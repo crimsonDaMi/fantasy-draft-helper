@@ -1,0 +1,10 @@
+{
+  "name": "fantasy-draft-helper",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev",
+    "build": "pnpm --recursive build",
+    "test": "pnpm --recursive test"
+  }
+}
