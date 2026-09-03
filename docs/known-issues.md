@@ -62,3 +62,27 @@ Evaluate whether the application should:
 - Increase polling frequency during active drafting.
 - Show a "refreshing" or "data may be delayed" indicator.
 - Measure observed API propagation latency.
+
+## Sleeper Defense Player Representation
+
+### Background
+
+Fantasy ranking CSV files may contain team defenses using the `DEF` position.
+
+Team defenses may not be represented by the Sleeper NFL player dataset in exactly the same way as individual players.
+
+### Evaluation Required
+
+Before finalizing player matching:
+
+1. Inspect Sleeper NFL player records for team defenses.
+2. Determine the Sleeper player IDs used for defenses.
+3. Verify position values.
+4. Verify team abbreviations.
+5. Verify whether defense names differ from CSV ranking names.
+
+### Current Decision
+
+The ranking CSV parser accepts `DEF`.
+
+The player matching algorithm will be validated against actual Sleeper defense records before relying on name-based defense matching.

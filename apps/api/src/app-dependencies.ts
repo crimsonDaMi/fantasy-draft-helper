@@ -18,6 +18,18 @@ import {
   DraftStateService,
 } from "./services/draft-state.service.js";
 
+import {
+  RankingCsvService,
+} from "./services/ranking-csv.service.js";
+
+import {
+  PlayerMatchingService,
+} from "./services/player-matching.service.js";
+
+import {
+  RankingImportService,
+} from "./services/ranking-import.service.js";
+
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
@@ -28,6 +40,8 @@ export interface AppDependencies {
   playerService: PlayerService;
 
   draftStateService: DraftStateService;
+
+  rankingImportService: RankingImportService;
 }
 
 export function createAppDependencies():
@@ -55,6 +69,21 @@ export function createAppDependencies():
       playerService,
     );
 
+  const rankingCsvService =
+    new RankingCsvService();
+
+  const playerMatchingService =
+    new PlayerMatchingService(
+      playerService,
+    );
+
+  const rankingImportService =
+    new RankingImportService(
+      rankingCsvService,
+
+      playerMatchingService,
+    );
+
   return {
     sleeperClient,
 
@@ -65,5 +94,7 @@ export function createAppDependencies():
     playerService,
 
     draftStateService,
+
+    rankingImportService,
   };
 }
