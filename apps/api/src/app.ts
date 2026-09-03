@@ -43,6 +43,7 @@ export async function buildApp() {
   await app.register(
     createDraftsRoutes(
       dependencies.draftService,
+      dependencies.draftStateService,
     ),
   );
 

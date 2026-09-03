@@ -35,3 +35,30 @@ Before finalizing the polling implementation, evaluate:
 Do not optimize around this behavior yet.
 
 Implement a correct polling architecture first and evaluate observed API latency using real measurements later.
+
+## Draft State Consistency During Rapid Picks
+
+### Observation
+
+The available-player calculation depends on the latest draft picks returned by the Sleeper API.
+
+If the Sleeper API temporarily lags behind the draft interface, the calculated available-player list can be stale.
+
+### Potential Scenario
+
+1. Player A is drafted.
+2. Sleeper draft UI immediately shows Player A as drafted.
+3. Sleeper API still returns the previous pick list.
+4. Draft helper calculates Player A as available.
+5. Player A may temporarily appear in recommendations.
+
+### Future Evaluation
+
+Evaluate whether the application should:
+
+- Display the timestamp of the last successful draft state refresh.
+- Detect multiple newly available picks.
+- Apply a short recommendation refresh delay.
+- Increase polling frequency during active drafting.
+- Show a "refreshing" or "data may be delayed" indicator.
+- Measure observed API propagation latency.

@@ -14,6 +14,10 @@ import {
   PlayerService,
 } from "./services/player.service.js";
 
+import {
+  DraftStateService,
+} from "./services/draft-state.service.js";
+
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
@@ -22,6 +26,8 @@ export interface AppDependencies {
   playerCache: PlayerCache;
 
   playerService: PlayerService;
+
+  draftStateService: DraftStateService;
 }
 
 export function createAppDependencies():
@@ -43,6 +49,12 @@ export function createAppDependencies():
       playerCache,
     );
 
+  const draftStateService =
+    new DraftStateService(
+      draftService,
+      playerService,
+    );
+
   return {
     sleeperClient,
 
@@ -51,5 +63,7 @@ export function createAppDependencies():
     playerCache,
 
     playerService,
+
+    draftStateService,
   };
 }
