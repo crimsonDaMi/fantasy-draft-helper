@@ -30,6 +30,14 @@ import {
   RankingImportService,
 } from "./services/ranking-import.service.js";
 
+import {
+  RankingStoreService,
+} from "./services/ranking-store.service.js";
+
+import {
+  RecommendationService,
+} from "./services/recommendation.service.js";
+
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
@@ -42,6 +50,10 @@ export interface AppDependencies {
   draftStateService: DraftStateService;
 
   rankingImportService: RankingImportService;
+
+  rankingStoreService: RankingStoreService;
+
+  recommendationService: RecommendationService;
 }
 
 export function createAppDependencies():
@@ -84,6 +96,16 @@ export function createAppDependencies():
       playerMatchingService,
     );
 
+  const rankingStoreService =
+    new RankingStoreService();
+
+  const recommendationService =
+    new RecommendationService(
+      draftStateService,
+
+      rankingStoreService,
+    );
+
   return {
     sleeperClient,
 
@@ -96,5 +118,9 @@ export function createAppDependencies():
     draftStateService,
 
     rankingImportService,
+
+    rankingStoreService,
+
+    recommendationService,
   };
 }

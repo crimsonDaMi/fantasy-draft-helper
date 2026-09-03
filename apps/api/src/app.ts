@@ -18,6 +18,17 @@ import {
   HttpError,
 } from "./utils/http-error.js";
 
+import multipart from
+  "@fastify/multipart";
+
+import {
+  createRankingsRoutes,
+} from "./routes/rankings.routes.js";
+
+import {
+  createRecommendationsRoutes,
+} from "./routes/recommendations.routes.js";
+
 export async function buildApp() {
   const app = Fastify({
     logger: true,
@@ -29,6 +40,16 @@ export async function buildApp() {
   await app.register(cors, {
     origin: true,
   });
+
+  await app.register(
+    multipart,
+    {
+      limits: {
+        fileSize:
+          1024 * 1024,
+      },
+    },
+  );
 
   app.get(
     "/health",
@@ -50,6 +71,22 @@ export async function buildApp() {
   await app.register(
     createPlayersRoutes(
       dependencies.playerService,
+    ),
+  );
+
+  await app.register(
+    createRankingsRoutes(
+      dependencies.rankingImportService,
+
+      dependencies.rankingStoreService,
+    ),
+  );
+
+  await app.register(
+    createRecommendationsRoutes(
+      dependencies.recommendationService,
+
+      dependencies.rankingStoreService,
     ),
   );
 
