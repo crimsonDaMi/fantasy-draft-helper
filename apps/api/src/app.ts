@@ -1,29 +1,55 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-
-import { draftsRoutes } from "./routes/drafts.routes.js";
-
 import { ZodError } from "zod";
 
-import { HttpError } from "./utils/http-error.js";
+import {
+  createAppDependencies,
+} from "./app-dependencies.js";
+
+import {
+  createDraftsRoutes,
+} from "./routes/drafts.routes.js";
+
+import {
+  createPlayersRoutes,
+} from "./routes/players.routes.js";
+
+import {
+  HttpError,
+} from "./utils/http-error.js";
 
 export async function buildApp() {
   const app = Fastify({
     logger: true,
   });
 
+  const dependencies =
+    createAppDependencies();
+
   await app.register(cors, {
     origin: true,
   });
 
-  app.get("/health", async () => {
-    return {
-      status: "ok",
-    };
-  });
+  app.get(
+    "/health",
+
+    async () => {
+      return {
+        status: "ok",
+      };
+    },
+  );
 
   await app.register(
-    draftsRoutes,
+    createDraftsRoutes(
+      dependencies.draftService,
+    ),
+  );
+
+  await app.register(
+    createPlayersRoutes(
+      dependencies.playerService,
+    ),
   );
 
   app.setErrorHandler(
