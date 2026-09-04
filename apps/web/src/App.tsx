@@ -27,7 +27,8 @@ import type {
 } from "./types/api";
 
 import {
-  POLLING_INTERVAL_MS,
+  ACTIVE_POLLING_INTERVAL_MS,
+  PRE_DRAFT_POLLING_INTERVAL_MS,
 } from "./config";
 
 function App() {
@@ -110,16 +111,36 @@ function App() {
       <MonitoringStatus
         draftId={draftId}
 
+        rankingId={rankingId}
+
+        draftStatus={
+          data?.draftStatus
+        }
+
+        totalPicks={
+          data?.totalPicks
+        }
+
         draftedPlayerCount={
           data?.draftedPlayerCount
         }
+
+        lastPick={data?.lastPick}
 
         generatedAt={
           data?.generatedAt
         }
 
+        lastUpdatedAt={
+          data?.lastUpdatedAt
+        }
+
         pollingIntervalMs={
-          POLLING_INTERVAL_MS
+          data?.draftStatus === "COMPLETE"
+            ? false
+            : data?.draftStatus === "PRE_DRAFT"
+              ? PRE_DRAFT_POLLING_INTERVAL_MS
+              : ACTIVE_POLLING_INTERVAL_MS
         }
 
         isLoading={isLoading}

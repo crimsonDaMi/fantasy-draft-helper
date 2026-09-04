@@ -1,7 +1,6 @@
 import {
-  useEffect,
-  useState,
-} from "react";
+  useQuery,
+} from "@tanstack/react-query";
 
 import {
   getRecommendations,
@@ -12,7 +11,8 @@ import type {
 } from "../types/api";
 
 import {
-  POLLING_INTERVAL_MS,
+  ACTIVE_POLLING_INTERVAL_MS,
+  PRE_DRAFT_POLLING_INTERVAL_MS,
 } from "../config";
 
 interface UseDraftRecommendationsResult {
@@ -28,94 +28,52 @@ export function useDraftRecommendations(
 
   rankingId?: string,
 ): UseDraftRecommendationsResult {
-  const [data, setData] =
-    useState<RecommendationsResponse>();
+  const query = useQuery({
+    queryKey: [
+      "recommendations",
+      draftId,
+      rankingId,
+    ],
 
-  const [error, setError] =
-    useState<string>();
+    queryFn: () =>
+      getRecommendations(
+        draftId!,
+        rankingId!,
+      ),
 
-  const [isLoading, setIsLoading] =
-    useState(false);
+    enabled: Boolean(
+      draftId && rankingId,
+    ),
 
-  useEffect(() => {
-    if (!draftId || !rankingId) {
-      return;
-    }
+    refetchInterval: (currentQuery) => {
+      const status =
+        currentQuery.state.data
+          ?.draftStatus;
 
-    const currentDraftId = draftId;
-
-    const currentRankingId = rankingId;
-
-    let cancelled = false;
-
-    let timeoutId:
-      number | undefined;
-
-    async function poll() {
-      if (cancelled) {
-        return;
+      if (status === "COMPLETE") {
+        return false;
       }
 
-      try {
-        setIsLoading(true);
-
-        const result =
-          await getRecommendations(
-            currentDraftId,
-
-            currentRankingId,
-          );
-
-        if (!cancelled) {
-          setData(result);
-          setError(undefined);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Failed to load recommendations.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-
-          timeoutId =
-            window.setTimeout(
-              () => {
-                void poll();
-              },
-              POLLING_INTERVAL_MS,
-            );
-        }
+      if (status === "PRE_DRAFT") {
+        return PRE_DRAFT_POLLING_INTERVAL_MS;
       }
-    }
 
-    void poll();
+      return ACTIVE_POLLING_INTERVAL_MS;
+    },
+  });
 
-    return () => {
-      cancelled = true;
-
-      if (timeoutId !== undefined) {
-        window.clearTimeout(
-          timeoutId,
-        );
-      }
-    };
-  }, [draftId, rankingId]);
+  const error = query.error;
 
   return {
-    data: draftId && rankingId
-      ? data
-      : undefined,
-    error: draftId && rankingId
-      ? error
-      : undefined,
-    isLoading:
-      draftId && rankingId
-        ? isLoading
-        : false,
+    data: query.data,
+
+    error: error instanceof Error
+      ? error.message
+      : error
+        ? "Failed to load recommendations."
+        : undefined,
+
+    isLoading: query.isLoading ||
+      query.isFetching,
   };
 }

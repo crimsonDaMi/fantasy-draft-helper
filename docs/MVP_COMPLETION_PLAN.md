@@ -119,13 +119,13 @@ Exit evidence: one request makes one draft-state fetch and one recommendation ca
 
 ### Phase 4: Frontend monitoring
 
-- [ ] Add TanStack Query and a dedicated recommendations query hook.
-- [ ] Store the returned `rankingId` after import.
-- [ ] Enable monitoring only when both IDs are present.
-- [ ] Use status-aware polling and stop polling after completion.
-- [ ] Display status, pick progress, last pick, import details, loading, error, and freshness states.
+- [x] Add TanStack Query and a dedicated recommendations query hook.
+- [x] Store the returned `rankingId` after import.
+- [x] Enable monitoring only when both IDs are present.
+- [x] Use status-aware polling and stop polling after completion.
+- [x] Display status, pick progress, last pick, import details, loading, error, and freshness states.
 
-Exit evidence: a browser workflow can import a ranking, start monitoring, see recommendations update, and stop refreshing for a completed draft.
+Exit evidence: the web app uses a TanStack Query key containing both IDs, polls pre-draft at 30 seconds and active drafts at 3 seconds, disables polling for completed drafts, and displays the current draft metadata and latest refresh time.
 
 ### Phase 5: End-to-end verification
 

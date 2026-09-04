@@ -1,23 +1,51 @@
 interface MonitoringStatusProps {
   draftId?: string;
 
+  rankingId?: string;
+
+  draftStatus?:
+    | "PRE_DRAFT"
+    | "DRAFTING"
+    | "COMPLETE"
+    | "UNKNOWN";
+
+  totalPicks?: number;
+
   draftedPlayerCount?: number;
 
+  lastPick?: {
+    playerId: string;
+    pickNo: number;
+    round?: number;
+  };
+
   generatedAt?: string;
+
+  lastUpdatedAt?: string;
 
   isLoading: boolean;
 
   error?: string;
 
-  pollingIntervalMs?: number;
+  pollingIntervalMs?: number | false;
 }
 
 export function MonitoringStatus({
   draftId,
 
+  rankingId,
+
+  draftStatus,
+
+  totalPicks,
+
   draftedPlayerCount,
 
+  lastPick,
+
   generatedAt,
+
+  lastUpdatedAt,
 
   isLoading,
 
@@ -25,10 +53,10 @@ export function MonitoringStatus({
 
   pollingIntervalMs,
 }: MonitoringStatusProps) {
-  if (!draftId) {
+  if (!draftId || !rankingId) {
     return (
       <p>
-        Not monitoring a draft.
+        Import a ranking and enter a draft ID to begin monitoring.
       </p>
     );
   }
@@ -43,17 +71,39 @@ export function MonitoringStatus({
         Draft ID: {draftId}
       </p>
 
+      {draftStatus && (
+        <p>
+          Draft status: {draftStatus}
+        </p>
+      )}
+
       {draftedPlayerCount !== undefined && (
         <p>
-          Drafted players:{" "}
+          Picks: {draftedPlayerCount}
+          {totalPicks !== undefined &&
+            ` / ${totalPicks}`}
+        </p>
+      )}
 
-          {draftedPlayerCount}
+      {lastPick && (
+        <p>
+          Last pick: #{lastPick.pickNo}
+          {lastPick.round !== undefined &&
+            ` (round ${lastPick.round})`}
+        </p>
+      )}
+
+      {lastUpdatedAt && (
+        <p>
+          Sleeper refresh: {new Date(
+            lastUpdatedAt,
+          ).toLocaleTimeString()}
         </p>
       )}
 
       {generatedAt && (
         <p>
-          Last updated:{" "}
+          Generated:{" "}
 
           {new Date(
             generatedAt,
@@ -69,12 +119,19 @@ export function MonitoringStatus({
         </p>
       )}
 
-      {pollingIntervalMs && (
+      {pollingIntervalMs !== undefined &&
+        pollingIntervalMs !== false && (
         <p>
           Polling interval:{" "}
 
           {pollingIntervalMs / 1000}
           {" seconds"}
+        </p>
+      )}
+
+      {draftStatus === "COMPLETE" && (
+        <p>
+          Draft complete. Monitoring stopped.
         </p>
       )}
 

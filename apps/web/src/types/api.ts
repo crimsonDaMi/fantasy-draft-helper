@@ -20,10 +20,10 @@ export interface RecommendationsResponse {
   draftId: string;
 
   draftStatus:
-    "PRE_DRAFT" |
-    "DRAFTING" |
-    "COMPLETE" |
-    "UNKNOWN";
+  "PRE_DRAFT" |
+  "DRAFTING" |
+  "COMPLETE" |
+  "UNKNOWN";
 
   totalPicks: number;
 
