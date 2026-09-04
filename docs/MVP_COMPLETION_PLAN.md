@@ -137,6 +137,14 @@ Exit evidence: the web app uses a TanStack Query key containing both IDs, polls 
 
 Exit evidence: `recommendation.integration.test.ts` uses deterministic Sleeper fixtures to verify pre-draft, active, and complete states, recommendation changes after a pick, and exclusion of unmatched and ambiguous rows. `ranking-store.service.test.ts` verifies persistence after store recreation.
 
+### Manual Smoke Verification
+
+- [x] Confirm recommendations remain visible during background refresh and the UI displays the completed-draft state without continued polling.
+- [x] Confirm an active-draft pick is reflected in the recommendation list after Sleeper exposes it.
+- [ ] Validate Sleeper defense (`DEF`) representation against a live player dataset.
+
+The manual smoke test confirmed API and web startup, successful CSV import, active polling, terminal invalid-draft handling, completed-draft metadata, and recommendation updates. Sleeper propagation delay remains an external limitation.
+
 ## Definition of Done
 
 The MVP is complete only when all of the following are true:
