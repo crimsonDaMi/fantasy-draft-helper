@@ -129,27 +129,38 @@ Exit evidence: the web app uses a TanStack Query key containing both IDs, polls 
 
 ### Phase 5: End-to-end verification
 
-- [ ] Add deterministic fixtures or mocked Sleeper responses for pre-draft, active, and complete states.
-- [ ] Verify a drafted player disappears from recommendations after the next refresh.
-- [ ] Verify unmatched and ambiguous players never appear in recommendations.
-- [ ] Verify API restart does not lose the ranking.
-- [ ] Run all verification commands and record results in the change summary.
+- [x] Add deterministic fixtures or mocked Sleeper responses for pre-draft, active, and complete states.
+- [x] Verify a drafted player disappears from recommendations after the next refresh.
+- [x] Verify unmatched and ambiguous players never appear in recommendations.
+- [x] Verify API restart does not lose the ranking.
+- [x] Run all verification commands and record results in the change summary.
+
+Exit evidence: `recommendation.integration.test.ts` uses deterministic Sleeper fixtures to verify pre-draft, active, and complete states, recommendation changes after a pick, and exclusion of unmatched and ambiguous rows. `ranking-store.service.test.ts` verifies persistence after store recreation.
 
 ## Definition of Done
 
 The MVP is complete only when all of the following are true:
 
-- [ ] A user can start the API and web app using documented commands.
-- [ ] A valid CSV can be imported using the canonical format.
-- [ ] The response provides a stable `rankingId` and match summary.
-- [ ] Unmatched and ambiguous players are visible to the user and excluded from recommendations.
-- [ ] Rankings survive an API restart.
-- [ ] A valid Sleeper draft ID returns normalized draft state.
-- [ ] The UI displays the top 10 pre-matched, available players in ranking order.
-- [ ] A newly reported Sleeper pick removes that player from recommendations.
-- [ ] Polling uses the required interval for the draft status and stops when the draft completes.
-- [ ] `pnpm test`, `pnpm build`, and web lint pass.
-- [ ] No non-MVP feature has been added without explicit approval.
+- [x] A user can start the API and web app using documented commands.
+- [x] A valid CSV can be imported using the canonical format.
+- [x] The response provides a stable `rankingId` and match summary.
+- [x] Unmatched and ambiguous players are visible to the user and excluded from recommendations.
+- [x] Rankings survive an API restart.
+- [x] A valid Sleeper draft ID returns normalized draft state.
+- [x] The UI displays the top 10 pre-matched, available players in ranking order.
+- [x] A newly reported Sleeper pick removes that player from recommendations.
+- [x] Polling uses the required interval for the draft status and stops when the draft completes.
+- [x] `pnpm test`, `pnpm build`, and web lint pass.
+- [x] No non-MVP feature has been added without explicit approval.
+
+## Final Verification Record
+
+Verified on 2026-09-04:
+
+- `pnpm test`: 94 tests passing.
+- `pnpm build`: API and web builds passing.
+- `pnpm --filter @fantasy-draft-helper/web lint`: passing.
+- `git diff --check`: passing.
 
 ## Known External Limitation
 

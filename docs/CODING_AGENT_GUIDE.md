@@ -12,7 +12,7 @@ The verification checklist for this guide is [`MVP_COMPLETION_PLAN.md`](MVP_COMP
 
 The repository already contains a working Fastify API, Sleeper client, in-memory player cache, CSV import services, deterministic matching, draft-state services, recommendation services, React UI components, and focused API tests.
 
-The remaining MVP work is tracked explicitly in the completion plan. Phase 4 now uses TanStack Query for status-aware polling; remaining work is the deterministic end-to-end verification in Phase 5.
+The remaining MVP work is tracked explicitly in the completion plan. Phases 1 through 5 are implemented; the completion plan records the final verification evidence and any future operational evaluation separately.
 
 Do not describe any of those items as complete until the corresponding checklist item and verification evidence exist.
 
