@@ -26,11 +26,6 @@ import type {
   RankingImportSummary,
 } from "./types/api";
 
-import {
-  ACTIVE_POLLING_INTERVAL_MS,
-  PRE_DRAFT_POLLING_INTERVAL_MS,
-} from "./config";
-
 function App() {
   const [draftId, setDraftId] =
     useState<string>();
@@ -48,6 +43,8 @@ function App() {
     data,
     error,
     isLoading,
+    pollingIntervalMs,
+    retry,
   } =
     useDraftRecommendations(
       draftId,
@@ -135,17 +132,13 @@ function App() {
           data?.lastUpdatedAt
         }
 
-        pollingIntervalMs={
-          data?.draftStatus === "COMPLETE"
-            ? false
-            : data?.draftStatus === "PRE_DRAFT"
-              ? PRE_DRAFT_POLLING_INTERVAL_MS
-              : ACTIVE_POLLING_INTERVAL_MS
-        }
+        pollingIntervalMs={pollingIntervalMs}
 
         isLoading={isLoading}
 
         error={error}
+
+        onRetry={retry}
       />
 
       {data && (

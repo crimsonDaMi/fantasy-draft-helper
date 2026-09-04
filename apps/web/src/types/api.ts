@@ -81,3 +81,9 @@ export interface RankingImportResponse {
 
   ambiguous: unknown[];
 }
+
+export interface RankingImportError {
+  row: number;
+
+  message: string;
+}

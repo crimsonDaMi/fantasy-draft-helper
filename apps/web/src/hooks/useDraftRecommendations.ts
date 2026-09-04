@@ -1,6 +1,11 @@
 import {
+  keepPreviousData,
   useQuery,
 } from "@tanstack/react-query";
+
+import {
+  ApiRequestError,
+} from "../api/fantasy-api";
 
 import {
   getRecommendations,
@@ -21,6 +26,10 @@ interface UseDraftRecommendationsResult {
   error?: string;
 
   isLoading: boolean;
+
+  pollingIntervalMs?: number | false;
+
+  retry: () => void;
 }
 
 export function useDraftRecommendations(
@@ -45,7 +54,35 @@ export function useDraftRecommendations(
       draftId && rankingId,
     ),
 
+    placeholderData: keepPreviousData,
+
+    retry: (failureCount, error) => {
+      if (failureCount >= 2) {
+        return false;
+      }
+
+      if (
+        error instanceof ApiRequestError &&
+        error.status !== undefined &&
+        error.status < 500
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+
+    retryDelay: (attemptIndex) =>
+      Math.min(
+        1_000 * 2 ** attemptIndex,
+        5_000,
+      ),
+
     refetchInterval: (currentQuery) => {
+      if (currentQuery.state.error) {
+        return false;
+      }
+
       const status =
         currentQuery.state.data
           ?.draftStatus;
@@ -73,7 +110,20 @@ export function useDraftRecommendations(
         ? "Failed to load recommendations."
         : undefined,
 
-    isLoading: query.isLoading ||
-      query.isFetching,
+    isLoading: query.isLoading,
+
+    pollingIntervalMs: query.error
+      ? false
+      : query.data?.draftStatus === "COMPLETE"
+        ? false
+        : query.data?.draftStatus === "PRE_DRAFT"
+          ? PRE_DRAFT_POLLING_INTERVAL_MS
+          : draftId && rankingId
+            ? ACTIVE_POLLING_INTERVAL_MS
+            : undefined,
+
+    retry: () => {
+      void query.refetch();
+    },
   };
 }

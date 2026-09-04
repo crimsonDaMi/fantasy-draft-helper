@@ -8,6 +8,34 @@ const API_BASE_URL =
     .VITE_API_BASE_URL ??
   "http://localhost:3000";
 
+export class ApiRequestError extends Error {
+  readonly status?: number;
+
+  constructor(
+    message: string,
+
+    status?: number,
+  ) {
+    super(message);
+
+    this.status = status;
+  }
+}
+
+async function getErrorMessage(
+  response: Response,
+): Promise<string> {
+  try {
+    const error = await response.json();
+
+    return error.message ??
+      error.error ??
+      "Request failed";
+  } catch {
+    return "Request failed";
+  }
+}
+
 export async function importRankings(
   file: File,
 ): Promise<RankingImportResponse> {
@@ -30,12 +58,9 @@ export async function importRankings(
     );
 
   if (!response.ok) {
-    const error =
-      await response.json();
-
-    throw new Error(
-      error.error ??
-      "Failed to import rankings",
+    throw new ApiRequestError(
+      await getErrorMessage(response),
+      response.status,
     );
   }
 
@@ -57,12 +82,9 @@ export async function getRecommendations(
     );
 
   if (!response.ok) {
-    const error =
-      await response.json();
-
-    throw new Error(
-      error.error ??
-      "Failed to load recommendations",
+    throw new ApiRequestError(
+      await getErrorMessage(response),
+      response.status,
     );
   }
 

@@ -4,10 +4,10 @@ interface MonitoringStatusProps {
   rankingId?: string;
 
   draftStatus?:
-    | "PRE_DRAFT"
-    | "DRAFTING"
-    | "COMPLETE"
-    | "UNKNOWN";
+  | "PRE_DRAFT"
+  | "DRAFTING"
+  | "COMPLETE"
+  | "UNKNOWN";
 
   totalPicks?: number;
 
@@ -26,6 +26,8 @@ interface MonitoringStatusProps {
   isLoading: boolean;
 
   error?: string;
+
+  onRetry: () => void;
 
   pollingIntervalMs?: number | false;
 }
@@ -50,6 +52,8 @@ export function MonitoringStatus({
   isLoading,
 
   error,
+
+  onRetry,
 
   pollingIntervalMs,
 }: MonitoringStatusProps) {
@@ -113,21 +117,19 @@ export function MonitoringStatus({
 
       {isLoading && (
         <p>
-          {generatedAt
-            ? "Refreshing..."
-            : "Loading recommendations..."}
+          Loading recommendations...
         </p>
       )}
 
       {pollingIntervalMs !== undefined &&
         pollingIntervalMs !== false && (
-        <p>
-          Polling interval:{" "}
+          <p>
+            Polling interval:{" "}
 
-          {pollingIntervalMs / 1000}
-          {" seconds"}
-        </p>
-      )}
+            {pollingIntervalMs / 1000}
+            {" seconds"}
+          </p>
+        )}
 
       {draftStatus === "COMPLETE" && (
         <p>
@@ -136,9 +138,22 @@ export function MonitoringStatus({
       )}
 
       {error && (
-        <p>
-          Error: {error}
-        </p>
+        <div>
+          <p>
+            Error: {error}
+          </p>
+
+          <p>
+            Check the draft ID, then submit it again to resume monitoring.
+          </p>
+
+          <button
+            type="button"
+            onClick={onRetry}
+          >
+            Retry monitoring
+          </button>
+        </div>
       )}
     </section>
   );

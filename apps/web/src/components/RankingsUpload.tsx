@@ -7,6 +7,7 @@ import {
 } from "../api/fantasy-api";
 
 import type {
+  RankingImportError,
   RankingImportSummary,
 } from "../types/api";
 
@@ -30,6 +31,9 @@ export function RankingsUpload({
   const [error, setError] =
     useState<string>();
 
+  const [validationErrors, setValidationErrors] =
+    useState<RankingImportError[]>([]);
+
   async function handleSubmit(
     event:
       React.FormEvent<HTMLFormElement>,
@@ -47,6 +51,8 @@ export function RankingsUpload({
     try {
       setError(undefined);
 
+      setValidationErrors([]);
+
       setIsUploading(true);
 
       const result =
@@ -59,11 +65,18 @@ export function RankingsUpload({
 
         result.rankingId,
       );
+
+      if (result.errors.length > 0) {
+        setValidationErrors(result.errors);
+        setError(
+          "Import completed with CSV errors. Correct the listed rows and re-import the file.",
+        );
+      }
     } catch (error) {
       setError(
         error instanceof Error
-          ? error.message
-          : "Failed to import rankings.",
+          ? `${error.message} Check the CSV headers and row values, then choose the corrected file and try again.`
+          : "Failed to import rankings. Check the CSV headers and row values, then try again.",
       );
     } finally {
       setIsUploading(false);
@@ -106,6 +119,16 @@ export function RankingsUpload({
         <p>
           {error}
         </p>
+      )}
+
+      {validationErrors.length > 0 && (
+        <ul>
+          {validationErrors.map((validationError) => (
+            <li key={`${validationError.row}-${validationError.message}`}>
+              Row {validationError.row}: {validationError.message}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
