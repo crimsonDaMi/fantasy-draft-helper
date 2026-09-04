@@ -21,7 +21,7 @@ export function createRankingsRoutes(
     app: FastifyInstance,
   ) {
     app.post(
-      "/rankings/import",
+      "/rankings",
 
       async (request, reply) => {
         const file =
@@ -68,12 +68,26 @@ export function createRankingsRoutes(
             ),
           );
 
-        rankingStoreService
-          .setMatches(
+        const rankingId =
+          rankingStoreService.setMatches(
             result.matches,
           );
 
         return {
+          rankingId,
+
+          playersImported:
+            result.summary.imported,
+
+          playersMatched:
+            result.summary.matched,
+
+          playersAmbiguous:
+            result.summary.ambiguous,
+
+          playersUnmatched:
+            result.summary.unmatched,
+
           summary:
             result.summary,
 

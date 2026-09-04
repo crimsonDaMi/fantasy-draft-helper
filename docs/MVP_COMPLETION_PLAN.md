@@ -25,7 +25,6 @@ Verified on 2026-09-04:
 
 Known gaps that block MVP completion:
 
-- Rankings are stored only in process memory; there is no SQLite repository or persistent `rankingId`.
 - The parser uses legacy headers and requires team and position, conflicting with the documented CSV contract.
 - Recommendations do not return draft status, total picks, or last pick.
 - Recommendation polling is hand-written, fixed at three seconds, and does not stop for completed drafts.
@@ -91,14 +90,14 @@ The UI shows the draft status and the timestamp of the latest successful refresh
 
 ### Phase 1: Contract and persistence
 
-- [ ] Choose and document the SQLite library, database path, schema initialization, and test database strategy.
-- [ ] Add ranking and ranking-player repositories.
-- [ ] Generate a stable ranking ID per import.
-- [ ] Persist pre-matched ranking rows and import summaries.
-- [ ] Make recommendation requests select rankings by ID.
-- [ ] Add restart/persistence tests.
+- [x] Choose and document the SQLite library, database path, schema initialization, and test database strategy.
+- [x] Add ranking and ranking-player repositories.
+- [x] Generate a stable ranking ID per import.
+- [x] Persist pre-matched ranking rows and import summaries.
+- [x] Make recommendation requests select rankings by ID.
+- [x] Add restart/persistence tests.
 
-Exit evidence: an imported ranking can be retrieved and used for recommendations after reconstructing application dependencies.
+Exit evidence: an imported ranking can be retrieved and used for recommendations after reconstructing application dependencies. SQLite uses Node 24's built-in `node:sqlite`; the default database is `data/fantasy-draft-helper.db`, configurable with `RANKINGS_DATABASE_PATH`, and tests use temporary files or `:memory:`.
 
 ### Phase 2: CSV and matching correctness
 

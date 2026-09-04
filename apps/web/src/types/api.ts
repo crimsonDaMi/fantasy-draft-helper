@@ -42,6 +42,8 @@ export interface RankingImportSummary {
 }
 
 export interface RankingImportResponse {
+  rankingId: string;
+
   summary:
   RankingImportSummary;
 

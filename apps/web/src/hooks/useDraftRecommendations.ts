@@ -25,6 +25,8 @@ interface UseDraftRecommendationsResult {
 
 export function useDraftRecommendations(
   draftId?: string,
+
+  rankingId?: string,
 ): UseDraftRecommendationsResult {
   const [data, setData] =
     useState<RecommendationsResponse>();
@@ -36,11 +38,13 @@ export function useDraftRecommendations(
     useState(false);
 
   useEffect(() => {
-    if (!draftId) {
+    if (!draftId || !rankingId) {
       return;
     }
 
     const currentDraftId = draftId;
+
+    const currentRankingId = rankingId;
 
     let cancelled = false;
 
@@ -58,6 +62,8 @@ export function useDraftRecommendations(
         const result =
           await getRecommendations(
             currentDraftId,
+
+            currentRankingId,
           );
 
         if (!cancelled) {
@@ -98,11 +104,18 @@ export function useDraftRecommendations(
         );
       }
     };
-  }, [draftId]);
+  }, [draftId, rankingId]);
 
   return {
-    data: draftId ? data : undefined,
-    error: draftId ? error : undefined,
-    isLoading: draftId ? isLoading : false,
+    data: draftId && rankingId
+      ? data
+      : undefined,
+    error: draftId && rankingId
+      ? error
+      : undefined,
+    isLoading:
+      draftId && rankingId
+        ? isLoading
+        : false,
   };
 }

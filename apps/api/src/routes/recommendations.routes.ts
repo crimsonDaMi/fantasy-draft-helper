@@ -22,6 +22,8 @@ const draftParamsSchema =
 
 const recommendationsQuerySchema =
   z.object({
+    rankingId: z.string().min(1),
+
     limit: z.coerce
       .number()
       .int()
@@ -64,22 +66,29 @@ export function createRecommendationsRoutes(
             request.params,
           );
 
-        const { limit } =
+        const { rankingId, limit } =
           recommendationsQuerySchema.parse(
             request.query,
           );
 
-        const recommendations =
-          await recommendationService
-            .getRecommendations(
-              draftId,
-              limit,
-            );
+        if (
+          !rankingStoreService.hasRanking(
+            rankingId,
+          )
+        ) {
+          return reply
+            .status(404)
+            .send({
+              error:
+                "Ranking was not found",
+            });
+        }
 
         const result =
           await recommendationService
             .getRecommendations(
               draftId,
+              rankingId,
               limit,
             );
 

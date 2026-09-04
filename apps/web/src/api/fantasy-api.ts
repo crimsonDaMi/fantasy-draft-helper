@@ -21,7 +21,7 @@ export async function importRankings(
 
   const response =
     await fetch(
-      `${API_BASE_URL}/rankings/import`,
+      `${API_BASE_URL}/rankings`,
       {
         method: "POST",
 
@@ -45,11 +45,15 @@ export async function importRankings(
 export async function getRecommendations(
   draftId: string,
 
+  rankingId: string,
+
   limit = 10,
 ): Promise<RecommendationsResponse> {
   const response =
     await fetch(
-      `${API_BASE_URL}/drafts/${draftId}/recommendations?limit=${limit}`,
+      `${API_BASE_URL}/drafts/${draftId}/recommendations?rankingId=${encodeURIComponent(
+        rankingId,
+      )}&limit=${limit}`,
     );
 
   if (!response.ok) {

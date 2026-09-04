@@ -85,6 +85,8 @@ describe(
           await service.getRecommendations(
             "draft-1",
 
+            "ranking-1",
+
             10,
           );
 
@@ -172,6 +174,8 @@ describe(
         const result =
           await service.getRecommendations(
             "draft-1",
+
+            "ranking-1",
 
             10,
           );

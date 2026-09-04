@@ -8,6 +8,19 @@ import {
   RankingStoreService,
 } from "./ranking-store.service.js";
 
+import {
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
+
+import {
+  tmpdir,
+} from "node:os";
+
+import {
+  join,
+} from "node:path";
+
 describe(
   "RankingStoreService",
 
@@ -17,7 +30,9 @@ describe(
 
       () => {
         const store =
-          new RankingStoreService();
+          new RankingStoreService(
+            ":memory:",
+          );
 
         expect(
           store.hasRankings(),
@@ -55,7 +70,9 @@ describe(
 
       () => {
         const store =
-          new RankingStoreService();
+          new RankingStoreService(
+            ":memory:",
+          );
 
         store.setMatches([
           {
@@ -79,6 +96,73 @@ describe(
         expect(
           store.hasRankings(),
         ).toBe(false);
+      },
+    );
+
+    it(
+      "loads imported matches after the store is recreated",
+
+      () => {
+        const directory =
+          mkdtempSync(
+            join(
+              tmpdir(),
+              "fantasy-draft-helper-",
+            ),
+          );
+
+        const databasePath = join(
+          directory,
+          "rankings.db",
+        );
+
+        const firstStore =
+          new RankingStoreService(
+            databasePath,
+          );
+
+        const rankingId =
+          firstStore.setMatches([
+            {
+              ranking: {
+                rank: 1,
+
+                playerName:
+                  "Josh Allen",
+
+                team: "BUF",
+
+                position: "QB",
+              },
+
+              method: "NONE",
+            },
+          ]);
+
+        firstStore.close();
+
+        const recreatedStore =
+          new RankingStoreService(
+            databasePath,
+          );
+
+        expect(
+          recreatedStore.hasRanking(
+            rankingId,
+          ),
+        ).toBe(true);
+
+        expect(
+          recreatedStore.getMatches(
+            rankingId,
+          ),
+        ).toHaveLength(1);
+
+        recreatedStore.close();
+        rmSync(directory, {
+          recursive: true,
+          force: true,
+        });
       },
     );
   },

@@ -12,7 +12,7 @@ The verification checklist for this guide is [`MVP_COMPLETION_PLAN.md`](MVP_COMP
 
 The repository already contains a working Fastify API, Sleeper client, in-memory player cache, CSV import services, deterministic matching, draft-state services, recommendation services, React UI components, and focused API tests.
 
-The remaining MVP work is tracked explicitly in the completion plan. In particular, rankings still need SQLite persistence and stable `rankingId` values, the CSV contract needs to accept the documented format, the recommendation response needs complete draft metadata, and frontend polling needs to become status-aware TanStack Query polling.
+The remaining MVP work is tracked explicitly in the completion plan. In particular, the CSV contract still needs to accept the documented format, the recommendation response needs complete draft metadata, and frontend polling needs to become status-aware TanStack Query polling.
 
 Do not describe any of those items as complete until the corresponding checklist item and verification evidence exist.
 

@@ -99,7 +99,10 @@ export function createAppDependencies():
     );
 
   const rankingStoreService =
-    new RankingStoreService();
+    new RankingStoreService(
+      process.env
+        .RANKINGS_DATABASE_PATH,
+    );
 
   const recommendationService =
     new RecommendationService(

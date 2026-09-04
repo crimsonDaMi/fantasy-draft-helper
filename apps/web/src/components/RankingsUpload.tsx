@@ -13,6 +13,8 @@ import type {
 interface RankingsUploadProps {
   onImported: (
     summary: RankingImportSummary,
+
+    rankingId: string,
   ) => void;
 }
 
@@ -54,6 +56,8 @@ export function RankingsUpload({
 
       onImported(
         result.summary,
+
+        result.rankingId,
       );
     } catch (error) {
       setError(

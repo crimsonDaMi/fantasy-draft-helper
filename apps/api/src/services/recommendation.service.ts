@@ -24,6 +24,8 @@ export class RecommendationService {
   async getRecommendations(
     draftId: string,
 
+    rankingId: string,
+
     limit: number,
   ): Promise<RecommendationResult> {
     const draftState =
@@ -37,7 +39,9 @@ export class RecommendationService {
 
     const matches =
       this.rankingStoreService
-        .getMatches();
+        .getMatches(
+          rankingId,
+        );
 
     const recommendations =
       matches

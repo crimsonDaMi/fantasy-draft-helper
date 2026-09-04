@@ -34,6 +34,9 @@ function App() {
   const [draftId, setDraftId] =
     useState<string>();
 
+  const [rankingId, setRankingId] =
+    useState<string>();
+
   const [
     rankingSummary,
     setRankingSummary,
@@ -47,6 +50,8 @@ function App() {
   } =
     useDraftRecommendations(
       draftId,
+
+      rankingId,
     );
 
   return (
@@ -56,9 +61,13 @@ function App() {
       </h1>
 
       <RankingsUpload
-        onImported={
-          setRankingSummary
-        }
+        onImported={(
+          summary,
+          importedRankingId,
+        ) => {
+          setRankingSummary(summary);
+          setRankingId(importedRankingId);
+        }}
       />
 
       {rankingSummary && (
