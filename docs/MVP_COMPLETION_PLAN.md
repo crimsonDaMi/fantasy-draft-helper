@@ -110,12 +110,12 @@ Exit evidence: focused CSV, matching, and cache initialization tests cover every
 
 ### Phase 3: Recommendation API
 
-- [ ] Remove duplicate recommendation calculation in the route.
-- [ ] Return draft status, total picks, last pick, and freshness timestamp.
-- [ ] Preserve ranking order without sorting on every polling request.
-- [ ] Add route-level tests for successful, missing-ranking, invalid-draft, and completed-draft responses.
+- [x] Remove duplicate recommendation calculation in the route.
+- [x] Return draft status, total picks, last pick, and freshness timestamp.
+- [x] Preserve ranking order without sorting on every polling request.
+- [x] Add route-level tests for successful, missing-ranking, invalid-draft, and completed-draft responses.
 
-Exit evidence: one request makes one draft-state fetch and one recommendation calculation, with the documented JSON shape.
+Exit evidence: one request makes one draft-state fetch and one recommendation calculation, with the documented JSON shape. Route-level tests cover success, missing rankings, unknown rankings, invalid drafts, and completed drafts.
 
 ### Phase 4: Frontend monitoring
 

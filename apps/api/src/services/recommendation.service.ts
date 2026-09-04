@@ -56,11 +56,6 @@ export class RecommendationService {
                 .sleeperId,
             ),
         )
-        .sort(
-          (a, b) =>
-            a.ranking.rank -
-            b.ranking.rank,
-        )
         .slice(
           0,
           limit,
@@ -80,6 +75,18 @@ export class RecommendationService {
 
       draftedPlayerCount:
         draftedPlayerIds.size,
+
+      draftStatus:
+        draftState.draft.status,
+
+      totalPicks:
+        draftState.picks.length,
+
+      lastPick:
+        draftState.picks.at(-1),
+
+      lastUpdatedAt:
+        draftState.lastUpdatedAt.toISOString(),
 
       generatedAt:
         new Date().toISOString(),

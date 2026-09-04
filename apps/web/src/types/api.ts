@@ -19,7 +19,23 @@ export interface ApiRecommendation {
 export interface RecommendationsResponse {
   draftId: string;
 
+  draftStatus:
+    "PRE_DRAFT" |
+    "DRAFTING" |
+    "COMPLETE" |
+    "UNKNOWN";
+
+  totalPicks: number;
+
   draftedPlayerCount: number;
+
+  lastPick?: {
+    playerId: string;
+    pickNo: number;
+    round?: number;
+  };
+
+  lastUpdatedAt: string;
 
   generatedAt: string;
 

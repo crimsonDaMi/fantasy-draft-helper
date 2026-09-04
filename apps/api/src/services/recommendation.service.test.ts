@@ -19,10 +19,19 @@ describe(
         const draftStateService = {
           getDraftState:
             async () => ({
+              draft: {
+                status: "DRAFTING",
+              },
+
+              picks: [],
+
               draftedPlayerIds:
                 new Set([
                   "1",
                 ]),
+
+              lastUpdatedAt:
+                new Date("2026-01-01T00:00:00.000Z"),
             }),
         };
 
@@ -101,18 +110,37 @@ describe(
         expect(
           result.draftedPlayerCount,
         ).toBe(1);
+
+        expect(result.draftStatus).toBe(
+          "DRAFTING",
+        );
+
+        expect(result.totalPicks).toBe(0);
+
+        expect(result.lastUpdatedAt).toBe(
+          "2026-01-01T00:00:00.000Z",
+        );
       },
     );
 
     it(
-      "sorts recommendations by rank",
+      "preserves stored ranking order",
 
       async () => {
         const draftStateService = {
           getDraftState:
             async () => ({
+              draft: {
+                status: "DRAFTING",
+              },
+
+              picks: [],
+
               draftedPlayerIds:
                 new Set(),
+
+              lastUpdatedAt:
+                new Date("2026-01-01T00:00:00.000Z"),
             }),
         };
 
@@ -186,8 +214,8 @@ describe(
               recommendation.ranking.rank,
           ),
         ).toEqual([
-          5,
           20,
+          5,
         ]);
       },
     );

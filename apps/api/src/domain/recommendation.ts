@@ -6,6 +6,11 @@ import {
   Ranking,
 } from "./ranking.js";
 
+import {
+  DraftPick,
+  DraftStatus,
+} from "./draft.js";
+
 export interface Recommendation {
   ranking: Ranking;
 
@@ -16,6 +21,14 @@ export interface RecommendationResult {
   recommendations: Recommendation[];
 
   draftedPlayerCount: number;
+
+  draftStatus: DraftStatus;
+
+  totalPicks: number;
+
+  lastPick?: DraftPick;
+
+  lastUpdatedAt: string;
 
   generatedAt: string;
 }

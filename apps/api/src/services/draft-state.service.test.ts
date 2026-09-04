@@ -27,11 +27,13 @@ describe(
             season: "2026",
           }),
 
-          getDraftedPlayerIds:
-            async () =>
-              new Set([
-                "2",
-              ]),
+          getDraftPicks: async () => [
+            {
+              playerId: "2",
+
+              pickNo: 1,
+            },
+          ],
         };
 
         const playerService = {

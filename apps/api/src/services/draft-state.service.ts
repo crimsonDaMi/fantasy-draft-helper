@@ -33,16 +33,20 @@ export class DraftStateService {
 
     const [
       draft,
-      draftedPlayerIds,
+      picks,
     ] = await Promise.all([
       this.draftService.getDraft(
         draftId,
       ),
 
-      this.draftService.getDraftedPlayerIds(
+      this.draftService.getDraftPicks(
         draftId,
       ),
     ]);
+
+    const draftedPlayerIds = new Set(
+      picks.map((pick) => pick.playerId),
+    );
 
     const allPlayers =
       this.playerService.getAllPlayers();
@@ -55,6 +59,8 @@ export class DraftStateService {
 
     return {
       draft,
+
+      picks,
 
       draftedPlayerIds,
 

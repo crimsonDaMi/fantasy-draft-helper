@@ -95,8 +95,20 @@ export function createRecommendationsRoutes(
         return {
           draftId,
 
+          draftStatus:
+            result.draftStatus,
+
+          totalPicks:
+            result.totalPicks,
+
           draftedPlayerCount:
             result.draftedPlayerCount,
+
+          lastPick:
+            result.lastPick,
+
+          lastUpdatedAt:
+            result.lastUpdatedAt,
 
           generatedAt:
             result.generatedAt,
