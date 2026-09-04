@@ -76,24 +76,33 @@ export function createRecommendationsRoutes(
               limit,
             );
 
+        const result =
+          await recommendationService
+            .getRecommendations(
+              draftId,
+              limit,
+            );
+
         return {
           draftId,
 
+          draftedPlayerCount:
+            result.draftedPlayerCount,
+
+          generatedAt:
+            result.generatedAt,
+
           recommendationCount:
-            recommendations.length,
+            result.recommendations.length,
 
           recommendations:
-            recommendations.map(
-              (
-                recommendation,
-              ) => ({
+            result.recommendations.map(
+              (recommendation) => ({
                 rank:
-                  recommendation
-                    .ranking.rank,
+                  recommendation.ranking.rank,
 
                 tier:
-                  recommendation
-                    .ranking.tier,
+                  recommendation.ranking.tier,
 
                 player: {
                   sleeperId:

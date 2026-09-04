@@ -11,3 +11,11 @@ export interface Recommendation {
 
   player: Player;
 }
+
+export interface RecommendationResult {
+  recommendations: Recommendation[];
+
+  draftedPlayerCount: number;
+
+  generatedAt: string;
+}

@@ -1,5 +1,6 @@
 import {
   Recommendation,
+  RecommendationResult,
 } from "../domain/recommendation.js";
 
 import {
@@ -9,6 +10,7 @@ import {
 import {
   RankingStoreService,
 } from "./ranking-store.service.js";
+
 
 export class RecommendationService {
   constructor(
@@ -23,7 +25,7 @@ export class RecommendationService {
     draftId: string,
 
     limit: number,
-  ): Promise<Recommendation[]> {
+  ): Promise<RecommendationResult> {
     const draftState =
       await this.draftStateService
         .getDraftState(
@@ -37,35 +39,46 @@ export class RecommendationService {
       this.rankingStoreService
         .getMatches();
 
-    return matches
-      .filter(
-        (match) =>
-          match.player !== undefined,
-      )
-      .filter(
-        (match) =>
-          !draftedPlayerIds.has(
-            match.player!
-              .sleeperId,
-          ),
-      )
-      .sort(
-        (a, b) =>
-          a.ranking.rank -
-          b.ranking.rank,
-      )
-      .slice(
-        0,
-        limit,
-      )
-      .map(
-        (match) => ({
-          ranking:
-            match.ranking,
+    const recommendations =
+      matches
+        .filter(
+          (match) =>
+            match.player !== undefined,
+        )
+        .filter(
+          (match) =>
+            !draftedPlayerIds.has(
+              match.player!
+                .sleeperId,
+            ),
+        )
+        .sort(
+          (a, b) =>
+            a.ranking.rank -
+            b.ranking.rank,
+        )
+        .slice(
+          0,
+          limit,
+        )
+        .map(
+          (match) => ({
+            ranking:
+              match.ranking,
 
-          player:
-            match.player!,
-        }),
-      );
+            player:
+              match.player!,
+          }),
+        );
+
+    return {
+      recommendations,
+
+      draftedPlayerCount:
+        draftedPlayerIds.size,
+
+      generatedAt:
+        new Date().toISOString(),
+    };
   }
 }

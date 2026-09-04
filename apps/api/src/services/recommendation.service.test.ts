@@ -89,12 +89,16 @@ describe(
           );
 
         expect(
-          result,
+          result.recommendations,
         ).toHaveLength(1);
 
         expect(
-          result[0]?.ranking.rank,
+          result.recommendations[0]?.ranking.rank,
         ).toBe(2);
+
+        expect(
+          result.draftedPlayerCount,
+        ).toBe(1);
       },
     );
 
@@ -173,7 +177,7 @@ describe(
           );
 
         expect(
-          result.map(
+          result.recommendations.map(
             (recommendation) =>
               recommendation.ranking.rank,
           ),

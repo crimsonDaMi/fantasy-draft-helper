@@ -86,3 +86,92 @@ Before finalizing player matching:
 The ranking CSV parser accepts `DEF`.
 
 The player matching algorithm will be validated against actual Sleeper defense records before relying on name-based defense matching.
+
+## Sleeper API Draft Pick Propagation Delay
+
+### Observation
+
+During mock drafts with automated bots making picks rapidly, there appears to be a delay between a pick occurring and the Sleeper API exposing that pick.
+
+### Current MVP Behavior
+
+The frontend polls the Fantasy Draft Helper API every 3 seconds.
+
+The application reflects the state returned by Sleeper and does not attempt to predict or infer picks that have not yet appeared in the API.
+
+### Future Evaluation
+
+Evaluate:
+
+- Typical propagation delay during real drafts.
+- Typical propagation delay during mock drafts.
+- Whether automated bot drafts behave differently.
+- Optimal polling interval.
+- Whether server-side polling or event-driven monitoring is preferable.
+
+## Initial Player Matching Availability
+
+### Observation
+
+During end-to-end testing, an initial CSV import returned all players as unmatched. Repeating the same import immediately afterwards successfully matched all players.
+
+### Possible Cause
+
+The Sleeper player data or player lookup cache may not have been fully initialized when the first ranking import occurred.
+
+### Current Status
+
+Requires further investigation.
+
+### Future Evaluation
+
+Investigate:
+
+- When Sleeper player data is loaded.
+- Whether player data is cached lazily.
+- Whether ranking imports can occur before player data initialization completes.
+- Whether the API should explicitly ensure the player dataset is available before processing a ranking import.
+
+### Desired Behavior
+
+A user should be able to start the application and immediately import a rankings CSV successfully without requiring a second import.
+
+## Sleeper API Draft Pick Propagation Delay
+
+### Observation
+
+During draft monitoring tests, there appears to be an approximately 20-second delay between a pick occurring in the draft and the Sleeper API exposing that pick.
+
+This was particularly noticeable during mock drafts and may be influenced by automated picks occurring in rapid succession.
+
+### Impact
+
+The current draft configuration uses a 30-second timer per pick.
+
+Because the Sleeper API may lag by approximately 20 seconds, recommendations can temporarily include players who have already been selected in the actual draft.
+
+In some situations, multiple recommendations may be based on outdated draft state.
+
+### Current MVP Behavior
+
+The frontend polls the Fantasy Draft Helper API every 3 seconds.
+
+The application reflects the latest state available from Sleeper and does not attempt to predict picks that have not yet appeared in the Sleeper API.
+
+### Important Finding
+
+The primary source of recommendation latency appears to be Sleeper API propagation delay rather than the application's polling interval.
+
+Reducing the frontend polling interval below 3 seconds is therefore unlikely to significantly improve the user experience.
+
+### Future Evaluation
+
+Evaluate:
+
+- Propagation delays during real drafts.
+- Differences between mock and real drafts.
+- Differences between automated and human picks.
+- Whether other Sleeper API endpoints provide faster updates.
+- Whether Sleeper offers an event-based or WebSocket-based mechanism.
+- Whether draft state should be displayed with a visible freshness indicator.
+- Whether recommendations should warn the user when the Sleeper data is stale.
