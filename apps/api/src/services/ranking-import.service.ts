@@ -18,6 +18,10 @@ import {
   RankingImportSummary,
 } from "../domain/ranking-import-summary.js";
 
+import {
+  PlayerService,
+} from "./player.service.js";
+
 export interface ProcessedRankingImport {
   importResult: RankingImportResult;
 
@@ -33,15 +37,21 @@ export class RankingImportService {
 
     private readonly matchingService:
       PlayerMatchingService,
+
+    private readonly playerService:
+      PlayerService,
   ) { }
 
-  importCsv(
+  async importCsv(
     csvContent: string,
-  ): ProcessedRankingImport {
+  ): Promise<ProcessedRankingImport> {
     const importResult =
       this.csvService.parse(
         csvContent,
       );
+
+    await this.playerService
+      .ensurePlayersLoaded();
 
     const matches =
       this.matchingService

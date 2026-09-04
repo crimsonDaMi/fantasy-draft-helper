@@ -12,6 +12,14 @@ import {
   RankingImportService,
 } from "./ranking-import.service.js";
 
+import {
+  PlayerService,
+} from "./player.service.js";
+
+import {
+  vi,
+} from "vitest";
+
 describe(
   "RankingImportService",
 
@@ -19,7 +27,7 @@ describe(
     it(
       "imports the example ranking CSV",
 
-      () => {
+      async () => {
         const csvService =
           new RankingCsvService();
 
@@ -27,15 +35,24 @@ describe(
           matchRankings: () => [],
         };
 
+        const playerService = {
+          ensurePlayersLoaded:
+            vi.fn().mockResolvedValue(
+              undefined,
+            ),
+        } as unknown as PlayerService;
+
         const service =
           new RankingImportService(
             csvService,
 
             matchingService as never,
+
+            playerService as never,
           );
 
         const result =
-          service.importCsv(`
+          await service.importCsv(`
 player_id,Rank,Name,Team,Position,Tier,Expert Rank
 9221,1,Jahmyr Gibbs,DET,RB,S,1.13
 9509,2,Bijan Robinson,ATL,RB,S,1.88
@@ -63,6 +80,48 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 
           position: "QB",
         });
+      },
+    );
+
+    it(
+      "loads players before matching rankings",
+      async () => {
+        const csvService =
+          new RankingCsvService();
+
+        const matchingService = {
+          matchRankings: () => [],
+        };
+
+        const playerService = {
+          ensurePlayersLoaded:
+            vi.fn().mockResolvedValue(
+              undefined,
+            ),
+        } as unknown as PlayerService;
+
+        const service =
+          new RankingImportService(
+            csvService,
+
+            matchingService as never,
+
+            playerService as never,
+          );
+
+        await service.importCsv(`
+player_id,Rank,Name,Team,Position,Tier,Expert Rank
+9221,1,Jahmyr Gibbs,DET,RB,S,1.13
+9509,2,Bijan Robinson,ATL,RB,S,1.88
+7564,3,Ja'Marr Chase,CIN,WR,S,3.00
+9493,4,Puka Nacua,LAR,WR,S,4.00
+11604,20,Brock Bowers,LV,TE,C,20.88
+4984,37,Josh Allen,BUF,QB,D,38.50
+`,);
+
+        expect(
+          playerService.ensurePlayersLoaded,
+        ).toHaveBeenCalledTimes(1);
       },
     );
   },

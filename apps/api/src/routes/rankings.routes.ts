@@ -62,7 +62,7 @@ export function createRankingsRoutes(
           await file.toBuffer();
 
         const result =
-          rankingImportService.importCsv(
+          await rankingImportService.importCsv(
             csvContent.toString(
               "utf-8",
             ),

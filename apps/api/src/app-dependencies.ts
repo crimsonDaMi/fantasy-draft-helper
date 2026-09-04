@@ -94,6 +94,8 @@ export function createAppDependencies():
       rankingCsvService,
 
       playerMatchingService,
+
+      playerService,
     );
 
   const rankingStoreService =
