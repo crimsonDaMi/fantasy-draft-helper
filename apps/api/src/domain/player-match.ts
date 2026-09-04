@@ -10,6 +10,7 @@ export type PlayerMatchMethod =
   | "SLEEPER_ID"
   | "NAME_POSITION_TEAM"
   | "NAME_POSITION"
+  | "NAME_TEAM"
   | "NAME"
   | "NONE"
   | "AMBIGUOUS";

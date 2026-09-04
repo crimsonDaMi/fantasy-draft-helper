@@ -11,9 +11,9 @@ export interface Ranking {
 
   playerName: string;
 
-  team: string;
+  team?: string;
 
-  position: FantasyPosition;
+  position?: FantasyPosition;
 
   sleeperPlayerId?: string;
 

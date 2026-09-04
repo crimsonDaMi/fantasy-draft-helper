@@ -134,6 +134,25 @@ export class PlayerMatchingService {
       };
     }
 
+    const byTeam = candidates.filter(
+      (player) =>
+        ranking.team !== undefined &&
+        player.team === ranking.team,
+    );
+
+    if (
+      byTeam.length === 1
+    ) {
+      return {
+        ranking,
+
+        player:
+          byTeam[0],
+
+        method: "NAME_TEAM",
+      };
+    }
+
     if (
       candidates.length === 1
     ) {

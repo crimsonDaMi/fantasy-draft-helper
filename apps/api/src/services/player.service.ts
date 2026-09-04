@@ -15,6 +15,9 @@ import {
 } from "./player.mapper.js";
 
 export class PlayerService {
+  private playersLoadPromise?:
+    Promise<void>;
+
   constructor(
     private readonly sleeperClient: SleeperClient,
 
@@ -39,7 +42,17 @@ export class PlayerService {
       return;
     }
 
-    await this.refreshPlayers();
+    if (!this.playersLoadPromise) {
+      this.playersLoadPromise =
+        this.refreshPlayers();
+    }
+
+    try {
+      await this.playersLoadPromise;
+    } finally {
+      this.playersLoadPromise =
+        undefined;
+    }
   }
 
   getPlayerById(

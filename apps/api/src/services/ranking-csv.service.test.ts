@@ -122,5 +122,97 @@ Rank,Name,Team,Position
         ).toHaveLength(1);
       },
     );
+
+    it(
+      "parses canonical headers with optional metadata",
+
+      () => {
+        const result =
+          service.parse(`
+rank,player,position,team,tier,notes
+1,Ja'Marr Chase,WR,CIN,1,Target share leader
+2,Name Only,,,,
+`);
+
+        expect(result.errors).toHaveLength(0);
+        expect(result.rankings).toEqual([
+          {
+            rank: 1,
+
+            playerName:
+              "Ja'Marr Chase",
+
+            team: "CIN",
+
+            position: "WR",
+
+            tier: "1",
+
+            sleeperPlayerId:
+              undefined,
+          },
+          {
+            rank: 2,
+
+            playerName: "Name Only",
+
+            team: undefined,
+
+            position: undefined,
+
+            tier: undefined,
+
+            sleeperPlayerId:
+              undefined,
+          },
+        ]);
+      },
+    );
+
+    it(
+      "rejects missing required headers",
+
+      () => {
+        const result =
+          service.parse(`
+position,team
+WR,CIN
+`);
+
+        expect(result.rankings).toHaveLength(0);
+        expect(result.errors[0]?.message).toContain(
+          "rank and player",
+        );
+      },
+    );
+
+    it(
+      "rejects empty CSV input",
+
+      () => {
+        const result = service.parse("");
+
+        expect(result.rankings).toHaveLength(0);
+        expect(result.errors[0]?.message).toContain(
+          "header",
+        );
+      },
+    );
+
+    it(
+      "reports malformed CSV input",
+
+      () => {
+        const result =
+          service.parse(
+            "rank,player\n1,\"Unclosed",
+          );
+
+        expect(result.rankings).toHaveLength(0);
+        expect(result.errors[0]?.message).toContain(
+          "Invalid CSV",
+        );
+      },
+    );
   },
 );

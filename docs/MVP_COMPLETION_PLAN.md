@@ -25,7 +25,6 @@ Verified on 2026-09-04:
 
 Known gaps that block MVP completion:
 
-- The parser uses legacy headers and requires team and position, conflicting with the documented CSV contract.
 - Recommendations do not return draft status, total picks, or last pick.
 - Recommendation polling is hand-written, fixed at three seconds, and does not stop for completed drafts.
 - TanStack Query is not installed or used.
@@ -101,13 +100,13 @@ Exit evidence: an imported ranking can be retrieved and used for recommendations
 
 ### Phase 2: CSV and matching correctness
 
-- [ ] Support canonical lowercase headers and optional team/position.
-- [ ] Validate required headers, empty files, invalid rows, and no-valid-row files.
-- [ ] Add exact name + team matching fallback.
-- [ ] Make player-cache initialization safe for concurrent first requests.
-- [ ] Add tests for all required normalization and matching cases.
+- [x] Support canonical lowercase headers and optional team/position.
+- [x] Validate required headers, empty files, invalid rows, and no-valid-row files.
+- [x] Add exact name + team matching fallback.
+- [x] Make player-cache initialization safe for concurrent first requests.
+- [x] Add tests for all required normalization and matching cases.
 
-Exit evidence: focused CSV and matching tests cover every rule in the guide and pass.
+Exit evidence: focused CSV, matching, and cache initialization tests cover every Phase 2 rule and pass. The parser accepts canonical lowercase and legacy headers, optional team/position values, and reports malformed or empty input.
 
 ### Phase 3: Recommendation API
 

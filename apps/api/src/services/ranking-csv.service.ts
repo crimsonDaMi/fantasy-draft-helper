@@ -22,32 +22,65 @@ const VALID_POSITIONS =
     "DEF",
   ]);
 
-interface CsvRow {
-  player_id?: string;
+type CsvRow = Record<
+  string,
+  string | undefined
+>;
 
-  Rank?: string;
+const HEADER_ALIASES: Record<
+  string,
+  keyof NormalizedCsvRow
+> = {
+  rank: "rank",
+  player: "player",
+  name: "player",
+  position: "position",
+  team: "team",
+  tier: "tier",
+  player_id: "sleeperPlayerId",
+};
 
-  Name?: string;
-
-  Team?: string;
-
-  Position?: string;
-
-  Tier?: string;
+interface NormalizedCsvRow {
+  rank?: string;
+  player?: string;
+  position?: string;
+  team?: string;
+  tier?: string;
+  sleeperPlayerId?: string;
 }
 
 export class RankingCsvService {
   parse(
     csvContent: string,
   ): RankingImportResult {
-    const rows =
-      parse(csvContent, {
+    let rows: CsvRow[];
+
+    try {
+      rows = parse(csvContent, {
         columns: true,
 
         skip_empty_lines: true,
 
         trim: true,
+
+        skip_records_with_empty_values: false,
       }) as CsvRow[];
+    } catch (error) {
+      return {
+        rankings: [],
+
+        errors: [
+          {
+            row: 1,
+
+            message:
+              error instanceof Error
+                ? `Invalid CSV: ${error.message}`
+                : "Invalid CSV",
+          },
+        ],
+      };
+    }
 
     const rankings: Ranking[] =
       [];
@@ -55,7 +88,47 @@ export class RankingCsvService {
     const errors: RankingImportError[] =
       [];
 
-    rows.forEach(
+    if (rows.length === 0) {
+      return {
+        rankings,
+
+        errors: [
+          {
+            row: 1,
+
+            message:
+              "CSV must contain a header and at least one ranking row",
+          },
+        ],
+      };
+    }
+
+    const normalizedRows = rows.map(
+      (row) =>
+        this.normalizeRow(row),
+    );
+
+    const firstRow = normalizedRows[0];
+
+    if (
+      firstRow?.rank === undefined ||
+      firstRow.player === undefined
+    ) {
+      return {
+        rankings,
+
+        errors: [
+          {
+            row: 1,
+
+            message:
+              "CSV must include required columns: rank and player",
+          },
+        ],
+      };
+    }
+
+    normalizedRows.forEach(
       (row, index) => {
         const rowNumber = index + 2;
 
@@ -88,7 +161,7 @@ export class RankingCsvService {
   }
 
   private parseRow(
-    row: CsvRow,
+    row: NormalizedCsvRow,
 
     rowNumber: number,
   ):
@@ -98,8 +171,7 @@ export class RankingCsvService {
     | {
       error: RankingImportError;
     } {
-    const rank =
-      Number(row.Rank);
+    const rank = Number(row.rank);
 
     if (
       !Number.isInteger(rank) ||
@@ -115,7 +187,7 @@ export class RankingCsvService {
       };
     }
 
-    if (!row.Name) {
+    if (!row.player) {
       return {
         error: {
           row: rowNumber,
@@ -126,22 +198,11 @@ export class RankingCsvService {
       };
     }
 
-    if (!row.Team) {
-      return {
-        error: {
-          row: rowNumber,
-
-          message:
-            "Team is required",
-        },
-      };
-    }
-
-    const position =
-      row.Position?.toUpperCase();
+    const position = row.position
+      ?.toUpperCase();
 
     if (
-      !position ||
+      position !== undefined &&
       !VALID_POSITIONS.has(
         position as FantasyPosition,
       )
@@ -151,7 +212,7 @@ export class RankingCsvService {
           row: rowNumber,
 
           message:
-            `Invalid position: ${row.Position}`,
+            `Invalid position: ${row.position}`,
         },
       };
     }
@@ -160,21 +221,44 @@ export class RankingCsvService {
       ranking: {
         rank,
 
-        playerName: row.Name,
+        playerName: row.player,
 
-        team: row.Team.toUpperCase(),
+        team: row.team
+          ? row.team.toUpperCase()
+          : undefined,
 
-        position:
-          position as FantasyPosition,
+        position: position as
+          | FantasyPosition
+          | undefined,
 
         sleeperPlayerId:
-          row.player_id ||
+          row.sleeperPlayerId ||
           undefined,
 
         tier:
-          row.Tier ||
+          row.tier ||
           undefined,
       },
     };
+  }
+
+  private normalizeRow(
+    row: CsvRow,
+  ): NormalizedCsvRow {
+    const normalized: NormalizedCsvRow =
+      {};
+
+    for (const [header, value] of Object.entries(row)) {
+      const field = HEADER_ALIASES[
+        header.trim().toLowerCase()
+      ];
+
+      if (field !== undefined) {
+        normalized[field] =
+          value?.trim() || undefined;
+      }
+    }
+
+    return normalized;
   }
 }

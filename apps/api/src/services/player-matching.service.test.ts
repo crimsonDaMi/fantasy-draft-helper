@@ -127,5 +127,71 @@ describe(
         ).toBe("NONE");
       },
     );
+
+    it(
+      "matches by name and team when position is absent",
+
+      () => {
+        const teamPlayers = [
+          {
+            sleeperId: "1",
+
+            fullName: "Shared Player",
+
+            team: "BUF",
+
+            position: "WR",
+
+            active: true,
+
+            fantasyPositions: ["WR"],
+          },
+
+          {
+            sleeperId: "2",
+
+            fullName: "Shared Player",
+
+            team: "MIA",
+
+            position: "WR",
+
+            active: true,
+
+            fantasyPositions: ["WR"],
+          },
+        ];
+
+        const teamPlayerService = {
+          getPlayerById: () => undefined,
+
+          findPlayersByName: () =>
+            teamPlayers,
+        };
+
+        const teamService =
+          new PlayerMatchingService(
+            teamPlayerService as never,
+          );
+
+        const result =
+          teamService.matchRanking({
+            rank: 1,
+
+            playerName:
+              "Shared Player",
+
+            team: "MIA",
+          });
+
+        expect(result.method).toBe(
+          "NAME_TEAM",
+        );
+
+        expect(result.player?.sleeperId).toBe(
+          "2",
+        );
+      },
+    );
   },
 );
