@@ -1,6 +1,9 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { ZodError } from "zod";
+import fastifyStatic from "@fastify/static";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   createAppDependencies,
@@ -89,6 +92,23 @@ export async function buildApp() {
       dependencies.rankingStoreService,
     ),
   );
+
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+  await app.register(fastifyStatic, {
+    root: path.join(__dirname, "../../web/dist"),
+  });
+
+  app.setNotFoundHandler((request, reply) => {
+    const apiPrefixes = ["/health", "/drafts", "/players", "/rankings"];
+    if (apiPrefixes.some((prefix) => request.raw.url?.startsWith(prefix))) {
+      return reply.status(404).send({
+        error: "NOT_FOUND",
+        message: "Route not found",
+      });
+    }
+    return reply.sendFile("index.html");
+  });
 
   app.setErrorHandler(
     (error, request, reply) => {
