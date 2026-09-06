@@ -72,7 +72,7 @@ export async function getRecommendations(
 
   rankingId: string,
 
-  limit = 10,
+  limit = 20,
 ): Promise<RecommendationsResponse> {
   const response =
     await fetch(

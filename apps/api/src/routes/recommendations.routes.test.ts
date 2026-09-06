@@ -102,7 +102,7 @@ describe(
         const response = await app.inject({
           method: "GET",
           url:
-            "/drafts/draft-1/recommendations?rankingId=ranking-1&limit=10",
+            "/drafts/draft-1/recommendations?rankingId=ranking-1&limit=20",
         });
 
         expect(response.statusCode).toBe(200);

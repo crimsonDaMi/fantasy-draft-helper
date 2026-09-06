@@ -113,7 +113,7 @@ Returns normalized draft metadata, including `PRE_DRAFT`, `DRAFTING`, `COMPLETE`
 ### Get recommendations
 
 ```text
-GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=10
+GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20
 ```
 
 The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations.

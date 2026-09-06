@@ -61,7 +61,7 @@ The importer may support the existing legacy headers (`Rank`, `Name`, `Position`
 - `GET /health` returns `{ "status": "ok" }`.
 - `POST /rankings` accepts `multipart/form-data` with a CSV file and returns a unique `rankingId` plus matched, ambiguous, unmatched, and error counts.
 - `GET /drafts/:draftId` returns normalized draft metadata, including status.
-- `GET /drafts/:draftId/recommendations?rankingId=<id>&limit=10` returns draft status, pick count, last pick when available, freshness timestamp, and recommendations.
+- `GET /drafts/:draftId/recommendations?rankingId=<id>&limit=20` returns draft status, pick count, last pick when available, freshness timestamp, and recommendations.
 - Internal `Set` values and raw Sleeper responses are never returned as JSON.
 - Invalid input, missing rankings, unknown rankings, invalid draft IDs, and Sleeper failures use structured, user-readable errors.
 
