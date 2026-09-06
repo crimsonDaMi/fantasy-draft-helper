@@ -1,0 +1,13 @@
+services:
+  draft-helper:
+    image: ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - draft-helper-data:/app/data
+    environment:
+      - RANKINGS_DATABASE_PATH=/app/data/fantasy-draft-helper.db
+    restart: unless-stopped
+
+volumes:
+  draft-helper-data:
