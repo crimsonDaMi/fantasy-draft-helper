@@ -36,18 +36,22 @@ export function useDraftRecommendations(
   draftId?: string,
 
   rankingId?: string,
+
+  positions?: string[],
 ): UseDraftRecommendationsResult {
   const query = useQuery({
     queryKey: [
       "recommendations",
       draftId,
       rankingId,
+      positions,
     ],
 
     queryFn: () =>
       getRecommendations(
         draftId!,
         rankingId!,
+        { positions }
       ),
 
     enabled: Boolean(

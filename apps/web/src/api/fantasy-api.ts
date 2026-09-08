@@ -67,19 +67,30 @@ export async function importRankings(
   return response.json();
 }
 
+export interface GetRecommendationsOptions {
+  limit?: number;
+  positions?: string[];
+}
+
 export async function getRecommendations(
   draftId: string,
-
   rankingId: string,
-
-  limit = 20,
+  options: GetRecommendationsOptions = {},
 ): Promise<RecommendationsResponse> {
-  const response =
-    await fetch(
-      `${API_BASE_URL}/drafts/${draftId}/recommendations?rankingId=${encodeURIComponent(
-        rankingId,
-      )}&limit=${limit}`,
-    );
+  const { limit = 20, positions } = options;
+
+  const params = new URLSearchParams({
+    rankingId,
+    limit: String(limit),
+  });
+
+  if (positions && positions.length > 0) {
+    params.set("positions", positions.join(","));
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/drafts/${draftId}/recommendations?${params.toString()}`,
+  );
 
   if (!response.ok) {
     throw new ApiRequestError(

@@ -30,6 +30,18 @@ const recommendationsQuerySchema =
       .min(1)
       .max(100)
       .default(20),
+
+    positions: z
+      .string()
+      .optional()
+      .transform((value) =>
+        value
+          ? value
+            .split(",")
+            .map((position) => position.trim().toUpperCase())
+            .filter(Boolean)
+          : undefined,
+      ),
   });
 
 export function createRecommendationsRoutes(
@@ -66,7 +78,7 @@ export function createRecommendationsRoutes(
             request.params,
           );
 
-        const { rankingId, limit } =
+        const { rankingId, limit, positions } =
           recommendationsQuerySchema.parse(
             request.query,
           );
@@ -90,6 +102,7 @@ export function createRecommendationsRoutes(
               draftId,
               rankingId,
               limit,
+              positions,
             );
 
         return {

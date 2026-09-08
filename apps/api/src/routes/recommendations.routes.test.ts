@@ -4,6 +4,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
 
 import {
@@ -259,6 +260,88 @@ describe(
         expect(response.statusCode).toBe(200);
         expect(response.json().draftStatus).toBe(
           "COMPLETE",
+        );
+
+        await app.close();
+      },
+    );
+
+    it(
+      "parses and forwards the positions filter",
+      async () => {
+        const app = Fastify();
+
+        const getRecommendations = vi.fn(
+          async () => recommendationResult,
+        );
+
+        const recommendationService = {
+          getRecommendations,
+        };
+
+        app.register(
+          createRecommendationsRoutes(
+            recommendationService as never,
+            {
+              hasRankings: () => true,
+              hasRanking: () => true,
+            } as never,
+          ),
+        );
+
+        const response = await app.inject({
+          method: "GET",
+          url:
+            "/drafts/draft-1/recommendations?rankingId=ranking-1&positions=rb,wr",
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(getRecommendations).toHaveBeenCalledWith(
+          "draft-1",
+          "ranking-1",
+          20,
+          ["RB", "WR"],
+        );
+
+        await app.close();
+      },
+    );
+
+    it(
+      "omits positions when the query param is absent",
+      async () => {
+        const app = Fastify();
+
+        const getRecommendations = vi.fn(
+          async () => recommendationResult,
+        );
+
+        const recommendationService = {
+          getRecommendations,
+        };
+
+        app.register(
+          createRecommendationsRoutes(
+            recommendationService as never,
+            {
+              hasRankings: () => true,
+              hasRanking: () => true,
+            } as never,
+          ),
+        );
+
+        const response = await app.inject({
+          method: "GET",
+          url:
+            "/drafts/draft-1/recommendations?rankingId=ranking-1",
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(getRecommendations).toHaveBeenCalledWith(
+          "draft-1",
+          "ranking-1",
+          20,
+          undefined,
         );
 
         await app.close();

@@ -27,6 +27,8 @@ export class RecommendationService {
     rankingId: string,
 
     limit: number,
+
+    positions?: string[],
   ): Promise<RecommendationResult> {
     const draftState =
       await this.draftStateService
@@ -55,6 +57,11 @@ export class RecommendationService {
               match.player!
                 .sleeperId,
             ),
+        )
+        .filter((match) =>
+          !positions || positions.length === 0
+            ? true
+            : positions.includes(match.player!.position!),
         )
         .slice(
           0,

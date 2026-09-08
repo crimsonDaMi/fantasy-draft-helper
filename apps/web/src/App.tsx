@@ -26,6 +26,10 @@ import type {
   RankingImportSummary,
 } from "./types/api";
 
+import {
+  PositionFilter
+} from "./components/PositionFilter";
+
 function App() {
   const [draftId, setDraftId] =
     useState<string>();
@@ -39,6 +43,11 @@ function App() {
   ] =
     useState<RankingImportSummary>();
 
+  const [
+    positions, setPositions
+  ] =
+    useState<string[]>([]);
+
   const {
     data,
     error,
@@ -50,6 +59,8 @@ function App() {
       draftId,
 
       rankingId,
+
+      positions,
     );
 
   return (
@@ -103,6 +114,10 @@ function App() {
 
       <DraftForm
         onSubmit={setDraftId}
+      />
+
+      <PositionFilter
+        selected={positions} onChange={setPositions}
       />
 
       <MonitoringStatus
