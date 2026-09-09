@@ -7,10 +7,15 @@ These instructions apply to all work in this repository.
 Before changing code, read:
 
 1. `docs/CODING_AGENT_GUIDE.md`
-2. `docs/MVP_COMPLETION_PLAN.md`
-3. The nearest implementation and test files for the requested behavior
+2. `docs/MVP_COMPLETION_PLAN.md` — historical record of the completed MVP
+   baseline, not current scope
+3. `DEVELOPMENT_PLAN.md` — current scope, priorities, and agreed
+   implementation order
+4. The nearest implementation and test files for the requested behavior
 
-The completion plan is the verification checklist. The coding guide defines architecture, scope, and domain behavior.
+`DEVELOPMENT_PLAN.md` is the completion plan's successor for scope purposes:
+the MVP defined in `MVP_COMPLETION_PLAN.md` is done, and further work follows
+the phases and dependency ordering documented in `DEVELOPMENT_PLAN.md`.
 
 ## Required Workflow
 
@@ -34,6 +39,16 @@ The completion plan is the verification checklist. The coding guide defines arch
 
 ## Scope Constraints
 
-Do not add authentication, payments, collaboration, WebSockets, automated drafting, machine learning, positional scarcity, roster optimization, or advanced strategy unless explicitly requested.
+Authentication, hosting, multi-user support, and user data separation are
+tracked as Phase 2/3 items in `DEVELOPMENT_PLAN.md` — planned, but each
+requires an explicit go-ahead before starting (see that document's "Decision
+framing for Phases 2 & 3"). Do not start any Phase 2/3 item without that
+explicit request, even though it's on the roadmap.
 
-Do not commit changes, create branches, reset the worktree, or revert user changes unless explicitly requested.
+Do not add payments, WebSockets, automated drafting, machine learning,
+positional scarcity, roster optimization, or advanced strategy unless
+explicitly requested — these remain out of scope entirely, not just
+phase-gated.
+
+Do not commit changes, create branches, reset the worktree, or revert user
+changes unless explicitly requested.

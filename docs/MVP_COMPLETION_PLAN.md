@@ -1,5 +1,11 @@
 # MVP Completion Plan
 
+> **Status: MVP complete**, verified 2026-09-04 (see Definition of Done and
+> Final Verification Record below). This document is kept as a historical
+> record of the original build and its verification — it is **not** the
+> current scope document. For current priorities and what's in or out of
+> scope now, see [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md).
+
 This document is the verification checklist for the Fantasy Draft Helper MVP. It records the target contract, the current baseline, the implementation sequence, and the evidence required to call the MVP complete.
 
 ## Verification Commands
