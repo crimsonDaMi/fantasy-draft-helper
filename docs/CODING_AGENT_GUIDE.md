@@ -10,6 +10,12 @@ The verification checklist for this guide is [`MVP_COMPLETION_PLAN.md`](MVP_COMP
 
 ## Current Repository State
 
+**Status: the MVP is complete** (see `MVP_COMPLETION_PLAN.md`'s Definition of
+Done and Final Verification Record). Section 22 below is a historical
+snapshot of the original target, not current scope. Current priorities and
+scope live in [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md) — read it
+before starting new work.
+
 The repository already contains a working Fastify API, Sleeper client, in-memory player cache, CSV import services, deterministic matching, draft-state services, recommendation services, React UI components, and focused API tests.
 
 The remaining MVP work is tracked explicitly in the completion plan. Phases 1 through 5 are implemented; the completion plan records the final verification evidence and any future operational evaluation separately.
@@ -48,7 +54,8 @@ The application must:
 - TypeScript
 - Vite
 - TanStack Query
-- Tailwind CSS
+- ~~Tailwind CSS~~ (not actually adopted — the app uses plain CSS with custom
+  properties; do not introduce Tailwind without explicit request)
 
 ## Backend
 
@@ -70,6 +77,16 @@ Do not introduce unnecessary frameworks.
 ---
 
 # 3. Repository Layout
+
+> **Note:** the trees below were the original planned structure. Actual
+> implementation has diverged in places — confirmed differences include
+> `apps/web/src/api/fantasy-api.ts`, `apps/web/src/hooks/useDraftRecommendations.ts`,
+> `apps/web/src/config.ts`, and flat (non-nested) component files
+> (`DraftForm.tsx`, `MonitoringStatus.tsx`, `RankingsUpload.tsx`,
+> `RecommendationsList.tsx`, `PositionFilter.tsx`) rather than the
+> `features/`/`lib/`/nested-folder layout shown here. **Verify against the
+> actual tree with `view`/`ls` before relying on paths in this section** —
+> don't assume this document is current.
 
 Create:
 
@@ -829,6 +846,9 @@ Implement in this order.
 
 # 22. Definition of Done for MVP
 
+> Historical record — this MVP is complete. For current scope, see
+> [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md).
+
 The MVP is complete when a user can:
 
 1. Start the application.
@@ -865,6 +885,12 @@ Do not implement in the MVP:
 - Roster optimization.
 - Automated drafting.
 - Direct interaction with Sleeper on behalf of the user.
+
+Note: some of these (authentication, multi-user collaboration) are now
+planned as phase-gated future work — see `DEVELOPMENT_PLAN.md`'s Phase 2/3.
+They remain out of scope until that document's stated go/no-go decision is
+made explicitly. The rest (payments, WebSockets, ML, roster optimization,
+etc.) remain out of scope entirely.
 
 ---
 
@@ -925,7 +951,9 @@ This is the intended MVP architecture.
 
 Before editing:
 
-1. Read this guide and [`MVP_COMPLETION_PLAN.md`](MVP_COMPLETION_PLAN.md).
+1. Read this guide, [`MVP_COMPLETION_PLAN.md`](MVP_COMPLETION_PLAN.md)
+   (historical), and [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md)
+   (current scope).
 2. Inspect the nearest implementation and test files.
 3. State one falsifiable local hypothesis and one focused validation check.
 
