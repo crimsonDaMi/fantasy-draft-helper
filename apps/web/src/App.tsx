@@ -30,6 +30,10 @@ import {
   PositionFilter
 } from "./components/PositionFilter";
 
+import {
+  isDebugUi
+} from "./config";
+
 function App() {
   const [draftId, setDraftId] =
     useState<string>();
@@ -81,34 +85,42 @@ function App() {
 
       {rankingSummary && (
         <section>
-          <h2>
-            Rankings Imported
-          </h2>
+          {isDebugUi ? (
+            <>
+              <h2>
+                Rankings Imported
+              </h2>
 
-          <p>
-            Imported:{" "}
-            {rankingSummary.imported}
-          </p>
+              <p>
+                Imported:{" "}
+                {rankingSummary.imported}
+              </p>
 
-          <p>
-            Matched:{" "}
-            {rankingSummary.matched}
-          </p>
+              <p>
+                Matched:{" "}
+                {rankingSummary.matched}
+              </p>
 
-          <p>
-            Unmatched:{" "}
-            {rankingSummary.unmatched}
-          </p>
+              <p>
+                Unmatched:{" "}
+                {rankingSummary.unmatched}
+              </p>
 
-          <p>
-            Ambiguous:{" "}
-            {rankingSummary.ambiguous}
-          </p>
+              <p>
+                Ambiguous:{" "}
+                {rankingSummary.ambiguous}
+              </p>
 
-          <p>
-            Errors:{" "}
-            {rankingSummary.errors}
-          </p>
+              <p>
+                Errors:{" "}
+                {rankingSummary.errors}
+              </p>
+            </>
+          ) : (
+            <p>
+              ✓ Rankings loaded ({rankingSummary.matched} players matched)
+            </p>
+          )}
         </section>
       )}
 

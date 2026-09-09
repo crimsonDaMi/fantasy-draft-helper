@@ -55,3 +55,18 @@ When a new version is ready:
 
 This way, any bug report can be tied to a specific version, and nobody gets
 surprise-updated mid-draft.
+
+## Building a debug image for troubleshooting
+
+If a league mate reports a bug and you need more visibility than the
+production UI shows, build a one-off debug image (see README.md's
+"UI Modes" section) rather than a versioned release:
+
+```bash
+docker build --build-arg VITE_UI_MODE=debug \
+  -t ghcr.io/crimsondami/fantasy-draft-helper:debug .
+docker push ghcr.io/crimsondami/fantasy-draft-helper:debug
+```
+
+Use the `debug` tag, not a version tag, for these — it's a diagnostic build,
+not a release, so it's exempt from the version-tag-sync rule above.

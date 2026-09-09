@@ -1,3 +1,7 @@
+import {
+  isDebugUi
+} from "../config";
+
 interface MonitoringStatusProps {
   draftId?: string;
 
@@ -71,63 +75,63 @@ export function MonitoringStatus({
         Monitoring Status
       </h2>
 
-      <p>
-        Draft ID: {draftId}
-      </p>
+      {isDebugUi && (
+        <p>
+          Draft ID: {draftId}</p>
+      )}
 
       {draftStatus && (
         <p>
-          Draft status: {draftStatus}
+          {isDebugUi ? "Draft status: " : ""}
+          {isDebugUi
+            ? draftStatus
+            : draftStatus === "PRE_DRAFT"
+              ? "Waiting for the draft to start…"
+              : draftStatus === "DRAFTING"
+                ? "Draft in progress"
+                : draftStatus === "COMPLETE"
+                  ? "Draft complete"
+                  : "Status unknown"}
         </p>
       )}
 
       {draftedPlayerCount !== undefined && (
         <p>
           Picks: {draftedPlayerCount}
-          {totalPicks !== undefined &&
-            ` / ${totalPicks}`}
+          {totalPicks !== undefined && ` / ${totalPicks}`}
         </p>
       )}
 
       {lastPick && (
         <p>
           Last pick: #{lastPick.pickNo}
-          {lastPick.round !== undefined &&
-            ` (round ${lastPick.round})`}
+          {lastPick.round !== undefined && ` (round ${lastPick.round})`}
         </p>
       )}
 
-      {lastUpdatedAt && (
+      {isDebugUi && lastUpdatedAt && (
         <p>
-          Sleeper refresh: {new Date(
-            lastUpdatedAt,
-          ).toLocaleTimeString()}
+          Sleeper refresh: {new Date(lastUpdatedAt).toLocaleTimeString()}
         </p>
       )}
 
-      {generatedAt && (
+      {isDebugUi && generatedAt && (
         <p>
-          Generated:{" "}
-
-          {new Date(
-            generatedAt,
-          ).toLocaleTimeString()}
+          Generated: {new Date(generatedAt).toLocaleTimeString()}
         </p>
       )}
 
-      {isLoading && (
+      {isLoading &&
         <p>
           Loading recommendations...
         </p>
-      )}
+      }
 
-      {pollingIntervalMs !== undefined &&
+      {isDebugUi &&
+        pollingIntervalMs !== undefined &&
         pollingIntervalMs !== false && (
           <p>
-            Polling interval:{" "}
-
-            {pollingIntervalMs / 1000}
-            {" seconds"}
+            Polling interval: {pollingIntervalMs / 1000} seconds
           </p>
         )}
 

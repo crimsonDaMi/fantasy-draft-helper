@@ -49,6 +49,30 @@ The default SQLite database is created at `data/fantasy-draft-helper.db`. Set `R
 RANKINGS_DATABASE_PATH=/path/to/rankings.db pnpm --filter @fantasy-draft-helper/api dev
 ```
 
+## UI Modes (Debug vs. Draft)
+
+The web app renders in one of two modes, controlled by `VITE_UI_MODE`:
+
+- **`debug`** — shows all monitoring detail: draft ID, exact Sleeper-refresh
+  and generated timestamps, polling interval, and the full rankings-import
+  breakdown (imported/matched/unmatched/ambiguous/errors). Used automatically
+  by `pnpm dev`.
+- **`draft`** — condensed, draft-day-focused view: pick progress, last pick,
+  a human-readable draft status, and a one-line rankings-import confirmation.
+  Used automatically by `vite build` (and therefore by the Docker image).
+
+The mode is chosen automatically from `import.meta.env.DEV`, so no
+configuration is needed for the normal case. To override it explicitly — for
+example, to build a debug-mode image for troubleshooting a league mate's bug
+report:
+
+```bash
+docker build --build-arg VITE_UI_MODE=debug -t fantasy-draft-helper:debug .
+```
+
+Valid values: `debug`, `draft`. Any other value falls back to the automatic
+`import.meta.env.DEV`-based default.
+
 ## Ranking CSV
 
 The canonical CSV format uses lowercase headers:
