@@ -66,8 +66,8 @@ export function RankingsUpload({
         result.rankingId,
       );
 
-      if (result.errors.length > 0) {
-        setValidationErrors(result.errors);
+      if (result.validationErrors.length > 0) {
+        setValidationErrors(result.validationErrors);
         setError(
           "Import completed with CSV errors. Correct the listed rows and re-import the file.",
         );

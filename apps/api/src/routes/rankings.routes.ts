@@ -76,30 +76,17 @@ export function createRankingsRoutes(
         return {
           rankingId,
 
-          playersImported:
-            result.summary.imported,
-
-          playersMatched:
-            result.summary.matched,
-
-          playersAmbiguous:
-            result.summary.ambiguous,
-
-          playersUnmatched:
-            result.summary.unmatched,
-
           summary:
             result.summary,
 
-          errors:
+          validationErrors:
             result.importResult.errors,
 
-          unmatched:
+          unmatchedPlayers:
             result.matches
               .filter(
                 (match) =>
-                  match.method ===
-                  "NONE",
+                  match.method === "NONE",
               )
               .map(
                 (match) => ({
@@ -107,24 +94,21 @@ export function createRankingsRoutes(
                     match.ranking.rank,
 
                   name:
-                    match.ranking
-                      .playerName,
+                    match.ranking.playerName,
 
                   team:
                     match.ranking.team,
 
                   position:
-                    match.ranking
-                      .position,
+                    match.ranking.position,
                 }),
               ),
 
-          ambiguous:
+          ambiguousPlayers:
             result.matches
               .filter(
                 (match) =>
-                  match.method ===
-                  "AMBIGUOUS",
+                  match.method === "AMBIGUOUS",
               )
               .map(
                 (match) => ({
@@ -132,8 +116,7 @@ export function createRankingsRoutes(
                     match.ranking.rank,
 
                   name:
-                    match.ranking
-                      .playerName,
+                    match.ranking.playerName,
 
                   candidates:
                     match.candidates?.map(

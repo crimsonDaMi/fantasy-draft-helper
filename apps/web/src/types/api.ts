@@ -63,13 +63,9 @@ export interface RankingImportResponse {
   summary:
   RankingImportSummary;
 
-  errors: {
-    row: number;
+  validationErrors: RankingImportError[];
 
-    message: string;
-  }[];
-
-  unmatched: {
+  unmatchedPlayers: {
     rank: number;
 
     name: string;
@@ -79,7 +75,17 @@ export interface RankingImportResponse {
     position: string;
   }[];
 
-  ambiguous: unknown[];
+  ambiguousPlayers: {
+    rank: number;
+
+    name: string;
+
+    candidates?: {
+      sleeperId: string;
+
+      fullName: string;
+    }[];
+  }[];
 }
 
 export interface RankingImportError {
