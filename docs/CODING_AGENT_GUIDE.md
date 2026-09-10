@@ -588,10 +588,24 @@ Response:
 ```json
 {
   "rankingId": "string",
-  "playersImported": 250,
-  "playersMatched": 247,
-  "playersAmbiguous": 1,
-  "playersUnmatched": 2
+  "summary": {
+    "imported": 250,
+    "matched": 247,
+    "unmatched": 2,
+    "ambiguous": 1,
+    "errors": 0
+  },
+  "validationErrors": [{ "row": 12, "message": "string" }],
+  "unmatchedPlayers": [
+    { "rank": 5, "name": "string", "team": "string", "position": "string" }
+  ],
+  "ambiguousPlayers": [
+    {
+      "rank": 8,
+      "name": "string",
+      "candidates": [{ "sleeperId": "string", "fullName": "string" }]
+    }
+  ]
 }
 ```
 
