@@ -20,6 +20,11 @@ React web app -> Fastify API -> Sleeper API
 - Poll before and during a draft using status-aware intervals.
 - Stop polling when the draft completes or a terminal request error occurs.
 
+## Post-MVP Features
+
+- Filter recommendations by position (`positions` query param / UI checkboxes).
+- Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
+
 ## Prerequisites
 
 - Node.js 24 or newer. The API uses Node's built-in `node:sqlite` module.
@@ -114,17 +119,42 @@ POST /rankings
 Content-Type: multipart/form-data
 ```
 
-The multipart field is `file`. The response includes a `rankingId` and import counts:
+The multipart field is `file`. The response includes a `rankingId`, an
+import summary, row-level validation errors (if any), and details on
+unmatched and ambiguous players:
 
 ```json
 {
   "rankingId": "string",
-  "playersImported": 250,
-  "playersMatched": 247,
-  "playersAmbiguous": 1,
-  "playersUnmatched": 2
+  "summary": {
+    "imported": 250,
+    "matched": 247,
+    "unmatched": 2,
+    "ambiguous": 1,
+    "errors": 0
+  },
+  "validationErrors": [{ "row": 12, "message": "string" }],
+  "unmatchedPlayers": [
+    { "rank": 5, "name": "string", "team": "string", "position": "string" }
+  ],
+  "ambiguousPlayers": [
+    {
+      "rank": 8,
+      "name": "string",
+      "candidates": [{ "sleeperId": "string", "fullName": "string" }]
+    }
+  ]
 }
 ```
+
+### Rankings status
+
+```text
+GET /rankings/status
+```
+
+Returns whether any ranking has been imported, plus the total and matched
+player counts for the currently stored ranking(s).
 
 ### Get a draft
 
@@ -160,27 +190,52 @@ The active interval can be changed with `VITE_POLLING_INTERVAL_MS`:
 VITE_POLLING_INTERVAL_MS=5000 pnpm --filter @fantasy-draft-helper/web dev
 ```
 
-## Development Commands
+## Local Development Scripts
 
-Run all tests:
-
-```bash
-pnpm test
-```
-
-Build all workspaces:
+One-time setup after cloning:
 
 ```bash
-pnpm build
+chmod +x scripts/*.sh
 ```
 
-Lint the web app:
+### Verification
 
 ```bash
-pnpm --filter @fantasy-draft-helper/web lint
+pnpm test    # all workspace tests
+pnpm build   # all workspace builds
+pnpm lint    # web app lint
+pnpm verify  # test + build + lint, in that order
 ```
 
-## Smoke Test
+`pnpm verify` is the same check required before any change is considered
+complete (see `docs/CODING_AGENT_GUIDE.md`) — run it before opening a PR or
+handing work off.
+
+### Docker smoke testing
+
+```bash
+pnpm smoke         # build the production image, run it at localhost:3000
+pnpm smoke:debug   # same, but with the debug UI mode forced on
+pnpm smoke:stop    # stop and remove the smoke-test container
+```
+
+`pnpm smoke`/`pnpm smoke:debug` build and start the container in one step;
+re-running either is safe even if a previous smoke container is still up.
+
+### Releasing
+
+```bash
+pnpm release -- vX.Y.Z
+```
+
+See [`RELEASING.md`](RELEASING.md) for what this does and the versioning
+scheme.
+
+## Manual QA Chaecklist
+
+For an automated Docker build-and-run check, see `pnpm smoke` under
+[Local Development Scripts](#local-development-scripts). This checklist
+covers functional correctness in more depth.
 
 1. Run `pnpm dev`.
 2. Open [http://localhost:5173](http://localhost:5173).
@@ -201,12 +256,20 @@ Sleeper may delay exposing picks through its API. Recommendations represent the 
 apps/api/       Fastify API, Sleeper client, domain services, SQLite repository
 apps/web/       React and Vite dashboard
 packages/shared Shared TypeScript package
+scripts/        Release and Docker smoke-test scripts
 docs/           Agent guide, MVP completion plan, and known issues
- test-data/      Sample ranking CSV
+test-data/      Sample ranking CSV
 ```
 
 The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/CODING_AGENT_GUIDE.md), and the acceptance checklist is in [docs/MVP_COMPLETION_PLAN.md](docs/MVP_COMPLETION_PLAN.md).
 
 ## MVP Scope
 
-The MVP intentionally does not include authentication, payments, collaboration, WebSockets, automated drafting, machine learning, positional scarcity, roster optimization, or advanced draft strategy.
+The original MVP intentionally did not include authentication, payments,
+collaboration, WebSockets, automated drafting, machine learning, positional
+scarcity, roster optimization, or advanced draft strategy. The MVP is now
+complete (see `docs/MVP_COMPLETION_PLAN.md`); authentication, hosting, and
+multi-user collaboration are planned as later phases — see
+[`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) for current scope and status.
+Payments, WebSockets, machine learning, and automated drafting remain out of
+scope entirely.
