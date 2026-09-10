@@ -11,10 +11,38 @@ Semantic versioning (`vMAJOR.MINOR.PATCH`), kept loose since this is an MVP feed
 - **minor** (`v0.2.0`) — new feature or noticeable change
 - **major** (`v1.0.0`) — reserved for leaving MVP/feedback phase
 
-## Keep the git tag and Docker image tag in sync
+## Releasing a new version
 
-Every release gets **the same version number** in both places, so anyone can trace a
-running image back to the exact source that produced it:
+Standard path — from the repository root:
+
+```bash
+pnpm release -- vX.Y.Z
+```
+
+For example: `pnpm release -- v0.4.0`. The `--` is required — without it,
+pnpm swallows the version as its own argument instead of passing it through
+to the script.
+
+This runs `scripts/release.sh`, which:
+
+1. Refuses to run with uncommitted changes in the working tree.
+2. Validates the version matches `vMAJOR.MINOR.PATCH`.
+3. Refuses to reuse a version whose git tag already exists.
+4. Bumps the root `package.json`'s `version` to match (without the leading
+   `v`), commits, and pushes that commit.
+5. Tags the resulting commit and pushes the tag.
+6. Builds the Docker image tagged both `vX.Y.Z` and `latest`.
+7. Pushes both tags to GHCR.
+
+Note: `apps/api/package.json` and `apps/web/package.json` are private,
+never-published workspace packages — their `version` fields are frozen
+(`0.0.0`) and intentionally **not** touched by the release script. Only the
+root `package.json`'s version tracks releases.
+
+### What the script does, spelled out manually
+
+Useful if you need to release by hand (script unavailable, or a step needs
+manual intervention):
 
 ```bash
 # 1. Tag the source
@@ -30,8 +58,8 @@ docker push ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0
 docker push ghcr.io/crimsondami/fantasy-draft-helper:latest
 ```
 
-Never reuse a version number for a different build — if you need to fix something,
-bump the patch version instead.
+Never reuse a version number for a different build — if you need to fix
+something, bump the patch version instead.
 
 ## Telling league mates about an update
 

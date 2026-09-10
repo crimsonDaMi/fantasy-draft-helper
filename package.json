@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev",
     "build": "pnpm --recursive build",
-    "test": "pnpm --recursive test"
+    "test": "pnpm --recursive test",
+    "docker:build": "docker build -t fantasy-draft-helper:test .",
+    "docker:build:debug": "docker build --build-arg VITE_UI_MODE=debug -t fantasy-draft-helper:debug .",
+    "release": "bash scripts/release.sh"
   }
 }
