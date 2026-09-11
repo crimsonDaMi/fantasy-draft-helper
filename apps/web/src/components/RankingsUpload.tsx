@@ -1,10 +1,6 @@
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
-import {
-  importRankings,
-} from "../api/fantasy-api";
+import { importRankings } from "../api/fantasy-api";
 
 import type {
   RankingImportError,
@@ -14,7 +10,6 @@ import type {
 interface RankingsUploadProps {
   onImported: (
     summary: RankingImportSummary,
-
     rankingId: string,
   ) => void;
 }
@@ -22,49 +17,29 @@ interface RankingsUploadProps {
 export function RankingsUpload({
   onImported,
 }: RankingsUploadProps) {
-  const [file, setFile] =
-    useState<File>();
+  const [file, setFile] = useState<File>();
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string>();
+  const [validationErrors, setValidationErrors] = useState<
+    RankingImportError[]
+  >([]);
 
-  const [isUploading, setIsUploading] =
-    useState(false);
-
-  const [error, setError] =
-    useState<string>();
-
-  const [validationErrors, setValidationErrors] =
-    useState<RankingImportError[]>([]);
-
-  async function handleSubmit(
-    event:
-      React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!file) {
-      setError(
-        "Please select a CSV file.",
-      );
-
+      setError("Please select a CSV file.");
       return;
     }
 
     try {
       setError(undefined);
-
       setValidationErrors([]);
-
       setIsUploading(true);
 
-      const result =
-        await importRankings(
-          file,
-        );
+      const result = await importRankings(file);
 
-      onImported(
-        result.summary,
-
-        result.rankingId,
-      );
+      onImported(result.summary, result.rankingId);
 
       if (result.validationErrors.length > 0) {
         setValidationErrors(result.validationErrors);
@@ -84,45 +59,39 @@ export function RankingsUpload({
   }
 
   return (
-    <section>
-      <h2>
-        Import Rankings
-      </h2>
+    <div>
+      <h2>Import rankings</h2>
 
-      <form
-        onSubmit={handleSubmit}
-      >
-        <input
-          type="file"
+      <form onSubmit={handleSubmit}>
+        <div className="file-upload">
+          <input
+            id="rankings-file"
+            className="file-upload__input"
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(event) => {
+              setFile(event.target.files?.[0]);
+            }}
+          />
+          <label htmlFor="rankings-file" className="file-upload__label">
+            Choose CSV
+          </label>
+          {file && <span className="file-upload__filename">{file.name}</span>}
 
-          accept=".csv,text/csv"
-
-          onChange={(event) => {
-            setFile(
-              event.target.files?.[0],
-            );
-          }}
-        />
-
-        <button
-          type="submit"
-
-          disabled={isUploading}
-        >
-          {isUploading
-            ? "Importing..."
-            : "Import Rankings"}
-        </button>
+          <button
+            type="submit"
+            className="file-upload__submit"
+            disabled={isUploading}
+          >
+            {isUploading ? "Importing…" : "Import"}
+          </button>
+        </div>
       </form>
 
-      {error && (
-        <p>
-          {error}
-        </p>
-      )}
+      {error && <p className="upload-error">{error}</p>}
 
       {validationErrors.length > 0 && (
-        <ul>
+        <ul className="upload-validation-list">
           {validationErrors.map((validationError) => (
             <li key={`${validationError.row}-${validationError.message}`}>
               Row {validationError.row}: {validationError.message}
@@ -130,6 +99,6 @@ export function RankingsUpload({
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

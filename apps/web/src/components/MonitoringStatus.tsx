@@ -1,164 +1,108 @@
-import {
-  isDebugUi
-} from "../config";
+import { isDebugUi } from "../config";
 
 interface MonitoringStatusProps {
   draftId?: string;
-
   rankingId?: string;
-
-  draftStatus?:
-  | "PRE_DRAFT"
-  | "DRAFTING"
-  | "COMPLETE"
-  | "UNKNOWN";
-
+  draftStatus?: "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
   totalPicks?: number;
-
   draftedPlayerCount?: number;
-
   lastPick?: {
     playerId: string;
     pickNo: number;
     round?: number;
   };
-
   generatedAt?: string;
-
   lastUpdatedAt?: string;
-
   isLoading: boolean;
-
   error?: string;
-
   onRetry: () => void;
-
   pollingIntervalMs?: number | false;
 }
 
 export function MonitoringStatus({
   draftId,
-
   rankingId,
-
   draftStatus,
-
   totalPicks,
-
   draftedPlayerCount,
-
   lastPick,
-
   generatedAt,
-
   lastUpdatedAt,
-
   isLoading,
-
   error,
-
   onRetry,
-
   pollingIntervalMs,
 }: MonitoringStatusProps) {
   if (!draftId || !rankingId) {
     return (
-      <p>
+      <p className="status-bar">
         Import a ranking and enter a draft ID to begin monitoring.
       </p>
     );
   }
 
+  const isLive = draftStatus === "DRAFTING";
+  const statusText = isDebugUi
+    ? draftStatus
+    : draftStatus === "PRE_DRAFT"
+      ? "Waiting for draft to start"
+      : draftStatus === "DRAFTING"
+        ? "Draft in progress"
+        : draftStatus === "COMPLETE"
+          ? "Draft complete"
+          : "Status unknown";
+
   return (
-    <section>
-      <h2>
-        Monitoring Status
-      </h2>
+    <div>
+      <div className="status-bar">
+        <span className={`status-bar__dot${isLive ? " status-bar__dot--live" : ""}`} />
+        <span>{statusText}</span>
 
-      {isDebugUi && (
-        <p>
-          Draft ID: {draftId}</p>
-      )}
+        {draftedPlayerCount !== undefined && (
+          <span>
+            {draftedPlayerCount}
+            {totalPicks !== undefined && ` / ${totalPicks}`} picks
+          </span>
+        )}
 
-      {draftStatus && (
-        <p>
-          {isDebugUi ? "Draft status: " : ""}
-          {isDebugUi
-            ? draftStatus
-            : draftStatus === "PRE_DRAFT"
-              ? "Waiting for the draft to start…"
-              : draftStatus === "DRAFTING"
-                ? "Draft in progress"
-                : draftStatus === "COMPLETE"
-                  ? "Draft complete"
-                  : "Status unknown"}
-        </p>
-      )}
+        {isDebugUi && draftId && <span>Draft ID: {draftId}</span>}
 
-      {draftedPlayerCount !== undefined && (
-        <p>
-          Picks: {draftedPlayerCount}
-          {totalPicks !== undefined && ` / ${totalPicks}`}
-        </p>
-      )}
+        {isDebugUi && lastUpdatedAt && (
+          <span>Refresh: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>
+        )}
+
+        {isDebugUi && generatedAt && (
+          <span>Generated: {new Date(generatedAt).toLocaleTimeString()}</span>
+        )}
+
+        {isDebugUi &&
+          pollingIntervalMs !== undefined &&
+          pollingIntervalMs !== false && (
+            <span>Poll: {pollingIntervalMs / 1000}s</span>
+          )}
+
+        {isLoading && <span>Loading…</span>}
+      </div>
 
       {lastPick && (
-        <p>
+        <p className="status-bar">
           Last pick: #{lastPick.pickNo}
           {lastPick.round !== undefined && ` (round ${lastPick.round})`}
         </p>
       )}
 
-      {isDebugUi && lastUpdatedAt && (
-        <p>
-          Sleeper refresh: {new Date(lastUpdatedAt).toLocaleTimeString()}
-        </p>
-      )}
-
-      {isDebugUi && generatedAt && (
-        <p>
-          Generated: {new Date(generatedAt).toLocaleTimeString()}
-        </p>
-      )}
-
-      {isLoading &&
-        <p>
-          Loading recommendations...
-        </p>
-      }
-
-      {isDebugUi &&
-        pollingIntervalMs !== undefined &&
-        pollingIntervalMs !== false && (
-          <p>
-            Polling interval: {pollingIntervalMs / 1000} seconds
-          </p>
-        )}
-
-      {draftStatus === "COMPLETE" && (
-        <p>
-          Draft complete. Monitoring stopped.
-        </p>
-      )}
-
       {error && (
-        <div>
-          <p>
-            Error: {error}
-          </p>
-
-          <p>
-            Check the draft ID, then submit it again to resume monitoring.
-          </p>
-
+        <div className="status-bar status-bar__error">
+          <span>{error}</span>
           <button
             type="button"
+            className="status-bar__retry"
             onClick={onRetry}
           >
-            Retry monitoring
+            Retry
           </button>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -18,18 +18,18 @@ export function PositionFilter({
   };
 
   return (
-    <fieldset>
-      <legend>Filter by position</legend>
+    <div className="position-filter" role="group" aria-label="Filter by position">
       {POSITIONS.map((position) => (
-        <label key={position}>
+        <span className="position-filter__pill" key={position}>
           <input
             type="checkbox"
+            id={`position-${position}`}
             checked={selected.includes(position)}
             onChange={() => toggle(position)}
           />
-          {position}
-        </label>
+          <label htmlFor={`position-${position}`}>{position}</label>
+        </span>
       ))}
-    </fieldset>
+    </div>
   );
 }
