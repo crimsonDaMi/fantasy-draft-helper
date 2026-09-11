@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Ignore a stray "--" separator some pnpm versions forward literally.
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
 VERSION="${1:-}"
 IMAGE="ghcr.io/crimsondami/fantasy-draft-helper"
 

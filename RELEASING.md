@@ -16,12 +16,10 @@ Semantic versioning (`vMAJOR.MINOR.PATCH`), kept loose since this is an MVP feed
 Standard path — from the repository root:
 
 ```bash
-pnpm release -- vX.Y.Z
+pnpm release vX.Y.Z
 ```
 
-For example: `pnpm release -- v0.4.0`. The `--` is required — without it,
-pnpm swallows the version as its own argument instead of passing it through
-to the script.
+For example: `pnpm release v0.4.0`.
 
 This runs `scripts/release.sh`, which:
 
