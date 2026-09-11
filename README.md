@@ -225,7 +225,7 @@ re-running either is safe even if a previous smoke container is still up.
 ### Releasing
 
 ```bash
-pnpm release -- vX.Y.Z
+pnpm release vX.Y.Z
 ```
 
 See [`RELEASING.md`](RELEASING.md) for what this does and the versioning
