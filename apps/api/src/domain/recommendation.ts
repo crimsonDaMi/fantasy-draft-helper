@@ -15,6 +15,11 @@ export interface Recommendation {
   ranking: Ranking;
 
   player: Player;
+
+  adp?: {
+    value: number;
+    diff: number;
+  };
 }
 
 export interface RecommendationResult {

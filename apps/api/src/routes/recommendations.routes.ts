@@ -155,6 +155,9 @@ export function createRecommendationsRoutes(
                     recommendation
                       .player.position,
                 },
+
+                adp:
+                  recommendation.adp,
               }),
             ),
         };

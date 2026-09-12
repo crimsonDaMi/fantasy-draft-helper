@@ -1,10 +1,18 @@
 import {
+  AdpClient,
+} from "./clients/adp.client.js";
+
+import {
   PlayerCache,
 } from "./cache/player.cache.js";
 
 import {
   SleeperClient,
 } from "./clients/sleeper.client.js";
+
+import {
+  AdpService,
+} from "./services/adp.service.js";
 
 import {
   DraftService,
@@ -41,6 +49,8 @@ import {
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
+  adpService: AdpService,
+
   draftService: DraftService;
 
   playerCache: PlayerCache;
@@ -60,6 +70,12 @@ export function createAppDependencies():
   AppDependencies {
   const sleeperClient =
     new SleeperClient();
+
+  const adpClient =
+    new AdpClient();
+
+  const adpService =
+    new AdpService(adpClient);
 
   const playerCache =
     new PlayerCache();
@@ -109,10 +125,14 @@ export function createAppDependencies():
       draftStateService,
 
       rankingStoreService,
+
+      adpService,
     );
 
   return {
     sleeperClient,
+
+    adpService,
 
     draftService,
 

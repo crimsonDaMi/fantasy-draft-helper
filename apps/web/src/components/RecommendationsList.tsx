@@ -21,6 +21,32 @@ function PlayerMeta({
   );
 }
 
+function AdpBadge({
+  recommendation,
+}: {
+  recommendation: ApiRecommendation;
+}) {
+  if (!recommendation.adp) {
+    return null;
+  }
+
+  const { diff } = recommendation.adp;
+  const rounded = Math.abs(diff).toFixed(1);
+
+  const variant =
+    diff > 1
+      ? "adp-diff--value"
+      : diff < -1
+        ? "adp-diff--reach"
+        : "adp-diff--neutral";
+
+  return (
+    <span className={`adp-diff ${variant}`}>
+      {diff >= 0 ? "▼" : "▲"} {rounded} ADP
+    </span>
+  );
+}
+
 export function RecommendationsList({
   recommendations,
 }: RecommendationsListProps) {
@@ -44,6 +70,12 @@ export function RecommendationsList({
           <span className="hero__name">{topPick.player.fullName}</span>
           <span className="hero__meta">
             <PlayerMeta recommendation={topPick} />
+            {topPick.adp && (
+              <>
+                {" · "}
+                <AdpBadge recommendation={topPick} />
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -58,6 +90,12 @@ export function RecommendationsList({
               </span>
               <span className="rec-list__meta">
                 <PlayerMeta recommendation={recommendation} />
+                {recommendation.adp && (
+                  <>
+                    {" · "}
+                    <AdpBadge recommendation={recommendation} />
+                  </>
+                )}
               </span>
             </li>
           ))}

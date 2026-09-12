@@ -374,3 +374,23 @@ button {
   color: var(--color-danger);
   font-size: 13px;
 }
+
+/* ADP diff badge */
+
+.adp-diff {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.adp-diff--value {
+  color: var(--color-accent);
+}
+
+.adp-diff--reach {
+  color: var(--color-danger);
+}
+
+.adp-diff--neutral {
+  color: var(--color-text-muted);
+}

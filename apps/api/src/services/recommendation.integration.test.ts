@@ -91,6 +91,10 @@ function createRecommendationFixture(
       playerService,
     );
 
+  const noopAdpService = {
+    getSnapshot: async () => new Map<string, number>(),
+  };
+
   const rankingStore =
     new RankingStoreService(":memory:");
 
@@ -153,6 +157,7 @@ function createRecommendationFixture(
     service: new RecommendationService(
       draftStateService,
       rankingStore,
+      noopAdpService as never,
     ),
   };
 }

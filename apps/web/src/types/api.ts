@@ -14,6 +14,11 @@ export interface ApiRecommendation {
   tier?: string;
 
   player: ApiPlayer;
+
+  adp?: {
+    value: number;
+    diff: number;
+  };
 }
 
 export interface RecommendationsResponse {

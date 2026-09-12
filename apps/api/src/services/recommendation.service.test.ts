@@ -8,6 +8,10 @@ import {
   RecommendationService,
 } from "./recommendation.service.js";
 
+const noopAdpService = {
+  getSnapshot: async () => new Map<string, number>(),
+};
+
 describe(
   "RecommendationService",
 
@@ -88,6 +92,8 @@ describe(
             draftStateService as never,
 
             rankingStoreService as never,
+
+            noopAdpService as never,
           );
 
         const result =
@@ -197,6 +203,8 @@ describe(
             draftStateService as never,
 
             rankingStoreService as never,
+
+            noopAdpService as never,
           );
 
         const result =
@@ -322,6 +330,8 @@ describe(
             draftStateService as never,
 
             rankingStoreService as never,
+
+            noopAdpService as never,
           );
 
         const result =
@@ -425,6 +435,8 @@ describe(
             draftStateService as never,
 
             rankingStoreService as never,
+
+            noopAdpService as never,
           );
 
         const result =
@@ -530,6 +542,8 @@ describe(
             draftStateService as never,
 
             rankingStoreService as never,
+
+            noopAdpService as never,
           );
 
         const result =
@@ -551,6 +565,113 @@ describe(
         ).toEqual([
           "1",
         ]);
+      },
+    );
+
+    it(
+      "attaches ADP diff when the player is in the ADP snapshot",
+
+      async () => {
+        const draftStateService = {
+          getDraftState: async () => ({
+            draft: { status: "DRAFTING" },
+            picks: [],
+            draftedPlayerIds: new Set(),
+            lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          }),
+        };
+
+        const rankingStoreService = {
+          getMatches: () => [
+            {
+              ranking: {
+                rank: 5,
+                playerName: "Player One",
+                team: "AAA",
+                position: "RB",
+              },
+              player: {
+                sleeperId: "1",
+                fullName: "Player One",
+                position: "RB",
+              },
+              method: "SLEEPER_ID",
+            },
+          ],
+        };
+
+        const adpService = {
+          getSnapshot: async () => new Map([["1", 3.7]]),
+        };
+
+        const service = new RecommendationService(
+          draftStateService as never,
+          rankingStoreService as never,
+          adpService as never,
+        );
+
+        const result = await service.getRecommendations(
+          "draft-1",
+          "ranking-1",
+          10,
+        );
+
+        expect(result.recommendations[0]?.adp).toEqual({
+          value: 3.7,
+          diff: 1.3,
+        });
+      },
+    );
+
+    it(
+      "omits adp when the player is not in the ADP snapshot",
+
+      async () => {
+        const draftStateService = {
+          getDraftState: async () => ({
+            draft: { status: "DRAFTING" },
+            picks: [],
+            draftedPlayerIds: new Set(),
+            lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+          }),
+        };
+
+        const rankingStoreService = {
+          getMatches: () => [
+            {
+              ranking: {
+                rank: 1,
+                playerName: "Player One",
+                team: "AAA",
+                position: "RB",
+              },
+              player: {
+                sleeperId: "1",
+                fullName: "Player One",
+                position: "RB",
+              },
+              method: "SLEEPER_ID",
+            },
+          ],
+        };
+
+        const adpService = {
+          getSnapshot: async () => new Map(),
+        };
+
+        const service = new RecommendationService(
+          draftStateService as never,
+          rankingStoreService as never,
+          adpService as never,
+        );
+
+        const result = await service.getRecommendations(
+          "draft-1",
+          "ranking-1",
+          10,
+        );
+
+        expect(result.recommendations[0]?.adp).toBeUndefined();
       },
     );
   },

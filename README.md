@@ -24,6 +24,8 @@ React web app -> Fastify API -> Sleeper API
 
 - Filter recommendations by position (`positions` query param / UI checkboxes).
 - Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
+- ADP vs. personal ranking diff, sourced from Sleeper's publicly-shared ADP
+  sheet — see "ADP Data Source" below.
 
 ## Prerequisites
 
@@ -174,6 +176,28 @@ The response includes draft status, total picks, drafted-player count, last pick
 
 The frontend communicates only with these API endpoints. It does not call Sleeper directly.
 
+Each recommendation includes an optional `adp` field when Average Draft
+Position data is available for that player:
+
+```json
+{
+  "rank": 3,
+  "tier": "A",
+  "player": {
+    "sleeperId": "9221",
+    "fullName": "Jahmyr Gibbs",
+    "team": "DET",
+    "position": "RB"
+  },
+  "adp": { "value": 3.7, "diff": -0.7 }
+}
+```
+
+`adp.diff` is `your rank − ADP value`: negative means you have the player
+ranked earlier than the field's consensus (a reach relative to ADP);
+positive means the field values them higher than you do. The `adp` field is
+omitted entirely (not `null`) for players not covered by the ADP source.
+
 ## Polling Behavior
 
 The web app uses TanStack Query:
@@ -189,6 +213,29 @@ The active interval can be changed with `VITE_POLLING_INTERVAL_MS`:
 ```bash
 VITE_POLLING_INTERVAL_MS=5000 pnpm --filter @fantasy-draft-helper/web dev
 ```
+
+## ADP Data Source
+
+Average Draft Position (ADP) data comes from Sleeper's own publicly-shared
+ADP spreadsheet (linked from the official [@SleeperHQ](https://x.com/SleeperHQ)
+account), not Sleeper's REST API — the public API doesn't expose ADP.
+The sheet is keyed by real Sleeper player IDs, so no name/team matching is
+needed to join it against rankings or recommendations.
+
+This is a **soft dependency**, not a formal API contract:
+
+- Fetched and cached server-side; refreshed at most once every 24 hours
+  (Sleeper updates the sheet roughly every 1–2 weeks, so this is comfortably
+  fresh without over-polling a source with no rate-limit guarantees).
+- If a fetch fails, the app keeps serving the last-known snapshot rather
+  than erroring.
+- If the sheet's format changes in a way the parser can't handle, ADP data
+  is silently omitted from recommendations rather than breaking them —
+  recommendations always work with or without ADP.
+- Currently reads the "Redraft SF ADP" column, matching this league's
+  Superflex scoring format. Change `ADP_COLUMN` in `adp.service.ts` if your
+  league uses a different format (e.g. `"Redraft PPR ADP"`,
+  `"Dynasty PPR ADP"`).
 
 ## Local Development Scripts
 
