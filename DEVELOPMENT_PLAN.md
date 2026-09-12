@@ -20,7 +20,7 @@ read this before starting on any of the items below.
 |---|---|---|---|---|
 | 1 | ~~Dev/prod UI switch~~ — **done, v0.3.0** | M | High | `VITE_UI_MODE` (`debug` \| `draft`), defaulting from `import.meta.env.DEV` — `pnpm dev` gets `debug`, `vite build`/Docker gets `draft`, overridable via `--build-arg VITE_UI_MODE=debug`. `isDebugUi` flag in `config.ts` gates raw draft ID, exact timestamps, polling interval, and the full rankings-import breakdown in `MonitoringStatus.tsx` and `App.tsx`. `DraftForm`, `RankingsUpload`, and `RecommendationsList` were not touched by this pass — worth a look during future production-UI polish. |
 | 2 | ~~Position-based filtering~~ — **done, v0.2.0** | S | High | `positions` query param on `GET /drafts/:draftId/recommendations`, filtered in `RecommendationService`, `PositionFilter` checkbox UI in `App.tsx`. Route + service test coverage added. |
-| 3 | ADP vs. personal ranking diff | M–L | High (if feasible) | **Sleeper's public API does not expose ADP** — confirmed against the official docs (docs.sleeper.com), only `search_rank` (Sleeper's internal signal) is available. Getting real ADP means integrating a third-party source (e.g. scraping, or a paid feed such as FantasyPros') and reconciling their player IDs against Sleeper's player IDs. **Do a short feasibility spike before committing to the full build** — confirm a workable, ID-mappable ADP source exists before estimating further. |
+| 3 | ADP vs. personal ranking diff — **spike complete, feasible, in progress** | S–M | High | Sleeper's public API doesn't expose ADP, but Sleeper's official account (@SleeperHQ) publicly shares an actively-maintained ADP Google Sheet, explicitly inviting external reuse. Confirmed against real data (`all-players_sleeper.json`, `draft-picks_sleeper.json`, an actual league ranking CSV): the sheet's "Player Id" column is a direct, exact-match Sleeper `player_id` — no fuzzy name/team matching needed, no cost, no ToS conflict. Complexity dropped from the original M–L estimate since the ID-matching risk that justified it is gone. League format is Redraft Superflex (per `REDRAFT_SF-rankings.csv`) — use the sheet's "Redraft SF ADP" column. Treat the sheet as a soft dependency (no formal API contract): cache locally, refresh infrequently (Sleeper updates it every 1–2 weeks), and degrade gracefully (omit the diff indicator) if a fetch fails or the format changes. |
 | 4 | Host the app online | M alone / prerequisite-gated | Medium alone, High as enabler | Container work is largely done. Remaining: choose a host, wire env vars/secrets, TLS, and — importantly — confirm the hosting tier has a **persistent** volume (many cheap PaaS tiers are ephemeral, which would silently lose the SQLite DB). **Should not go publicly live before #7 and #8 exist** — otherwise it's an open, unauthenticated endpoint making Sleeper API calls on your behalf. |
 | 5 | Multi-user support | L | High (if the league wants an always-on shared tool) | Biggest lift. Touches nearly every API route and the data model — rankings/drafts need to become per-user instead of singular. Depends on #4, #6, #8. |
 | 6 | Clean user data separation | M | Medium | `user_id` scoping on every table and query handler. Mostly hardening/trust, not a user-visible feature by itself. Prerequisite for #5. |
@@ -46,10 +46,9 @@ current single-container, run-it-yourself distribution model.
 
 1. ~~**#2 Position-based filtering**~~ — done, released as **v0.2.0**.
 2. ~~**#1 Dev/prod UI switch**~~ — done, released as **v0.3.0**.
-3. **#3 ADP vs. ranking diff** — start with the feasibility spike described
-   above. Only commit to the full build once a workable ADP source and ID
-   mapping are confirmed. If the spike shows it's messier than expected, it's
-   fine to deprioritize below Phase 2. **Next up.**
+3. **#3 ADP vs. ranking diff** — feasibility spike complete (see table above):
+   a free, no-matching-risk data source exists (Sleeper's own publicly-shared
+   ADP sheet, keyed by real Sleeper player IDs). **In progress.**
 
 ### Phase 2 — only if hosting is actually wanted (bigger commitment)
 
