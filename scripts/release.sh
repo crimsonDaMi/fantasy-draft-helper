@@ -39,12 +39,4 @@ echo "==> Tagging git $VERSION"
 git tag "$VERSION"
 git push --tags
 
-echo "==> Building $IMAGE:$VERSION (and :latest)"
-docker build -t "$IMAGE:$VERSION" -t "$IMAGE:latest" .
-
-echo "==> Pushing $IMAGE:$VERSION"
-docker push "$IMAGE:$VERSION"
-echo "==> Pushing $IMAGE:latest"
-docker push "$IMAGE:latest"
-
 echo "==> Done. Released $VERSION."
