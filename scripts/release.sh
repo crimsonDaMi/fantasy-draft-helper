@@ -8,6 +8,7 @@ fi
 
 VERSION="${1:-}"
 IMAGE="ghcr.io/crimsondami/fantasy-draft-helper"
+SKIP_AUDIT="${SKIP_AUDIT:-0}"
 
 if [[ -z "$VERSION" ]]; then
   echo "Usage: pnpm release -- vX.Y.Z   (e.g. pnpm release -- v0.4.0)"
@@ -26,6 +27,16 @@ fi
 
 if git rev-parse "$VERSION" >/dev/null 2>&1; then
   echo "Tag $VERSION already exists. Choose a new version."
+  exit 1
+fi
+
+echo "==> Auditing dependencies (high/critical only)"
+if [[ "$SKIP_AUDIT" != "1" ]] && ! pnpm audit --audit-level=high; then
+  echo ""
+  echo "Dependency audit found high/critical vulnerabilities. Review the"
+  echo "output above. If a fix is available, run 'pnpm update' and re-run"
+  echo "this script. If no fix exists yet and you've reviewed the risk,"
+  echo "re-run with SKIP_AUDIT=1 to proceed anyway."
   exit 1
 fi
 

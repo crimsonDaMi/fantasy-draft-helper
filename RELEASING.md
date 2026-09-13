@@ -26,16 +26,19 @@ This runs `scripts/release.sh`, which:
 1. Refuses to run with uncommitted changes in the working tree.
 2. Validates the version matches `vMAJOR.MINOR.PATCH`.
 3. Refuses to reuse a version whose git tag already exists.
-4. Bumps the root `package.json`'s `version` to match (without the leading
+4. Runs `pnpm audit --audit-level=high`, refusing to release if any
+   high/critical vulnerabilities are found (override with `SKIP_AUDIT=1`
+   if you've reviewed an unfixable advisory and accept the risk).
+5. Bumps the root `package.json`'s `version` to match (without the leading
    `v`), commits, and pushes that commit.
-5. Tags the resulting commit and pushes the tag.
+6. Tags the resulting commit and pushes the tag.
 
 Pushing the tag is where the script's job ends. From there, the
 **`.github/workflows/release.yml`** GitHub Actions workflow takes over:
 
-6. Triggers automatically on the pushed `vX.Y.Z` tag.
-7. Builds the Docker image tagged both `vX.Y.Z` and `latest`.
-8. Pushes both tags to GHCR using the repo's built-in `GITHUB_TOKEN`
+7. Triggers automatically on the pushed `vX.Y.Z` tag.
+8. Builds the Docker image tagged both `vX.Y.Z` and `latest`.
+9. Pushes both tags to GHCR using the repo's built-in `GITHUB_TOKEN`
    (no PAT or manually-managed secret needed).
 
 You do not need Docker installed or authenticated locally to cut a release —
