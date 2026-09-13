@@ -7,7 +7,9 @@ import { RecommendationsList } from "./components/RecommendationsList";
 import { useDraftRecommendations } from "./hooks/useDraftRecommendations";
 import type { RankingImportSummary } from "./types/api";
 import { PositionFilter } from "./components/PositionFilter";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { isDebugUi } from "./config";
+import { useTheme } from "./hooks/useTheme";
 
 function App() {
   const [draftId, setDraftId] = useState<string>();
@@ -15,6 +17,7 @@ function App() {
   const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
   const [positions, setPositions] = useState<string[]>([]);
   const [setupOpen, setSetupOpen] = useState(() => !draftId || !rankingId);
+  const [theme, setTheme] = useTheme();
 
   const { data, error, isLoading, pollingIntervalMs, retry } =
     useDraftRecommendations(draftId, rankingId, positions);
@@ -22,7 +25,10 @@ function App() {
   return (
     <main>
       <header className="app-header">
-        <h1>Fantasy Draft Helper</h1>
+        <div className="app-header__top">
+          <h1>Fantasy Draft Helper</h1>
+          <ThemeToggle theme={theme} onChange={setTheme} />
+        </div>
         <MonitoringStatus
           draftId={draftId}
           rankingId={rankingId}
