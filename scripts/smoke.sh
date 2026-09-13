@@ -17,7 +17,7 @@ docker build "${BUILD_ARGS[@]}" -t "$IMAGE" .
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
 
 echo "==> Starting $CONTAINER"
-docker run -d --name "$CONTAINER" -p 3000:3000 "$IMAGE" >/dev/null
+docker run --env-file .env -d --name "$CONTAINER" -p 3000:3000 "$IMAGE" >/dev/null
 
 echo "==> Running at http://localhost:3000"
 echo "==> Stop it with: pnpm smoke:stop"

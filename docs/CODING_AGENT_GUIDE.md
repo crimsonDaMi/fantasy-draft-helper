@@ -900,11 +900,12 @@ Do not implement in the MVP:
 - Automated drafting.
 - Direct interaction with Sleeper on behalf of the user.
 
-Note: some of these (authentication, multi-user collaboration) are now
-planned as phase-gated future work — see `DEVELOPMENT_PLAN.md`'s Phase 2/3.
-They remain out of scope until that document's stated go/no-go decision is
-made explicitly. The rest (payments, WebSockets, ML, roster optimization,
-etc.) remain out of scope entirely.
+Note: authentication (#7) and the allowlist (#8) are now implemented — see
+`apps/api/src/services/auth.service.ts` and `routes/auth.routes.ts`.
+Multi-user collaboration (#5) and user data separation (#6) remain
+phase-gated future work per `DEVELOPMENT_PLAN.md`'s Phase 2/3, not yet
+started. Payments, WebSockets, ML, roster optimization, etc. remain out of
+scope entirely.
 
 ---
 

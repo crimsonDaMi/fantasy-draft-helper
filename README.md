@@ -158,6 +158,24 @@ GET /rankings/status
 Returns whether any ranking has been imported, plus the total and matched
 player counts for the currently stored ranking(s).
 
+### Authentication
+
+```text
+POST /auth/register
+POST /auth/login
+POST /auth/logout
+GET  /auth/me
+```
+
+`register` and `login` accept JSON `{ "username": "string", "password": "string" }`
+and set an `httpOnly` session cookie on success. `register` only succeeds for
+usernames on the server's allowlist (see "Authentication Setup" below).
+`logout` clears the session. `GET /auth/me` returns the current user, or
+`401` if not logged in.
+
+All other API routes (`/rankings`, `/drafts`, `/players`) require a valid
+session cookie; `/health` and `/auth/*` remain open.
+
 ### Get a draft
 
 ```text
@@ -236,6 +254,27 @@ This is a **soft dependency**, not a formal API contract:
   Superflex scoring format. Change `ADP_COLUMN` in `adp.service.ts` if your
   league uses a different format (e.g. `"Redraft PPR ADP"`,
   `"Dynasty PPR ADP"`).
+
+  ## Authentication Setup
+
+Access is restricted to a hardcoded allowlist of usernames — proportionate
+for a small, known league rather than open signup. Configure it via an
+environment variable before starting the API:
+
+```bash
+ALLOWED_USERNAMES=andrej,mike,sarah pnpm --filter @fantasy-draft-helper/api dev
+```
+
+Usernames are matched case-insensitively. Only usernames on this list can
+successfully call `POST /auth/register`; anyone else gets a `403`.
+
+Passwords are hashed with Node's built-in `scrypt` (no external hashing
+dependency) and never stored in plaintext. Sessions are opaque tokens
+stored server-side, carried via an `httpOnly` cookie, valid for 30 days.
+
+The default database is `data/fantasy-draft-helper.db` (same file as
+rankings, per `RANKINGS_DATABASE_PATH`). Set `AUTH_DATABASE_PATH` to use a
+different file for users/sessions specifically.
 
 ## Local Development Scripts
 

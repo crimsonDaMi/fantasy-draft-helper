@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import cookie from "@fastify/cookie";
 import { ZodError } from "zod";
 import fastifyStatic from "@fastify/static";
 import path from "node:path";
@@ -8,6 +9,10 @@ import { fileURLToPath } from "node:url";
 import {
   createAppDependencies,
 } from "./app-dependencies.js";
+
+import {
+  createAuthRoutes,
+} from "./routes/auth.routes.js";
 
 import {
   createDraftsRoutes,
@@ -42,7 +47,12 @@ export async function buildApp() {
 
   await app.register(cors, {
     origin: true,
+    credentials: true,
   });
+
+  await app.register(
+    cookie,
+  );
 
   await app.register(
     multipart,
@@ -63,6 +73,36 @@ export async function buildApp() {
       };
     },
   );
+
+  await app.register(
+    createAuthRoutes(
+      dependencies.authService,
+    ),
+  );
+
+  const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
+
+  app.addHook("onRequest", async (request, reply) => {
+    const isProtected = PROTECTED_PREFIXES.some((prefix) =>
+      request.raw.url?.startsWith(prefix),
+    );
+
+    if (!isProtected) {
+      return;
+    }
+
+    const token = request.cookies.session;
+    const user = token
+      ? dependencies.authService.getUserForSession(token)
+      : undefined;
+
+    if (!user) {
+      return reply.status(401).send({
+        error: "UNAUTHENTICATED",
+        message: "Login required",
+      });
+    }
+  });
 
   await app.register(
     createDraftsRoutes(

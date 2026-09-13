@@ -8,8 +8,10 @@ import { useDraftRecommendations } from "./hooks/useDraftRecommendations";
 import type { RankingImportSummary } from "./types/api";
 import { PositionFilter } from "./components/PositionFilter";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { LoginForm } from "./components/LoginForm";
 import { isDebugUi } from "./config";
 import { useTheme } from "./hooks/useTheme";
+import { useAuth } from "./hooks/useAuth";
 
 function App() {
   const [draftId, setDraftId] = useState<string>();
@@ -18,16 +20,40 @@ function App() {
   const [positions, setPositions] = useState<string[]>([]);
   const [setupOpen, setSetupOpen] = useState(() => !draftId || !rankingId);
   const [theme, setTheme] = useTheme();
+  const auth = useAuth();
 
   const { data, error, isLoading, pollingIntervalMs, retry } =
     useDraftRecommendations(draftId, rankingId, positions);
+
+  if (auth.isLoading) {
+    return null;
+  }
+
+  if (!auth.user) {
+    return (
+      <LoginForm
+        error={auth.error}
+        onLogin={auth.login}
+        onRegister={auth.register}
+      />
+    );
+  }
 
   return (
     <main>
       <header className="app-header">
         <div className="app-header__top">
           <h1>Fantasy Draft Helper</h1>
-          <ThemeToggle theme={theme} onChange={setTheme} />
+          <div className="app-header__controls">
+            <ThemeToggle theme={theme} onChange={setTheme} />
+            <button
+              type="button"
+              className="theme-toggle__option"
+              onClick={() => void auth.logout()}
+            >
+              Log out
+            </button>
+          </div>
         </div>
         <MonitoringStatus
           draftId={draftId}
@@ -45,12 +71,14 @@ function App() {
         />
       </header>
 
-      {data && (
-        <>
-          <PositionFilter selected={positions} onChange={setPositions} />
-          <RecommendationsList recommendations={data.recommendations} />
-        </>
-      )}
+      {
+        data && (
+          <>
+            <PositionFilter selected={positions} onChange={setPositions} />
+            <RecommendationsList recommendations={data.recommendations} />
+          </>
+        )
+      }
 
       <details
         className="draft-setup"
@@ -93,7 +121,7 @@ function App() {
           />
         </div>
       </details>
-    </main>
+    </main >
   );
 }
 

@@ -30,6 +30,9 @@ the phases and dependency ordering documented in `DEVELOPMENT_PLAN.md`.
 ## Architecture Constraints
 
 - Keep the flow `React -> Fastify API -> Sleeper API`; the web app must never call Sleeper directly.
+- Routes under `/rankings`, `/drafts`, `/players` require an authenticated
+  session (see `auth.routes.ts`'s `onRequest` hook in `app.ts`); `/health`
+  and `/auth/*` stay open.
 - Keep Sleeper communication in the client boundary and validate/map external data before it reaches domain services.
 - Match ranking players to Sleeper IDs during import, persist the result, and never repeat name matching during draft polling.
 - Keep recommendation logic deterministic and independently testable.
@@ -39,11 +42,10 @@ the phases and dependency ordering documented in `DEVELOPMENT_PLAN.md`.
 
 ## Scope Constraints
 
-Authentication, hosting, multi-user support, and user data separation are
-tracked as Phase 2/3 items in `DEVELOPMENT_PLAN.md` — planned, but each
-requires an explicit go-ahead before starting (see that document's "Decision
-framing for Phases 2 & 3"). Do not start any Phase 2/3 item without that
-explicit request, even though it's on the roadmap.
+Authentication (#7) and the allowlist (#8) are implemented — see +`auth.service.ts`/`auth.routes.ts`. Hosting (#4), user data separation (#6),
++and multi-user support (#5) remain Phase 2/3 items in `DEVELOPMENT_PLAN.md`
++not yet started — do not begin them without explicit request, even though
++they're on the roadmap (see that document's "Decision framing for Phases 2 & 3").
 
 Do not add payments, WebSockets, automated drafting, machine learning,
 positional scarcity, roster optimization, or advanced strategy unless

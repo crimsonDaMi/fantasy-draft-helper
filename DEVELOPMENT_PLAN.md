@@ -26,8 +26,8 @@ read this before starting on any of the items below.
 | 4 | Host the app online | M alone / prerequisite-gated | Medium alone, High as enabler | Container work is largely done. Remaining: choose a host, wire env vars/secrets, TLS, and — importantly — confirm the hosting tier has a **persistent** volume (many cheap PaaS tiers are ephemeral, which would silently lose the SQLite DB). **Should not go publicly live before #7 and #8 exist** — otherwise it's an open, unauthenticated endpoint making Sleeper API calls on your behalf. |
 | 5 | Multi-user support | L | High (if the league wants an always-on shared tool) | Biggest lift. Touches nearly every API route and the data model — rankings/drafts need to become per-user instead of singular. Depends on #4, #6, #8. |
 | 6 | Clean user data separation | M | Medium | `user_id` scoping on every table and query handler. Mostly hardening/trust, not a user-visible feature by itself. Prerequisite for #5. |
-| 7 | User authentication | M | Medium | Plumbing, not itself a draft-day feature. A lightweight approach (e.g. magic-link or simple credentials) is proportionate for a ~10-person closed league — full OAuth is likely overkill. Prerequisite for #4. |
-| 8 | Sign-in confirmation / allowlist | S–M | Medium | Since the league is a small, known, fixed group, this can be a simple hardcoded allowlist of usernames/emails rather than a general signup-approval flow. Cheap once #7 exists. Prerequisite for #4 and #5. |
+| 7 | ~~User authentication~~ — **implemented** | M | Medium | Username/password, hashed with `scrypt`, session cookies via `@fastify/cookie`. Not yet version-tagged — will ship alongside #4's release. |
+| 8 | ~~Sign-in confirmation / allowlist~~ — **implemented** | S–M | Medium | Hardcoded `ALLOWED_USERNAMES` env var, checked case-insensitively at registration. Same release as above. |
 
 ## Dependency graph
 
@@ -57,10 +57,9 @@ Phase 1 is fully shipped. Next decision point is whether to start Phase 2
 
 ### Phase 2 — only if hosting is actually wanted (bigger commitment)
 
-4. **#7 Authentication**
-5. **#8 Allowlist / sign-in confirmation** (natural continuation of #7; both
-   needed before going public)
-6. **#4 Online hosting** — now safe to expose publicly
+4. ~~**#7 Authentication**~~ — implemented.
+5. ~~**#8 Allowlist / sign-in confirmation**~~ — implemented.
+6. **#4 Online hosting** — now safe to expose publicly. **Next up.**
 
 ### Phase 3 — only if the league wants a shared always-on tool
 

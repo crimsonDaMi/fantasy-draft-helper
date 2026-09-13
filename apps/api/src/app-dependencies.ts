@@ -3,6 +3,10 @@ import {
 } from "./clients/adp.client.js";
 
 import {
+  AuthService,
+} from "./services/auth.service.js";
+
+import {
   PlayerCache,
 } from "./cache/player.cache.js";
 
@@ -49,6 +53,8 @@ import {
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
+  authService: AuthService;
+
   adpService: AdpService,
 
   draftService: DraftService;
@@ -70,6 +76,16 @@ export function createAppDependencies():
   AppDependencies {
   const sleeperClient =
     new SleeperClient();
+
+  const allowedUsernames = (process.env.ALLOWED_USERNAMES ?? "")
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  const authService = new AuthService(
+    process.env.AUTH_DATABASE_PATH,
+    allowedUsernames,
+  );
 
   const adpClient =
     new AdpClient();
@@ -131,6 +147,8 @@ export function createAppDependencies():
 
   return {
     sleeperClient,
+
+    authService,
 
     adpService,
 

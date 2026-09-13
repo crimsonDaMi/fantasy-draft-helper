@@ -54,6 +54,8 @@ export async function importRankings(
         method: "POST",
 
         body: formData,
+
+        credentials: "include",
       },
     );
 
@@ -90,6 +92,7 @@ export async function getRecommendations(
 
   const response = await fetch(
     `${API_BASE_URL}/drafts/${draftId}/recommendations?${params.toString()}`,
+    { credentials: "include" },
   );
 
   if (!response.ok) {
@@ -100,4 +103,73 @@ export async function getRecommendations(
   }
 
   return response.json();
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+}
+
+async function postCredentials(
+  path: string,
+  username: string,
+  password: string,
+): Promise<AuthUser> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      await getErrorMessage(response),
+      response.status,
+    );
+  }
+
+  const body = (await response.json()) as { user: AuthUser };
+  return body.user;
+}
+
+export function register(
+  username: string,
+  password: string,
+): Promise<AuthUser> {
+  return postCredentials("/auth/register", username, password);
+}
+
+export function login(
+  username: string,
+  password: string,
+): Promise<AuthUser> {
+  return postCredentials("/auth/login", username, password);
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+}
+
+export async function getCurrentUser(): Promise<AuthUser | undefined> {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    return undefined;
+  }
+
+  if (!response.ok) {
+    throw new ApiRequestError(
+      await getErrorMessage(response),
+      response.status,
+    );
+  }
+
+  const body = (await response.json()) as { user: AuthUser };
+  return body.user;
 }

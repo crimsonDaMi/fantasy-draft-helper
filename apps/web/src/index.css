@@ -452,3 +452,71 @@ button {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* Login panel */
+
+.login-panel {
+  max-width: 320px;
+  margin: 80px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.login-panel__tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.login-panel__tabs button {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.login-panel__tab--active {
+  background: var(--color-accent) !important;
+  color: var(--color-accent-text) !important;
+  border-color: var(--color-accent) !important;
+}
+
+.login-panel form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-panel input {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.login-panel button[type="submit"] {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-panel__hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.app-header__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
