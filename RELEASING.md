@@ -51,6 +51,17 @@ never-published workspace packages — their `version` fields are frozen
 (`0.0.0`) and intentionally **not** touched by the release script. Only the
 root `package.json`'s version tracks releases.
 
+### Multi-architecture images
+
+Released images are built for both `linux/amd64` and `linux/arm64` (via
+QEMU emulation in the GitHub Actions workflow), published under a single
+multi-arch manifest per tag. This is what lets the same
+`ghcr.io/crimsondami/fantasy-draft-helper:vX.Y.Z` tag run on both a
+typical x86 server/VM and ARM devices like a Raspberry Pi — Docker pulls
+the right architecture automatically. Building the `arm64` leg under
+emulation is noticeably slower than a native build, so expect release
+builds to take longer than a single-arch build would.
+
 ### What the script does, spelled out manually
 
 Useful if you need to release by hand (script unavailable, or a step needs
