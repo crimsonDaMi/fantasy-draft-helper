@@ -343,7 +343,6 @@ Sleeper may delay exposing picks through its API. Recommendations represent the 
 ```text
 apps/api/       Fastify API, Sleeper client, domain services, SQLite repository
 apps/web/       React and Vite dashboard
-packages/shared Shared TypeScript package
 scripts/        Release and Docker smoke-test scripts
 docs/           Agent guide, MVP completion plan, and known issues
 test-data/      Sample ranking CSV
