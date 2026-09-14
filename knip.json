@@ -5,9 +5,6 @@
     },
     "apps/web": {
       "project": ["src/**/*.{ts,tsx}"]
-    },
-    "packages/shared": {
-      "project": ["src/**/*.ts"]
     }
   }
 }
