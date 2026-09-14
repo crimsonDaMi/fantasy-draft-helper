@@ -1,19 +1,14 @@
 import {
-  mkdirSync,
-} from "node:fs";
-
-import {
-  dirname,
-  resolve,
-} from "node:path";
-
-import {
   randomUUID,
 } from "node:crypto";
 
 import {
   DatabaseSync,
 } from "node:sqlite";
+
+import {
+  openDatabase,
+} from "./database.js";
 
 import {
   PlayerMatch,
@@ -27,22 +22,9 @@ export class RankingRepository {
   private readonly database: DatabaseSync;
 
   constructor(
-    databasePath = resolve(
-      process.cwd(),
-      "data",
-      "fantasy-draft-helper.db",
-    ),
+    databasePath?: string,
   ) {
-    if (databasePath !== ":memory:") {
-      mkdirSync(
-        dirname(databasePath),
-        {
-          recursive: true,
-        },
-      );
-    }
-
-    this.database = new DatabaseSync(
+    this.database = openDatabase(
       databasePath,
     );
 
