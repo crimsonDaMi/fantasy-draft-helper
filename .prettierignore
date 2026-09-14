@@ -1,0 +1,14 @@
+# generated output
+apps/api/dist
+apps/web/dist
+
+# dependencies (also covered by Prettier's built-in defaults, listed
+# explicitly here for clarity across the monorepo's multiple node_modules)
+node_modules
+**/node_modules
+
+# local runtime data, not source
+data
+
+# package manager-owned, not hand-formatted
+pnpm-lock.yaml

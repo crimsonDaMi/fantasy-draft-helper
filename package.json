@@ -7,6 +7,8 @@
     "build": "pnpm --recursive build",
     "test": "pnpm --recursive test",
     "lint": "pnpm --filter @fantasy-draft-helper/web lint",
+    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,css,json,md}\"",
     "verify": "pnpm test && pnpm build && pnpm lint",
     "docker:build": "docker build -t fantasy-draft-helper:test .",
     "docker:build:debug": "docker build --build-arg VITE_UI_MODE=debug -t fantasy-draft-helper:debug .",
@@ -15,5 +17,8 @@
     "smoke:debug": "bash scripts/smoke.sh --debug",
     "smoke:stop": "docker rm -f fantasy-draft-helper-smoke",
     "release": "bash scripts/release.sh"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
   }
 }

@@ -287,10 +287,12 @@ chmod +x scripts/*.sh
 ### Verification
 
 ```bash
-pnpm test    # all workspace tests
-pnpm build   # all workspace builds
-pnpm lint    # web app lint
-pnpm verify  # test + build + lint, in that order
+pnpm test          # all workspace tests
+pnpm build         # all workspace builds
+pnpm lint          # web app lint
+pnpm format        # apply Prettier formatting
+pnpm format:check  # verify formatting without writing (useful in CI)
+pnpm verify        # test + build + lint, in that order
 ```
 
 `pnpm verify` is the same check required before any change is considered
@@ -359,7 +361,6 @@ multi-user collaboration are planned as later phases — see
 [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) for current scope and status.
 Payments, WebSockets, machine learning, and automated drafting remain out of
 scope entirely.
-
 
 ## Shared Raspberry Pi Deployment
 
