@@ -1,9 +1,5 @@
 import { FastifyInstance } from "fastify";
 
-import { SleeperClient } from "../clients/sleeper.client.js";
-
-import { PlayerCache } from "../cache/player.cache.js";
-
 import { PlayerService } from "../services/player.service.js";
 
 export function createPlayersRoutes(playerService: PlayerService) {

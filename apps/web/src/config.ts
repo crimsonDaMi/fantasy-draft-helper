@@ -1,6 +1,6 @@
 const explicitUiMode = import.meta.env.VITE_UI_MODE;
 
-export const UI_MODE: "debug" | "draft" =
+const UI_MODE: "debug" | "draft" =
   explicitUiMode === "debug"
     ? "debug"
     : explicitUiMode === "draft"

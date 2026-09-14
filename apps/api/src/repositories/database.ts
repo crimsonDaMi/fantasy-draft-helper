@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-export const DEFAULT_DATABASE_PATH = resolve(
+const DEFAULT_DATABASE_PATH = resolve(
   process.cwd(),
   "data",
   "fantasy-draft-helper.db",
