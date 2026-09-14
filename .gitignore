@@ -23,3 +23,6 @@ Thumbs.db
 
 # IDE
 .idea/
+
+# Raspberry Pi deployment
+deploy/pi/.env

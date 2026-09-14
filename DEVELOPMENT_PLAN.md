@@ -11,6 +11,11 @@ tags (`vX.Y.Z`) — see `RELEASING.md`.
 **v0.4.0** ships the production UI pass (draft-day view redesign).
 **v0.5.0** ships Phase 1 item #3, the ADP vs. ranking diff — Phase 1 complete.
 
+**Phase 2 is complete.** Authentication and its allowlist now protect the
+shared Raspberry Pi deployment, which is exposed through Tailscale Funnel.
+The reproducible deployment configuration and operating notes live in
+deploy/pi.
+
 This document tracks the next round of feature ideas: their complexity,
 benefit, dependencies, and the agreed implementation order. Intended for
 both human contributors and coding agents picking up work on this repo —
@@ -23,11 +28,11 @@ read this before starting on any of the items below.
 | 1 | ~~Dev/prod UI switch~~ — **done, v0.3.0** | M | High | `VITE_UI_MODE` (`debug` \| `draft`), defaulting from `import.meta.env.DEV` — `pnpm dev` gets `debug`, `vite build`/Docker gets `draft`, overridable via `--build-arg VITE_UI_MODE=debug`. `isDebugUi` flag in `config.ts` gates raw draft ID, exact timestamps, polling interval, and the full rankings-import breakdown in `MonitoringStatus.tsx` and `App.tsx`. `DraftForm`, `RankingsUpload`, and `RecommendationsList` were not touched by this pass — worth a look during future production-UI polish. |
 | 2 | ~~Position-based filtering~~ — **done, v0.2.0** | S | High | `positions` query param on `GET /drafts/:draftId/recommendations`, filtered in `RecommendationService`, `PositionFilter` checkbox UI in `App.tsx`. Route + service test coverage added. |
 | 3 | ~~ADP vs. personal ranking diff~~ — **done, v0.5.0** | S–M | High | Sourced from Sleeper's official, publicly-shared ADP Google Sheet (@SleeperHQ) — keyed by real Sleeper `player_id`, so no fuzzy matching needed, no cost, no ToS conflict. `AdpClient` fetches the sheet's CSV export; `AdpService` caches it with a 24h refresh interval and failure backoff, degrading gracefully (omits the `adp` field) rather than breaking recommendations on fetch failure or format changes. Reads the "Redraft SF ADP" column, matching this league's Superflex format (change `ADP_COLUMN` in `adp.service.ts` for other formats). `Recommendation.adp = { value, diff }`, where `diff = your rank − ADP value`. UI shows a sign-colored badge in `RecommendationsList`, muted below a ±1 threshold. |
-| 4 | Host the app online | M alone / prerequisite-gated | Medium alone, High as enabler | Container work is largely done. Remaining: choose a host, wire env vars/secrets, TLS, and — importantly — confirm the hosting tier has a **persistent** volume (many cheap PaaS tiers are ephemeral, which would silently lose the SQLite DB). **Should not go publicly live before #7 and #8 exist** — otherwise it's an open, unauthenticated endpoint making Sleeper API calls on your behalf. |
+| 4 | ~~Host the app online~~ — **done** | M alone / prerequisite-gated | Medium alone, High as enabler | Self-hosted on a Raspberry Pi 4 via Tailscale Funnel. The Compose configuration binds the app only to loopback, persists /app/data in the draft-helper-data named volume, and supplies the ALLOWED_USERNAMES allowlist from an uncommitted environment file. See deploy/pi. |
 | 5 | Multi-user support | L | High (if the league wants an always-on shared tool) | Biggest lift. Touches nearly every API route and the data model — rankings/drafts need to become per-user instead of singular. Depends on #4, #6, #8. |
 | 6 | Clean user data separation | M | Medium | `user_id` scoping on every table and query handler. Mostly hardening/trust, not a user-visible feature by itself. Prerequisite for #5. |
-| 7 | ~~User authentication~~ — **implemented** | M | Medium | Username/password, hashed with `scrypt`, session cookies via `@fastify/cookie`. Not yet version-tagged — will ship alongside #4's release. |
-| 8 | ~~Sign-in confirmation / allowlist~~ — **implemented** | S–M | Medium | Hardcoded `ALLOWED_USERNAMES` env var, checked case-insensitively at registration. Same release as above. |
+| 7 | ~~User authentication~~ — **implemented** | M | Medium | Username/password, hashed with scrypt, session cookies via Fastify cookie support. Included in v0.6.1 and later. |
+| 8 | ~~Sign-in confirmation / allowlist~~ — **implemented** | S–M | Medium | Hardcoded ALLOWED_USERNAMES env var, checked case-insensitively at registration. Included in v0.6.1 and later. |
 
 ## Dependency graph
 
@@ -52,14 +57,15 @@ current single-container, run-it-yourself distribution model.
    candidate above, but the natural follow-on once #1 shipped the mechanism).
 4. ~~**#3 ADP vs. ranking diff**~~ — done, released as **v0.5.0**.
 
-Phase 1 is fully shipped. Next decision point is whether to start Phase 2
-(see "Decision framing" below) or stay on the current feature set.
+Phase 1 and Phase 2 are fully complete. The next decision point is whether
+to start Phase 3 (see "Decision framing" below) or stay on the current feature set.
 
-### Phase 2 — only if hosting is actually wanted (bigger commitment)
+### Phase 2 — hosting commitment — **complete**
 
 4. ~~**#7 Authentication**~~ — implemented.
 5. ~~**#8 Allowlist / sign-in confirmation**~~ — implemented.
-6. **#4 Online hosting** — now safe to expose publicly. **Next up.**
+6. ~~**#4 Online hosting**~~ — deployed on the Raspberry Pi through
+   Tailscale Funnel; deployment instructions are in deploy/pi/deploy-pi-README.md.
 
 ### Phase 3 — only if the league wants a shared always-on tool
 
@@ -72,7 +78,8 @@ Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model
 works fine at a 1-minute pick clock — Sleeper API latency was not an issue.
 Phases 2/3 buy convenience (not having to run the app locally on draft day),
-not a missing capability. Before starting Phase 2, confirm with the league
-whether "the host runs it locally on draft day" is an actual pain point —
-treat this as a deliberate go/no-go decision, not a default continuation of
-Phase 1.
+not a missing capability. Phase 2 addressed the convenience of an always-available shared instance;
+the current Raspberry Pi deployment provides that without opening a router
+port. Phase 3 remains a separate go/no-go decision: it adds per-user data
+separation and multi-user support, rather than a missing capability of the
+current shared deployment.

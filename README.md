@@ -359,3 +359,14 @@ multi-user collaboration are planned as later phases — see
 [`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) for current scope and status.
 Payments, WebSockets, machine learning, and automated drafting remain out of
 scope entirely.
+
+
+## Shared Raspberry Pi Deployment
+
+The league shared instance runs on a Raspberry Pi 4 and is exposed via
+Tailscale Funnel. Its Compose file binds the app to loopback only and keeps
+the SQLite data in a named Docker volume. Follow the reproducible setup,
+update, recovery, and access-control instructions in deploy/pi/deploy-pi-README.md.
+Copy deploy/pi/.env.example to deploy/pi/.env and set the real
+ALLOWED_USERNAMES value before starting it; do not commit that file or the
+Funnel URL.

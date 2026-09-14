@@ -1,0 +1,13 @@
+services:
+  draft-helper:
+    image: ghcr.io/crimsondami/fantasy-draft-helper:v0.6.2
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - draft-helper-data:/app/data
+    environment:
+      - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
+    restart: unless-stopped
+
+volumes:
+  draft-helper-data:

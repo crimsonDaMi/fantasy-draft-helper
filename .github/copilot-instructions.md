@@ -42,10 +42,10 @@ the phases and dependency ordering documented in `DEVELOPMENT_PLAN.md`.
 
 ## Scope Constraints
 
-Authentication (#7) and the allowlist (#8) are implemented — see +`auth.service.ts`/`auth.routes.ts`. Hosting (#4), user data separation (#6),
-+and multi-user support (#5) remain Phase 2/3 items in `DEVELOPMENT_PLAN.md`
-+not yet started — do not begin them without explicit request, even though
-+they're on the roadmap (see that document's "Decision framing for Phases 2 & 3").
+Authentication (#7), the allowlist (#8), and hosting (#4) are implemented.
+See the auth routes and deploy/pi. User data separation (#6) and multi-user
+support (#5) remain Phase 3 items in DEVELOPMENT_PLAN.md and must not begin
+without explicit request; see its Decision framing for Phases 2 and 3.
 
 Do not add payments, WebSockets, automated drafting, machine learning,
 positional scarcity, roster optimization, or advanced strategy unless
