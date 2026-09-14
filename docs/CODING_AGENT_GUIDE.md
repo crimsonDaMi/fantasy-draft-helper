@@ -87,6 +87,15 @@ Do not introduce unnecessary frameworks.
 > `features/`/`lib/`/nested-folder layout shown here. **Verify against the
 > actual tree with `view`/`ls` before relying on paths in this section** —
 > don't assume this document is current.
+>
+> **`packages/shared` no longer exists.** It was scaffolded per the
+> structure below but never actually imported by either app — confirmed via
+> grep across both `package.json` files and TS project references, with
+> zero hits beyond the package announcing its own name. Removed as dead
+> code. Domain types are defined locally per-app instead
+> (`apps/api/src/domain/`, `apps/web/src/types/api.ts`) — do not recreate
+> a shared package without a concrete cross-app type-duplication problem
+> to justify it.
 
 Create:
 
@@ -95,8 +104,6 @@ fantasy-draft-helper/
 ├── apps/
 │   ├── api/
 │   └── web/
-├── packages/
-│   └── shared/
 ├── package.json
 ├── pnpm-workspace.yaml
 └── README.md
@@ -154,16 +161,6 @@ apps/web/src/
 │   └── useDraftPolling.ts
 └── lib/
     └── api-client.ts
-```
-
-Shared package:
-
-```text
-packages/shared/src/
-├── player.ts
-├── draft.ts
-├── ranking.ts
-└── recommendation.ts
 ```
 
 ---
