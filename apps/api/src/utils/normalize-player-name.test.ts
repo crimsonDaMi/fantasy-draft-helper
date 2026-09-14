@@ -1,71 +1,21 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  normalizePlayerName,
-} from "./normalize-player-name.js";
+import { normalizePlayerName } from "./normalize-player-name.js";
 
-describe(
-  "normalizePlayerName",
+describe("normalizePlayerName", () => {
+  it("normalizes case", () => {
+    expect(normalizePlayerName("Patrick Mahomes")).toBe("patrick mahomes");
+  });
 
-  () => {
-    it(
-      "normalizes case",
+  it("removes punctuation", () => {
+    expect(normalizePlayerName("D.J. Moore")).toBe("dj moore");
+  });
 
-      () => {
-        expect(
-          normalizePlayerName(
-            "Patrick Mahomes",
-          ),
-        ).toBe(
-          "patrick mahomes",
-        );
-      },
-    );
+  it("removes apostrophes", () => {
+    expect(normalizePlayerName("Ja'Marr Chase")).toBe("jamarr chase");
+  });
 
-    it(
-      "removes punctuation",
-
-      () => {
-        expect(
-          normalizePlayerName(
-            "D.J. Moore",
-          ),
-        ).toBe(
-          "dj moore",
-        );
-      },
-    );
-
-    it(
-      "removes apostrophes",
-
-      () => {
-        expect(
-          normalizePlayerName(
-            "Ja'Marr Chase",
-          ),
-        ).toBe(
-          "jamarr chase",
-        );
-      },
-    );
-
-    it(
-      "normalizes whitespace",
-
-      () => {
-        expect(
-          normalizePlayerName(
-            "  Josh   Allen  ",
-          ),
-        ).toBe(
-          "josh allen",
-        );
-      },
-    );
-  },
-);
+  it("normalizes whitespace", () => {
+    expect(normalizePlayerName("  Josh   Allen  ")).toBe("josh allen");
+  });
+});

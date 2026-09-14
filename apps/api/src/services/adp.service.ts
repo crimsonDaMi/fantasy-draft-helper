@@ -13,7 +13,7 @@ export class AdpService {
   private lastAttemptAt?: Date;
   private refreshing?: Promise<void>;
 
-  constructor(private readonly adpClient: AdpClient) { }
+  constructor(private readonly adpClient: AdpClient) {}
 
   /**
    * Returns the current best-known ADP snapshot, refreshing it first if

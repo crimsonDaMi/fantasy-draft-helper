@@ -1,19 +1,10 @@
-import {
-  keepPreviousData,
-  useQuery,
-} from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import {
-  ApiRequestError,
-} from "../api/fantasy-api";
+import { ApiRequestError } from "../api/fantasy-api";
 
-import {
-  getRecommendations,
-} from "../api/fantasy-api";
+import { getRecommendations } from "../api/fantasy-api";
 
-import type {
-  RecommendationsResponse,
-} from "../types/api";
+import type { RecommendationsResponse } from "../types/api";
 
 import {
   ACTIVE_POLLING_INTERVAL_MS,
@@ -40,23 +31,11 @@ export function useDraftRecommendations(
   positions?: string[],
 ): UseDraftRecommendationsResult {
   const query = useQuery({
-    queryKey: [
-      "recommendations",
-      draftId,
-      rankingId,
-      positions,
-    ],
+    queryKey: ["recommendations", draftId, rankingId, positions],
 
-    queryFn: () =>
-      getRecommendations(
-        draftId!,
-        rankingId!,
-        { positions }
-      ),
+    queryFn: () => getRecommendations(draftId!, rankingId!, { positions }),
 
-    enabled: Boolean(
-      draftId && rankingId,
-    ),
+    enabled: Boolean(draftId && rankingId),
 
     placeholderData: keepPreviousData,
 
@@ -76,20 +55,14 @@ export function useDraftRecommendations(
       return true;
     },
 
-    retryDelay: (attemptIndex) =>
-      Math.min(
-        1_000 * 2 ** attemptIndex,
-        5_000,
-      ),
+    retryDelay: (attemptIndex) => Math.min(1_000 * 2 ** attemptIndex, 5_000),
 
     refetchInterval: (currentQuery) => {
       if (currentQuery.state.error) {
         return false;
       }
 
-      const status =
-        currentQuery.state.data
-          ?.draftStatus;
+      const status = currentQuery.state.data?.draftStatus;
 
       if (status === "COMPLETE") {
         return false;
@@ -108,11 +81,12 @@ export function useDraftRecommendations(
   return {
     data: query.data,
 
-    error: error instanceof Error
-      ? error.message
-      : error
-        ? "Failed to load recommendations."
-        : undefined,
+    error:
+      error instanceof Error
+        ? error.message
+        : error
+          ? "Failed to load recommendations."
+          : undefined,
 
     isLoading: query.isLoading,
 

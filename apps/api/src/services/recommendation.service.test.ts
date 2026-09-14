@@ -1,678 +1,556 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  RecommendationService,
-} from "./recommendation.service.js";
+import { RecommendationService } from "./recommendation.service.js";
 
 const noopAdpService = {
   getSnapshot: async () => new Map<string, number>(),
 };
 
-describe(
-  "RecommendationService",
+describe("RecommendationService", () => {
+  it("returns the highest ranked available players", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: {
+          status: "DRAFTING",
+        },
 
-  () => {
-    it(
-      "returns the highest ranked available players",
+        picks: [],
 
-      async () => {
-        const draftStateService = {
-          getDraftState:
-            async () => ({
-              draft: {
-                status: "DRAFTING",
-              },
+        draftedPlayerIds: new Set(["1"]),
 
-              picks: [],
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
 
-              draftedPlayerIds:
-                new Set([
-                  "1",
-                ]),
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 1,
 
-              lastUpdatedAt:
-                new Date("2026-01-01T00:00:00.000Z"),
-            }),
-        };
+            playerName: "Player One",
 
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 1,
+            team: "AAA",
 
-                playerName:
-                  "Player One",
+            position: "RB",
+          },
 
-                team: "AAA",
+          player: {
+            sleeperId: "1",
 
-                position: "RB",
-              },
+            fullName: "Player One",
+          },
 
-              player: {
-                sleeperId: "1",
+          method: "SLEEPER_ID",
+        },
 
-                fullName:
-                  "Player One",
-              },
+        {
+          ranking: {
+            rank: 2,
 
-              method: "SLEEPER_ID",
-            },
+            playerName: "Player Two",
 
-            {
-              ranking: {
-                rank: 2,
+            team: "BBB",
 
-                playerName:
-                  "Player Two",
+            position: "WR",
+          },
 
-                team: "BBB",
+          player: {
+            sleeperId: "2",
 
-                position: "WR",
-              },
+            fullName: "Player Two",
+          },
 
-              player: {
-                sleeperId: "2",
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
 
-                fullName:
-                  "Player Two",
-              },
+    const service = new RecommendationService(
+      draftStateService as never,
 
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
+      rankingStoreService as never,
 
-        const service =
-          new RecommendationService(
-            draftStateService as never,
-
-            rankingStoreService as never,
-
-            noopAdpService as never,
-          );
-
-        const result =
-          await service.getRecommendations(
-            "draft-1",
-
-            "ranking-1",
-
-            10,
-          );
-
-        expect(
-          result.recommendations,
-        ).toHaveLength(1);
-
-        expect(
-          result.recommendations[0]?.ranking.rank,
-        ).toBe(2);
-
-        expect(
-          result.draftedPlayerCount,
-        ).toBe(1);
-
-        expect(result.draftStatus).toBe(
-          "DRAFTING",
-        );
-
-        expect(result.totalPicks).toBe(0);
-
-        expect(result.lastUpdatedAt).toBe(
-          "2026-01-01T00:00:00.000Z",
-        );
-      },
+      noopAdpService as never,
     );
 
-    it(
-      "preserves stored ranking order",
+    const result = await service.getRecommendations(
+      "draft-1",
 
-      async () => {
-        const draftStateService = {
-          getDraftState:
-            async () => ({
-              draft: {
-                status: "DRAFTING",
-              },
+      "ranking-1",
 
-              picks: [],
-
-              draftedPlayerIds:
-                new Set(),
-
-              lastUpdatedAt:
-                new Date("2026-01-01T00:00:00.000Z"),
-            }),
-        };
-
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 20,
-
-                playerName:
-                  "Player Twenty",
-
-                team: "AAA",
-
-                position: "RB",
-              },
-
-              player: {
-                sleeperId: "20",
-
-                fullName:
-                  "Player Twenty",
-              },
-
-              method: "SLEEPER_ID",
-            },
-
-            {
-              ranking: {
-                rank: 5,
-
-                playerName:
-                  "Player Five",
-
-                team: "BBB",
-
-                position: "WR",
-              },
-
-              player: {
-                sleeperId: "5",
-
-                fullName:
-                  "Player Five",
-              },
-
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
-
-        const service =
-          new RecommendationService(
-            draftStateService as never,
-
-            rankingStoreService as never,
-
-            noopAdpService as never,
-          );
-
-        const result =
-          await service.getRecommendations(
-            "draft-1",
-
-            "ranking-1",
-
-            10,
-          );
-
-        expect(
-          result.recommendations.map(
-            (recommendation) =>
-              recommendation.ranking.rank,
-          ),
-        ).toEqual([
-          20,
-          5,
-        ]);
-      },
+      10,
     );
 
-    it(
-      "filters recommendations to the requested positions",
+    expect(result.recommendations).toHaveLength(1);
 
-      async () => {
-        const draftStateService = {
-          getDraftState:
-            async () => ({
-              draft: {
-                status: "DRAFTING",
-              },
+    expect(result.recommendations[0]?.ranking.rank).toBe(2);
 
-              picks: [],
+    expect(result.draftedPlayerCount).toBe(1);
 
-              draftedPlayerIds:
-                new Set(),
+    expect(result.draftStatus).toBe("DRAFTING");
 
-              lastUpdatedAt:
-                new Date("2026-01-01T00:00:00.000Z"),
-            }),
-        };
+    expect(result.totalPicks).toBe(0);
 
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 1,
+    expect(result.lastUpdatedAt).toBe("2026-01-01T00:00:00.000Z");
+  });
 
-                playerName:
-                  "Player One",
+  it("preserves stored ranking order", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: {
+          status: "DRAFTING",
+        },
 
-                team: "AAA",
+        picks: [],
 
-                position: "QB",
-              },
+        draftedPlayerIds: new Set(),
 
-              player: {
-                sleeperId: "1",
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
 
-                fullName:
-                  "Player One",
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 20,
 
-                position: "QB",
-              },
+            playerName: "Player Twenty",
 
-              method: "SLEEPER_ID",
-            },
+            team: "AAA",
 
-            {
-              ranking: {
-                rank: 2,
+            position: "RB",
+          },
 
-                playerName:
-                  "Player Two",
+          player: {
+            sleeperId: "20",
 
-                team: "BBB",
+            fullName: "Player Twenty",
+          },
 
-                position: "RB",
-              },
+          method: "SLEEPER_ID",
+        },
 
-              player: {
-                sleeperId: "2",
+        {
+          ranking: {
+            rank: 5,
 
-                fullName:
-                  "Player Two",
+            playerName: "Player Five",
 
-                position: "RB",
-              },
+            team: "BBB",
 
-              method: "SLEEPER_ID",
-            },
+            position: "WR",
+          },
 
-            {
-              ranking: {
-                rank: 3,
+          player: {
+            sleeperId: "5",
 
-                playerName:
-                  "Player Three",
+            fullName: "Player Five",
+          },
 
-                team: "CCC",
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
 
-                position: "RB",
-              },
+    const service = new RecommendationService(
+      draftStateService as never,
 
-              player: {
-                sleeperId: "3",
+      rankingStoreService as never,
 
-                fullName:
-                  "Player Three",
-
-                position: "RB",
-              },
-
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
-
-        const service =
-          new RecommendationService(
-            draftStateService as never,
-
-            rankingStoreService as never,
-
-            noopAdpService as never,
-          );
-
-        const result =
-          await service.getRecommendations(
-            "draft-1",
-
-            "ranking-1",
-
-            10,
-
-            ["RB"],
-          );
-
-        expect(
-          result.recommendations.map(
-            (recommendation) =>
-              recommendation.player.sleeperId,
-          ),
-        ).toEqual([
-          "2",
-          "3",
-        ]);
-      },
+      noopAdpService as never,
     );
 
-    it(
-      "treats an empty positions array as no filter",
+    const result = await service.getRecommendations(
+      "draft-1",
 
-      async () => {
-        const draftStateService = {
-          getDraftState:
-            async () => ({
-              draft: {
-                status: "DRAFTING",
-              },
+      "ranking-1",
 
-              picks: [],
-
-              draftedPlayerIds:
-                new Set(),
-
-              lastUpdatedAt:
-                new Date("2026-01-01T00:00:00.000Z"),
-            }),
-        };
-
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 1,
-
-                playerName:
-                  "Player One",
-
-                team: "AAA",
-
-                position: "QB",
-              },
-
-              player: {
-                sleeperId: "1",
-
-                fullName:
-                  "Player One",
-
-                position: "QB",
-              },
-
-              method: "SLEEPER_ID",
-            },
-
-            {
-              ranking: {
-                rank: 2,
-
-                playerName:
-                  "Player Two",
-
-                team: "BBB",
-
-                position: "RB",
-              },
-
-              player: {
-                sleeperId: "2",
-
-                fullName:
-                  "Player Two",
-
-                position: "RB",
-              },
-
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
-
-        const service =
-          new RecommendationService(
-            draftStateService as never,
-
-            rankingStoreService as never,
-
-            noopAdpService as never,
-          );
-
-        const result =
-          await service.getRecommendations(
-            "draft-1",
-
-            "ranking-1",
-
-            10,
-
-            [],
-          );
-
-        expect(
-          result.recommendations.map(
-            (recommendation) =>
-              recommendation.player.sleeperId,
-          ),
-        ).toEqual([
-          "1",
-          "2",
-        ]);
-      },
+      10,
     );
 
-    it(
-      "excludes drafted players even when their position matches the filter",
+    expect(
+      result.recommendations.map(
+        (recommendation) => recommendation.ranking.rank,
+      ),
+    ).toEqual([20, 5]);
+  });
 
-      async () => {
-        const draftStateService = {
-          getDraftState:
-            async () => ({
-              draft: {
-                status: "DRAFTING",
-              },
+  it("filters recommendations to the requested positions", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: {
+          status: "DRAFTING",
+        },
 
-              picks: [],
+        picks: [],
 
-              draftedPlayerIds:
-                new Set([
-                  "2",
-                ]),
+        draftedPlayerIds: new Set(),
 
-              lastUpdatedAt:
-                new Date("2026-01-01T00:00:00.000Z"),
-            }),
-        };
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
 
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 1,
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 1,
 
-                playerName:
-                  "Player One",
+            playerName: "Player One",
 
-                team: "AAA",
+            team: "AAA",
 
-                position: "RB",
-              },
+            position: "QB",
+          },
 
-              player: {
-                sleeperId: "1",
+          player: {
+            sleeperId: "1",
 
-                fullName:
-                  "Player One",
+            fullName: "Player One",
 
-                position: "RB",
-              },
+            position: "QB",
+          },
 
-              method: "SLEEPER_ID",
-            },
+          method: "SLEEPER_ID",
+        },
 
-            {
-              ranking: {
-                rank: 2,
+        {
+          ranking: {
+            rank: 2,
 
-                playerName:
-                  "Player Two",
+            playerName: "Player Two",
 
-                team: "BBB",
+            team: "BBB",
 
-                position: "RB",
-              },
+            position: "RB",
+          },
 
-              player: {
-                sleeperId: "2",
+          player: {
+            sleeperId: "2",
 
-                fullName:
-                  "Player Two",
+            fullName: "Player Two",
 
-                position: "RB",
-              },
+            position: "RB",
+          },
 
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
+          method: "SLEEPER_ID",
+        },
 
-        const service =
-          new RecommendationService(
-            draftStateService as never,
+        {
+          ranking: {
+            rank: 3,
 
-            rankingStoreService as never,
+            playerName: "Player Three",
 
-            noopAdpService as never,
-          );
+            team: "CCC",
 
-        const result =
-          await service.getRecommendations(
-            "draft-1",
+            position: "RB",
+          },
 
-            "ranking-1",
+          player: {
+            sleeperId: "3",
 
-            10,
+            fullName: "Player Three",
 
-            ["RB"],
-          );
+            position: "RB",
+          },
 
-        expect(
-          result.recommendations.map(
-            (recommendation) =>
-              recommendation.player.sleeperId,
-          ),
-        ).toEqual([
-          "1",
-        ]);
-      },
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+
+      rankingStoreService as never,
+
+      noopAdpService as never,
     );
 
-    it(
-      "attaches ADP diff when the player is in the ADP snapshot",
+    const result = await service.getRecommendations(
+      "draft-1",
 
-      async () => {
-        const draftStateService = {
-          getDraftState: async () => ({
-            draft: { status: "DRAFTING" },
-            picks: [],
-            draftedPlayerIds: new Set(),
-            lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
-          }),
-        };
+      "ranking-1",
 
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 5,
-                playerName: "Player One",
-                team: "AAA",
-                position: "RB",
-              },
-              player: {
-                sleeperId: "1",
-                fullName: "Player One",
-                position: "RB",
-              },
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
+      10,
 
-        const adpService = {
-          getSnapshot: async () => new Map([["1", 3.7]]),
-        };
-
-        const service = new RecommendationService(
-          draftStateService as never,
-          rankingStoreService as never,
-          adpService as never,
-        );
-
-        const result = await service.getRecommendations(
-          "draft-1",
-          "ranking-1",
-          10,
-        );
-
-        expect(result.recommendations[0]?.adp).toEqual({
-          value: 3.7,
-          diff: 1.3,
-        });
-      },
+      ["RB"],
     );
 
-    it(
-      "omits adp when the player is not in the ADP snapshot",
+    expect(
+      result.recommendations.map(
+        (recommendation) => recommendation.player.sleeperId,
+      ),
+    ).toEqual(["2", "3"]);
+  });
 
-      async () => {
-        const draftStateService = {
-          getDraftState: async () => ({
-            draft: { status: "DRAFTING" },
-            picks: [],
-            draftedPlayerIds: new Set(),
-            lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
-          }),
-        };
+  it("treats an empty positions array as no filter", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: {
+          status: "DRAFTING",
+        },
 
-        const rankingStoreService = {
-          getMatches: () => [
-            {
-              ranking: {
-                rank: 1,
-                playerName: "Player One",
-                team: "AAA",
-                position: "RB",
-              },
-              player: {
-                sleeperId: "1",
-                fullName: "Player One",
-                position: "RB",
-              },
-              method: "SLEEPER_ID",
-            },
-          ],
-        };
+        picks: [],
 
-        const adpService = {
-          getSnapshot: async () => new Map(),
-        };
+        draftedPlayerIds: new Set(),
 
-        const service = new RecommendationService(
-          draftStateService as never,
-          rankingStoreService as never,
-          adpService as never,
-        );
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
 
-        const result = await service.getRecommendations(
-          "draft-1",
-          "ranking-1",
-          10,
-        );
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 1,
 
-        expect(result.recommendations[0]?.adp).toBeUndefined();
-      },
+            playerName: "Player One",
+
+            team: "AAA",
+
+            position: "QB",
+          },
+
+          player: {
+            sleeperId: "1",
+
+            fullName: "Player One",
+
+            position: "QB",
+          },
+
+          method: "SLEEPER_ID",
+        },
+
+        {
+          ranking: {
+            rank: 2,
+
+            playerName: "Player Two",
+
+            team: "BBB",
+
+            position: "RB",
+          },
+
+          player: {
+            sleeperId: "2",
+
+            fullName: "Player Two",
+
+            position: "RB",
+          },
+
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+
+      rankingStoreService as never,
+
+      noopAdpService as never,
     );
-  },
-);
+
+    const result = await service.getRecommendations(
+      "draft-1",
+
+      "ranking-1",
+
+      10,
+
+      [],
+    );
+
+    expect(
+      result.recommendations.map(
+        (recommendation) => recommendation.player.sleeperId,
+      ),
+    ).toEqual(["1", "2"]);
+  });
+
+  it("excludes drafted players even when their position matches the filter", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: {
+          status: "DRAFTING",
+        },
+
+        picks: [],
+
+        draftedPlayerIds: new Set(["2"]),
+
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 1,
+
+            playerName: "Player One",
+
+            team: "AAA",
+
+            position: "RB",
+          },
+
+          player: {
+            sleeperId: "1",
+
+            fullName: "Player One",
+
+            position: "RB",
+          },
+
+          method: "SLEEPER_ID",
+        },
+
+        {
+          ranking: {
+            rank: 2,
+
+            playerName: "Player Two",
+
+            team: "BBB",
+
+            position: "RB",
+          },
+
+          player: {
+            sleeperId: "2",
+
+            fullName: "Player Two",
+
+            position: "RB",
+          },
+
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+
+      rankingStoreService as never,
+
+      noopAdpService as never,
+    );
+
+    const result = await service.getRecommendations(
+      "draft-1",
+
+      "ranking-1",
+
+      10,
+
+      ["RB"],
+    );
+
+    expect(
+      result.recommendations.map(
+        (recommendation) => recommendation.player.sleeperId,
+      ),
+    ).toEqual(["1"]);
+  });
+
+  it("attaches ADP diff when the player is in the ADP snapshot", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING" },
+        picks: [],
+        draftedPlayerIds: new Set(),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 5,
+            playerName: "Player One",
+            team: "AAA",
+            position: "RB",
+          },
+          player: {
+            sleeperId: "1",
+            fullName: "Player One",
+            position: "RB",
+          },
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
+
+    const adpService = {
+      getSnapshot: async () => new Map([["1", 3.7]]),
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      adpService as never,
+    );
+
+    const result = await service.getRecommendations("draft-1", "ranking-1", 10);
+
+    expect(result.recommendations[0]?.adp).toEqual({
+      value: 3.7,
+      diff: 1.3,
+    });
+  });
+
+  it("omits adp when the player is not in the ADP snapshot", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING" },
+        picks: [],
+        draftedPlayerIds: new Set(),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankingStoreService = {
+      getMatches: () => [
+        {
+          ranking: {
+            rank: 1,
+            playerName: "Player One",
+            team: "AAA",
+            position: "RB",
+          },
+          player: {
+            sleeperId: "1",
+            fullName: "Player One",
+            position: "RB",
+          },
+          method: "SLEEPER_ID",
+        },
+      ],
+    };
+
+    const adpService = {
+      getSnapshot: async () => new Map(),
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      adpService as never,
+    );
+
+    const result = await service.getRecommendations("draft-1", "ranking-1", 10);
+
+    expect(result.recommendations[0]?.adp).toBeUndefined();
+  });
+});

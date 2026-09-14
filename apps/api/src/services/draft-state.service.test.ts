@@ -1,95 +1,65 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  DraftStateService,
-} from "./draft-state.service.js";
+import { DraftStateService } from "./draft-state.service.js";
 
-describe(
-  "DraftStateService",
+describe("DraftStateService", () => {
+  it("removes drafted players", async () => {
+    const draftService = {
+      getDraft: async () => ({
+        id: "draft-1",
 
-  () => {
-    it(
-      "removes drafted players",
+        status: "DRAFTING",
 
-      async () => {
-        const draftService = {
-          getDraft: async () => ({
-            id: "draft-1",
+        sport: "nfl",
 
-            status: "DRAFTING",
+        season: "2026",
+      }),
 
-            sport: "nfl",
+      getDraftPicks: async () => [
+        {
+          playerId: "2",
 
-            season: "2026",
-          }),
+          pickNo: 1,
+        },
+      ],
+    };
 
-          getDraftPicks: async () => [
-            {
-              playerId: "2",
+    const playerService = {
+      ensurePlayersLoaded: async () => {},
 
-              pickNo: 1,
-            },
-          ],
-        };
+      getAllPlayers: () => [
+        {
+          sleeperId: "1",
 
-        const playerService = {
-          ensurePlayersLoaded:
-            async () => { },
+          fullName: "Player One",
 
-          getAllPlayers: () => [
-            {
-              sleeperId: "1",
+          active: true,
 
-              fullName:
-                "Player One",
+          fantasyPositions: ["QB"],
+        },
 
-              active: true,
+        {
+          sleeperId: "2",
 
-              fantasyPositions: [
-                "QB",
-              ],
-            },
+          fullName: "Player Two",
 
-            {
-              sleeperId: "2",
+          active: true,
 
-              fullName:
-                "Player Two",
+          fantasyPositions: ["RB"],
+        },
+      ],
+    };
 
-              active: true,
+    const service = new DraftStateService(
+      draftService as never,
 
-              fantasyPositions: [
-                "RB",
-              ],
-            },
-          ],
-        };
-
-        const service =
-          new DraftStateService(
-            draftService as never,
-
-            playerService as never,
-          );
-
-        const result =
-          await service.getDraftState(
-            "draft-1",
-          );
-
-        expect(
-          result.availablePlayers,
-        ).toHaveLength(1);
-
-        expect(
-          result.availablePlayers[0]
-            ?.sleeperId,
-        ).toBe("1");
-      },
+      playerService as never,
     );
-  },
-);
+
+    const result = await service.getDraftState("draft-1");
+
+    expect(result.availablePlayers).toHaveLength(1);
+
+    expect(result.availablePlayers[0]?.sleeperId).toBe("1");
+  });
+});

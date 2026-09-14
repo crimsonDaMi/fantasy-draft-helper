@@ -62,16 +62,10 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Password"
-          autoComplete={
-            mode === "login" ? "current-password" : "new-password"
-          }
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
         />
         <button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? "..."
-            : mode === "login"
-              ? "Log in"
-              : "Register"}
+          {isSubmitting ? "..." : mode === "login" ? "Log in" : "Register"}
         </button>
       </form>
 

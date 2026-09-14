@@ -1,16 +1,10 @@
-import type {
-  ApiRecommendation,
-} from "../types/api";
+import type { ApiRecommendation } from "../types/api";
 
 interface RecommendationsListProps {
   recommendations: ApiRecommendation[];
 }
 
-function PlayerMeta({
-  recommendation,
-}: {
-  recommendation: ApiRecommendation;
-}) {
+function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
   return (
     <>
       {recommendation.player.position}
@@ -21,11 +15,7 @@ function PlayerMeta({
   );
 }
 
-function AdpBadge({
-  recommendation,
-}: {
-  recommendation: ApiRecommendation;
-}) {
+function AdpBadge({ recommendation }: { recommendation: ApiRecommendation }) {
   if (!recommendation.adp) {
     return null;
   }
@@ -53,9 +43,7 @@ export function RecommendationsList({
   if (recommendations.length === 0) {
     return (
       <section>
-        <p className="rec-list__empty">
-          No recommendations available yet.
-        </p>
+        <p className="rec-list__empty">No recommendations available yet.</p>
       </section>
     );
   }

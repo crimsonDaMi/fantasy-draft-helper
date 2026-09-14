@@ -4,9 +4,7 @@ import type {
 } from "../types/api";
 
 const API_BASE_URL =
-  import.meta.env
-    .VITE_API_BASE_URL ??
-  "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
 export class ApiRequestError extends Error {
   readonly status?: number;
@@ -22,15 +20,11 @@ export class ApiRequestError extends Error {
   }
 }
 
-async function getErrorMessage(
-  response: Response,
-): Promise<string> {
+async function getErrorMessage(response: Response): Promise<string> {
   try {
     const error = await response.json();
 
-    return error.message ??
-      error.error ??
-      "Request failed";
+    return error.message ?? error.error ?? "Request failed";
   } catch {
     return "Request failed";
   }
@@ -39,31 +33,20 @@ async function getErrorMessage(
 export async function importRankings(
   file: File,
 ): Promise<RankingImportResponse> {
-  const formData =
-    new FormData();
+  const formData = new FormData();
 
-  formData.append(
-    "file",
-    file,
-  );
+  formData.append("file", file);
 
-  const response =
-    await fetch(
-      `${API_BASE_URL}/rankings`,
-      {
-        method: "POST",
+  const response = await fetch(`${API_BASE_URL}/rankings`, {
+    method: "POST",
 
-        body: formData,
+    body: formData,
 
-        credentials: "include",
-      },
-    );
+    credentials: "include",
+  });
 
   if (!response.ok) {
-    throw new ApiRequestError(
-      await getErrorMessage(response),
-      response.status,
-    );
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
   return response.json();
@@ -96,10 +79,7 @@ export async function getRecommendations(
   );
 
   if (!response.ok) {
-    throw new ApiRequestError(
-      await getErrorMessage(response),
-      response.status,
-    );
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
   return response.json();
@@ -123,10 +103,7 @@ async function postCredentials(
   });
 
   if (!response.ok) {
-    throw new ApiRequestError(
-      await getErrorMessage(response),
-      response.status,
-    );
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
   const body = (await response.json()) as { user: AuthUser };
@@ -140,10 +117,7 @@ export function register(
   return postCredentials("/auth/register", username, password);
 }
 
-export function login(
-  username: string,
-  password: string,
-): Promise<AuthUser> {
+export function login(username: string, password: string): Promise<AuthUser> {
   return postCredentials("/auth/login", username, password);
 }
 
@@ -164,10 +138,7 @@ export async function getCurrentUser(): Promise<AuthUser | undefined> {
   }
 
   if (!response.ok) {
-    throw new ApiRequestError(
-      await getErrorMessage(response),
-      response.status,
-    );
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
   const body = (await response.json()) as { user: AuthUser };

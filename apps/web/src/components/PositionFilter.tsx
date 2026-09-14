@@ -5,10 +5,7 @@ interface PositionFilterProps {
   onChange: (positions: string[]) => void;
 }
 
-export function PositionFilter({
-  selected,
-  onChange,
-}: PositionFilterProps) {
+export function PositionFilter({ selected, onChange }: PositionFilterProps) {
   const toggle = (position: string) => {
     if (selected.includes(position)) {
       onChange(selected.filter((p) => p !== position));
@@ -18,7 +15,11 @@ export function PositionFilter({
   };
 
   return (
-    <div className="position-filter" role="group" aria-label="Filter by position">
+    <div
+      className="position-filter"
+      role="group"
+      aria-label="Filter by position"
+    >
       {POSITIONS.map((position) => (
         <span className="position-filter__pill" key={position}>
           <input

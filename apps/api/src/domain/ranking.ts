@@ -1,10 +1,4 @@
-export type FantasyPosition =
-  | "QB"
-  | "RB"
-  | "WR"
-  | "TE"
-  | "K"
-  | "DEF";
+export type FantasyPosition = "QB" | "RB" | "WR" | "TE" | "K" | "DEF";
 
 export interface Ranking {
   rank: number;

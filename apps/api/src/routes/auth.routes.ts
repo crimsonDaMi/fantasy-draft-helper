@@ -1,6 +1,4 @@
-import {
-  FastifyInstance,
-} from "fastify";
+import { FastifyInstance } from "fastify";
 
 import { z } from "zod";
 
@@ -18,24 +16,16 @@ const credentialsSchema = z.object({
 
 const isProduction = process.env.NODE_ENV === "production";
 
-export function createAuthRoutes(
-  authService: AuthService,
-) {
-  return async function authRoutes(
-    app: FastifyInstance,
-  ) {
+export function createAuthRoutes(authService: AuthService) {
+  return async function authRoutes(app: FastifyInstance) {
     app.post(
       "/auth/register",
 
       async (request, reply) => {
-        const { username, password } =
-          credentialsSchema.parse(request.body);
+        const { username, password } = credentialsSchema.parse(request.body);
 
         try {
-          const { user, token } = authService.register(
-            username,
-            password,
-          );
+          const { user, token } = authService.register(username, password);
 
           reply.setCookie("session", token, {
             httpOnly: true,
@@ -69,14 +59,10 @@ export function createAuthRoutes(
       "/auth/login",
 
       async (request, reply) => {
-        const { username, password } =
-          credentialsSchema.parse(request.body);
+        const { username, password } = credentialsSchema.parse(request.body);
 
         try {
-          const { user, token } = authService.login(
-            username,
-            password,
-          );
+          const { user, token } = authService.login(username, password);
 
           reply.setCookie("session", token, {
             httpOnly: true,
@@ -120,9 +106,7 @@ export function createAuthRoutes(
 
       async (request, reply) => {
         const token = request.cookies.session;
-        const user = token
-          ? authService.getUserForSession(token)
-          : undefined;
+        const user = token ? authService.getUserForSession(token) : undefined;
 
         if (!user) {
           return reply.status(401).send({

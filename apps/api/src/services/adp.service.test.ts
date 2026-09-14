@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AdpService } from "./adp.service.js";
 
@@ -25,82 +18,58 @@ function createFakeAdpClient(csv: string | Error) {
   };
 }
 
-describe(
-  "AdpService",
+describe("AdpService", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-10T00:00:00.000Z"));
+  });
 
-  () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-09-10T00:00:00.000Z"));
-    });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    afterEach(() => {
-      vi.useRealTimers();
-    });
+  it("parses the Redraft SF ADP column keyed by Sleeper player id", async () => {
+    const adpClient = createFakeAdpClient(SAMPLE_CSV);
+    const service = new AdpService(adpClient as never);
 
-    it(
-      "parses the Redraft SF ADP column keyed by Sleeper player id",
+    const snapshot = await service.getSnapshot();
 
-      async () => {
-        const adpClient = createFakeAdpClient(SAMPLE_CSV);
-        const service = new AdpService(adpClient as never);
+    expect(snapshot.get("9221")).toBe(1.5);
+    expect(snapshot.get("9509")).toBe(2.6);
+    expect(adpClient.getAdpCsv).toHaveBeenCalledTimes(1);
+  });
 
-        const snapshot = await service.getSnapshot();
+  it("does not refetch within the refresh interval", async () => {
+    const adpClient = createFakeAdpClient(SAMPLE_CSV);
+    const service = new AdpService(adpClient as never);
 
-        expect(snapshot.get("9221")).toBe(1.5);
-        expect(snapshot.get("9509")).toBe(2.6);
-        expect(adpClient.getAdpCsv).toHaveBeenCalledTimes(1);
-      },
-    );
+    await service.getSnapshot();
+    await service.getSnapshot();
 
-    it(
-      "does not refetch within the refresh interval",
+    expect(adpClient.getAdpCsv).toHaveBeenCalledTimes(1);
+  });
 
-      async () => {
-        const adpClient = createFakeAdpClient(SAMPLE_CSV);
-        const service = new AdpService(adpClient as never);
+  it("serves the last-known snapshot when a refresh fails", async () => {
+    const adpClient = createFakeAdpClient(SAMPLE_CSV);
+    const service = new AdpService(adpClient as never);
 
-        await service.getSnapshot();
-        await service.getSnapshot();
+    await service.getSnapshot();
 
-        expect(adpClient.getAdpCsv).toHaveBeenCalledTimes(1);
-      },
-    );
+    vi.advanceTimersByTime(25 * 60 * 60 * 1000);
 
-    it(
-      "serves the last-known snapshot when a refresh fails",
+    adpClient.getAdpCsv.mockRejectedValueOnce(new Error("network error"));
 
-      async () => {
-        const adpClient = createFakeAdpClient(SAMPLE_CSV);
-        const service = new AdpService(adpClient as never);
+    const snapshot = await service.getSnapshot();
 
-        await service.getSnapshot();
+    expect(snapshot.get("9221")).toBe(1.5);
+  });
 
-        vi.advanceTimersByTime(25 * 60 * 60 * 1000);
+  it("returns an empty snapshot rather than throwing on first-ever failure", async () => {
+    const adpClient = createFakeAdpClient(new Error("network error"));
+    const service = new AdpService(adpClient as never);
 
-        adpClient.getAdpCsv.mockRejectedValueOnce(
-          new Error("network error"),
-        );
+    const snapshot = await service.getSnapshot();
 
-        const snapshot = await service.getSnapshot();
-
-        expect(snapshot.get("9221")).toBe(1.5);
-      },
-    );
-
-    it(
-      "returns an empty snapshot rather than throwing on first-ever failure",
-
-      async () => {
-        const adpClient = createFakeAdpClient(
-          new Error("network error"),
-        );
-        const service = new AdpService(adpClient as never);
-
-        const snapshot = await service.getSnapshot();
-
-        expect(snapshot.size).toBe(0);
-      },
-    );
-  },
-);
+    expect(snapshot.size).toBe(0);
+  });
+});

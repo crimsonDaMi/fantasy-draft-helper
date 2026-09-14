@@ -24,11 +24,7 @@ export interface ApiRecommendation {
 export interface RecommendationsResponse {
   draftId: string;
 
-  draftStatus:
-  "PRE_DRAFT" |
-  "DRAFTING" |
-  "COMPLETE" |
-  "UNKNOWN";
+  draftStatus: "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
 
   totalPicks: number;
 
@@ -46,8 +42,7 @@ export interface RecommendationsResponse {
 
   recommendationCount: number;
 
-  recommendations:
-  ApiRecommendation[];
+  recommendations: ApiRecommendation[];
 }
 
 export interface RankingImportSummary {
@@ -65,8 +60,7 @@ export interface RankingImportSummary {
 export interface RankingImportResponse {
   rankingId: string;
 
-  summary:
-  RankingImportSummary;
+  summary: RankingImportSummary;
 
   validationErrors: RankingImportError[];
 

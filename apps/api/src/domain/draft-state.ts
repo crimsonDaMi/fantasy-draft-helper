@@ -1,7 +1,4 @@
-import {
-  Draft,
-  DraftPick,
-} from "./draft.js";
+import { Draft, DraftPick } from "./draft.js";
 import { Player } from "./player.js";
 
 export interface DraftState {

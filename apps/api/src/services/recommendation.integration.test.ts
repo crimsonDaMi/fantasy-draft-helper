@@ -1,36 +1,18 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  PlayerCache,
-} from "../cache/player.cache.js";
+import { PlayerCache } from "../cache/player.cache.js";
 
-import {
-  SleeperClient,
-} from "../clients/sleeper.client.js";
+import { SleeperClient } from "../clients/sleeper.client.js";
 
-import {
-  DraftService,
-} from "./draft.service.js";
+import { DraftService } from "./draft.service.js";
 
-import {
-  DraftStateService,
-} from "./draft-state.service.js";
+import { DraftStateService } from "./draft-state.service.js";
 
-import {
-  PlayerService,
-} from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
-import {
-  RecommendationService,
-} from "./recommendation.service.js";
+import { RecommendationService } from "./recommendation.service.js";
 
-import {
-  RankingStoreService,
-} from "./ranking-store.service.js";
+import { RankingStoreService } from "./ranking-store.service.js";
 
 import type {
   SleeperDraft,
@@ -43,9 +25,7 @@ interface DraftFixture {
   picks: SleeperDraftPick[];
 }
 
-function createFixtureClient(
-  fixture: DraftFixture,
-) {
+function createFixtureClient(fixture: DraftFixture) {
   return {
     getDraft: async () => fixture.draft,
 
@@ -73,30 +53,21 @@ function createFixtureClient(
   } as unknown as SleeperClient;
 }
 
-function createRecommendationFixture(
-  fixture: DraftFixture,
-) {
-  const client = createFixtureClient(
-    fixture,
-  );
+function createRecommendationFixture(fixture: DraftFixture) {
+  const client = createFixtureClient(fixture);
 
-  const playerService = new PlayerService(
-    client,
-    new PlayerCache(),
-  );
+  const playerService = new PlayerService(client, new PlayerCache());
 
-  const draftStateService =
-    new DraftStateService(
-      new DraftService(client),
-      playerService,
-    );
+  const draftStateService = new DraftStateService(
+    new DraftService(client),
+    playerService,
+  );
 
   const noopAdpService = {
     getSnapshot: async () => new Map<string, number>(),
   };
 
-  const rankingStore =
-    new RankingStoreService(":memory:");
+  const rankingStore = new RankingStoreService(":memory:");
 
   const rankingId = rankingStore.setMatches([
     {
@@ -162,148 +133,108 @@ function createRecommendationFixture(
   };
 }
 
-describe(
-  "recommendation flow",
-  () => {
-    it(
-      "updates recommendations after a drafted pick",
-      async () => {
-        const fixture: DraftFixture = {
-          draft: {
-            draft_id: "draft-1",
-            status: "drafting",
-            sport: "nfl",
-            season: "2026",
-          },
-          picks: [],
-        };
+describe("recommendation flow", () => {
+  it("updates recommendations after a drafted pick", async () => {
+    const fixture: DraftFixture = {
+      draft: {
+        draft_id: "draft-1",
+        status: "drafting",
+        sport: "nfl",
+        season: "2026",
+      },
+      picks: [],
+    };
 
-        const flow =
-          createRecommendationFixture(
-            fixture,
-          );
+    const flow = createRecommendationFixture(fixture);
 
-        const beforePick =
-          await flow.service.getRecommendations(
-            "draft-1",
-            flow.rankingId,
-            10,
-          );
+    const beforePick = await flow.service.getRecommendations(
+      "draft-1",
+      flow.rankingId,
+      10,
+    );
 
-        expect(
-          beforePick.recommendations.map(
-            ({ player }) => player.sleeperId,
-          ),
-        ).toEqual(["1", "2"]);
+    expect(
+      beforePick.recommendations.map(({ player }) => player.sleeperId),
+    ).toEqual(["1", "2"]);
 
-        fixture.picks.push({
+    fixture.picks.push({
+      player_id: "1",
+      pick_no: 1,
+      round: 1,
+    });
+
+    const afterPick = await flow.service.getRecommendations(
+      "draft-1",
+      flow.rankingId,
+      10,
+    );
+
+    expect(
+      afterPick.recommendations.map(({ player }) => player.sleeperId),
+    ).toEqual(["2"]);
+
+    expect(afterPick.totalPicks).toBe(1);
+    expect(afterPick.lastPick?.playerId).toBe("1");
+
+    flow.rankingStore.close();
+  });
+
+  it("excludes unmatched and ambiguous players", async () => {
+    const fixture: DraftFixture = {
+      draft: {
+        draft_id: "draft-1",
+        status: "pre_draft",
+        sport: "nfl",
+        season: "2026",
+      },
+      picks: [],
+    };
+
+    const flow = createRecommendationFixture(fixture);
+
+    const result = await flow.service.getRecommendations(
+      "draft-1",
+      flow.rankingId,
+      10,
+    );
+
+    expect(
+      result.recommendations.map(({ ranking }) => ranking.playerName),
+    ).toEqual(["Player One", "Player Two"]);
+
+    expect(result.draftStatus).toBe("PRE_DRAFT");
+
+    flow.rankingStore.close();
+  });
+
+  it("reports completed draft state", async () => {
+    const fixture: DraftFixture = {
+      draft: {
+        draft_id: "draft-1",
+        status: "complete",
+        sport: "nfl",
+        season: "2026",
+      },
+      picks: [
+        {
           player_id: "1",
           pick_no: 1,
           round: 1,
-        });
+        },
+      ],
+    };
 
-        const afterPick =
-          await flow.service.getRecommendations(
-            "draft-1",
-            flow.rankingId,
-            10,
-          );
+    const flow = createRecommendationFixture(fixture);
 
-        expect(
-          afterPick.recommendations.map(
-            ({ player }) => player.sleeperId,
-          ),
-        ).toEqual(["2"]);
-
-        expect(afterPick.totalPicks).toBe(1);
-        expect(afterPick.lastPick?.playerId).toBe(
-          "1",
-        );
-
-        flow.rankingStore.close();
-      },
+    const result = await flow.service.getRecommendations(
+      "draft-1",
+      flow.rankingId,
+      10,
     );
 
-    it(
-      "excludes unmatched and ambiguous players",
-      async () => {
-        const fixture: DraftFixture = {
-          draft: {
-            draft_id: "draft-1",
-            status: "pre_draft",
-            sport: "nfl",
-            season: "2026",
-          },
-          picks: [],
-        };
+    expect(result.draftStatus).toBe("COMPLETE");
+    expect(result.totalPicks).toBe(1);
 
-        const flow =
-          createRecommendationFixture(
-            fixture,
-          );
-
-        const result =
-          await flow.service.getRecommendations(
-            "draft-1",
-            flow.rankingId,
-            10,
-          );
-
-        expect(
-          result.recommendations.map(
-            ({ ranking }) => ranking.playerName,
-          ),
-        ).toEqual([
-          "Player One",
-          "Player Two",
-        ]);
-
-        expect(result.draftStatus).toBe(
-          "PRE_DRAFT",
-        );
-
-        flow.rankingStore.close();
-      },
-    );
-
-    it(
-      "reports completed draft state",
-      async () => {
-        const fixture: DraftFixture = {
-          draft: {
-            draft_id: "draft-1",
-            status: "complete",
-            sport: "nfl",
-            season: "2026",
-          },
-          picks: [
-            {
-              player_id: "1",
-              pick_no: 1,
-              round: 1,
-            },
-          ],
-        };
-
-        const flow =
-          createRecommendationFixture(
-            fixture,
-          );
-
-        const result =
-          await flow.service.getRecommendations(
-            "draft-1",
-            flow.rankingId,
-            10,
-          );
-
-        expect(result.draftStatus).toBe(
-          "COMPLETE",
-        );
-        expect(result.totalPicks).toBe(1);
-
-        flow.rankingStore.close();
-      },
-    );
-  },
-);
+    flow.rankingStore.close();
+  });
+});

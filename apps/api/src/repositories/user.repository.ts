@@ -5,13 +5,9 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 
-import {
-  DatabaseSync,
-} from "node:sqlite";
+import { DatabaseSync } from "node:sqlite";
 
-import {
-  openDatabase,
-} from "./database.js";
+import { openDatabase } from "./database.js";
 
 const SCRYPT_KEY_LENGTH = 64;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -24,12 +20,8 @@ export interface User {
 export class UserRepository {
   private readonly database: DatabaseSync;
 
-  constructor(
-    databasePath?: string,
-  ) {
-    this.database = openDatabase(
-      databasePath,
-    );
+  constructor(databasePath?: string) {
+    this.database = openDatabase(databasePath);
 
     this.database.exec(`
       PRAGMA foreign_keys = ON;
@@ -56,10 +48,7 @@ export class UserRepository {
     `);
   }
 
-  createUser(
-    username: string,
-    password: string,
-  ): User {
+  createUser(username: string, password: string): User {
     const id = randomUUID();
     const salt = randomBytes(16).toString("hex");
     const hash = this.hashPassword(password, salt);
@@ -75,9 +64,7 @@ export class UserRepository {
     return { id, username };
   }
 
-  usernameExists(
-    username: string,
-  ): boolean {
+  usernameExists(username: string): boolean {
     const row = this.database
       .prepare(
         `SELECT 1 AS found
@@ -85,17 +72,12 @@ export class UserRepository {
          WHERE username = ?
          LIMIT 1`,
       )
-      .get(username) as unknown as
-      | { found: number }
-      | undefined;
+      .get(username) as unknown as { found: number } | undefined;
 
     return row !== undefined;
   }
 
-  verifyPassword(
-    username: string,
-    password: string,
-  ): User | undefined {
+  verifyPassword(username: string, password: string): User | undefined {
     const row = this.database
       .prepare(
         `SELECT id, username, password_salt, password_hash
@@ -104,21 +86,18 @@ export class UserRepository {
       )
       .get(username) as unknown as
       | {
-        id: string;
-        username: string;
-        password_salt: string;
-        password_hash: string;
-      }
+          id: string;
+          username: string;
+          password_salt: string;
+          password_hash: string;
+        }
       | undefined;
 
     if (!row) {
       return undefined;
     }
 
-    const candidateHash = this.hashPassword(
-      password,
-      row.password_salt,
-    );
+    const candidateHash = this.hashPassword(password, row.password_salt);
 
     const stored = Buffer.from(row.password_hash, "hex");
     const candidate = Buffer.from(candidateHash, "hex");
@@ -133,26 +112,17 @@ export class UserRepository {
     return { id: row.id, username: row.username };
   }
 
-  createSession(
-    userId: string,
-  ): { token: string; expiresAt: string } {
+  createSession(userId: string): { token: string; expiresAt: string } {
     const token = randomBytes(32).toString("hex");
     const createdAt = new Date();
-    const expiresAt = new Date(
-      createdAt.getTime() + SESSION_TTL_MS,
-    );
+    const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_MS);
 
     this.database
       .prepare(
         `INSERT INTO sessions (token, user_id, created_at, expires_at)
          VALUES (?, ?, ?, ?)`,
       )
-      .run(
-        token,
-        userId,
-        createdAt.toISOString(),
-        expiresAt.toISOString(),
-      );
+      .run(token, userId, createdAt.toISOString(), expiresAt.toISOString());
 
     return {
       token,
@@ -160,9 +130,7 @@ export class UserRepository {
     };
   }
 
-  getSession(
-    token: string,
-  ): User | undefined {
+  getSession(token: string): User | undefined {
     const row = this.database
       .prepare(
         `SELECT users.id AS id, users.username AS username, sessions.expires_at AS expires_at
@@ -171,8 +139,7 @@ export class UserRepository {
          WHERE sessions.token = ?`,
       )
       .get(token) as unknown as
-      | { id: string; username: string; expires_at: string }
-      | undefined;
+      { id: string; username: string; expires_at: string } | undefined;
 
     if (!row) {
       return undefined;
@@ -186,28 +153,15 @@ export class UserRepository {
     return { id: row.id, username: row.username };
   }
 
-  deleteSession(
-    token: string,
-  ): void {
-    this.database
-      .prepare(
-        `DELETE FROM sessions WHERE token = ?`,
-      )
-      .run(token);
+  deleteSession(token: string): void {
+    this.database.prepare(`DELETE FROM sessions WHERE token = ?`).run(token);
   }
 
   close(): void {
     this.database.close();
   }
 
-  private hashPassword(
-    password: string,
-    salt: string,
-  ): string {
-    return scryptSync(
-      password,
-      salt,
-      SCRYPT_KEY_LENGTH,
-    ).toString("hex");
+  private hashPassword(password: string, salt: string): string {
+    return scryptSync(password, salt, SCRYPT_KEY_LENGTH).toString("hex");
   }
 }

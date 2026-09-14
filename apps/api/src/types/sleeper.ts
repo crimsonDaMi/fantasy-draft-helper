@@ -71,7 +71,4 @@ export interface SleeperPlayer {
   fantasy_positions?: string[] | null;
 }
 
-export type SleeperPlayersResponse = Record<
-  string,
-  SleeperPlayer
->;
+export type SleeperPlayersResponse = Record<string, SleeperPlayer>;

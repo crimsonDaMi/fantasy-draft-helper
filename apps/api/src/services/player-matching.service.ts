@@ -1,57 +1,32 @@
-import {
-  Player,
-} from "../domain/player.js";
+import { Player } from "../domain/player.js";
 
-import {
-  PlayerMatch,
-} from "../domain/player-match.js";
+import { PlayerMatch } from "../domain/player-match.js";
 
-import {
-  Ranking,
-} from "../domain/ranking.js";
+import { Ranking } from "../domain/ranking.js";
 
-import {
-  PlayerService,
-} from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
-import {
-  normalizePlayerName,
-} from "../utils/normalize-player-name.js";
+import { normalizePlayerName } from "../utils/normalize-player-name.js";
 
 export class PlayerMatchingService {
-  constructor(
-    private readonly playerService:
-      PlayerService,
-  ) { }
+  constructor(private readonly playerService: PlayerService) {}
 
-  matchRanking(
-    ranking: Ranking,
-  ): PlayerMatch {
-    const bySleeperId =
-      this.matchBySleeperId(
-        ranking,
-      );
+  matchRanking(ranking: Ranking): PlayerMatch {
+    const bySleeperId = this.matchBySleeperId(ranking);
 
     if (bySleeperId) {
       return bySleeperId;
     }
 
-    return this.matchByName(
-      ranking,
-    );
+    return this.matchByName(ranking);
   }
 
-  private matchBySleeperId(
-    ranking: Ranking,
-  ): PlayerMatch | undefined {
+  private matchBySleeperId(ranking: Ranking): PlayerMatch | undefined {
     if (!ranking.sleeperPlayerId) {
       return undefined;
     }
 
-    const player =
-      this.playerService.getPlayerById(
-        ranking.sleeperPlayerId,
-      );
+    const player = this.playerService.getPlayerById(ranking.sleeperPlayerId);
 
     if (!player) {
       return undefined;
@@ -64,25 +39,14 @@ export class PlayerMatchingService {
 
       method: "SLEEPER_ID",
 
-      warnings:
-        this.getIdMatchWarnings(
-          ranking,
-          player,
-        ),
+      warnings: this.getIdMatchWarnings(ranking, player),
     };
   }
 
-  private matchByName(
-    ranking: Ranking,
-  ): PlayerMatch {
-    const candidates =
-      this.playerService.findPlayersByName(
-        ranking.playerName,
-      );
+  private matchByName(ranking: Ranking): PlayerMatch {
+    const candidates = this.playerService.findPlayersByName(ranking.playerName);
 
-    if (
-      candidates.length === 0
-    ) {
+    if (candidates.length === 0) {
       return {
         ranking,
 
@@ -90,77 +54,54 @@ export class PlayerMatchingService {
       };
     }
 
-    const byTeamPosition =
-      candidates.filter(
-        (player) =>
-          player.team ===
-          ranking.team &&
-          player.position ===
-          ranking.position,
-      );
+    const byTeamPosition = candidates.filter(
+      (player) =>
+        player.team === ranking.team && player.position === ranking.position,
+    );
 
-    if (
-      byTeamPosition.length === 1
-    ) {
+    if (byTeamPosition.length === 1) {
       return {
         ranking,
 
-        player:
-          byTeamPosition[0],
+        player: byTeamPosition[0],
 
-        method:
-          "NAME_POSITION_TEAM",
+        method: "NAME_POSITION_TEAM",
       };
     }
 
-    const byPosition =
-      candidates.filter(
-        (player) =>
-          player.position ===
-          ranking.position,
-      );
+    const byPosition = candidates.filter(
+      (player) => player.position === ranking.position,
+    );
 
-    if (
-      byPosition.length === 1
-    ) {
+    if (byPosition.length === 1) {
       return {
         ranking,
 
-        player:
-          byPosition[0],
+        player: byPosition[0],
 
-        method:
-          "NAME_POSITION",
+        method: "NAME_POSITION",
       };
     }
 
     const byTeam = candidates.filter(
-      (player) =>
-        ranking.team !== undefined &&
-        player.team === ranking.team,
+      (player) => ranking.team !== undefined && player.team === ranking.team,
     );
 
-    if (
-      byTeam.length === 1
-    ) {
+    if (byTeam.length === 1) {
       return {
         ranking,
 
-        player:
-          byTeam[0],
+        player: byTeam[0],
 
         method: "NAME_TEAM",
       };
     }
 
-    if (
-      candidates.length === 1
-    ) {
+    if (candidates.length === 1) {
       return {
         ranking,
 
-        player:
-          candidates[0],
+        player: candidates[0],
 
         method: "NAME",
       };
@@ -175,15 +116,8 @@ export class PlayerMatchingService {
     };
   }
 
-  matchRankings(
-    rankings: Ranking[],
-  ): PlayerMatch[] {
-    return rankings.map(
-      (ranking) =>
-        this.matchRanking(
-          ranking,
-        ),
-    );
+  matchRankings(rankings: Ranking[]): PlayerMatch[] {
+    return rankings.map((ranking) => this.matchRanking(ranking));
   }
 
   private getIdMatchWarnings(
@@ -191,30 +125,20 @@ export class PlayerMatchingService {
 
     player: Player,
   ) {
-    const warnings: (
-      | "ID_METADATA_MISMATCH"
-    )[] = [];
+    const warnings: "ID_METADATA_MISMATCH"[] = [];
 
     const namesMatch =
-      normalizePlayerName(
-        ranking.playerName,
-      ) ===
-      normalizePlayerName(
-        player.fullName,
-      );
+      normalizePlayerName(ranking.playerName) ===
+      normalizePlayerName(player.fullName);
 
     if (
       !namesMatch ||
       player.team !== ranking.team ||
       player.position !== ranking.position
     ) {
-      warnings.push(
-        "ID_METADATA_MISMATCH",
-      );
+      warnings.push("ID_METADATA_MISMATCH");
     }
 
-    return warnings.length > 0
-      ? warnings
-      : undefined;
+    return warnings.length > 0 ? warnings : undefined;
   }
 }

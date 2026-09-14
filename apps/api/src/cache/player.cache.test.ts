@@ -1,159 +1,97 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  PlayerCache,
-} from "./player.cache.js";
+import { PlayerCache } from "./player.cache.js";
 
-describe(
-  "PlayerCache",
+describe("PlayerCache", () => {
+  it("stores players by Sleeper ID", () => {
+    const cache = new PlayerCache();
 
-  () => {
-    it(
-      "stores players by Sleeper ID",
+    cache.replace([
+      {
+        sleeperId: "1",
 
-      () => {
-        const cache =
-          new PlayerCache();
+        fullName: "Josh Allen",
 
-        cache.replace([
-          {
-            sleeperId: "1",
+        active: true,
 
-            fullName:
-              "Josh Allen",
-
-            active: true,
-
-            fantasyPositions: [
-              "QB",
-            ],
-          },
-        ]);
-
-        expect(
-          cache.getById("1"),
-        ).toMatchObject({
-          fullName:
-            "Josh Allen",
-        });
+        fantasyPositions: ["QB"],
       },
-    );
+    ]);
 
-    it(
-      "finds players by normalized name",
+    expect(cache.getById("1")).toMatchObject({
+      fullName: "Josh Allen",
+    });
+  });
 
-      () => {
-        const cache =
-          new PlayerCache();
+  it("finds players by normalized name", () => {
+    const cache = new PlayerCache();
 
-        cache.replace([
-          {
-            sleeperId: "1",
+    cache.replace([
+      {
+        sleeperId: "1",
 
-            fullName:
-              "D.J. Moore",
+        fullName: "D.J. Moore",
 
-            active: true,
+        active: true,
 
-            fantasyPositions: [
-              "WR",
-            ],
-          },
-        ]);
-
-        const results =
-          cache.getByNormalizedName(
-            "DJ Moore",
-          );
-
-        expect(results).toHaveLength(
-          1,
-        );
-
-        expect(
-          results[0]?.sleeperId,
-        ).toBe("1");
+        fantasyPositions: ["WR"],
       },
-    );
+    ]);
 
-    it(
-      "supports duplicate names",
+    const results = cache.getByNormalizedName("DJ Moore");
 
-      () => {
-        const cache =
-          new PlayerCache();
+    expect(results).toHaveLength(1);
 
-        cache.replace([
-          {
-            sleeperId: "1",
+    expect(results[0]?.sleeperId).toBe("1");
+  });
 
-            fullName:
-              "John Smith",
+  it("supports duplicate names", () => {
+    const cache = new PlayerCache();
 
-            active: true,
+    cache.replace([
+      {
+        sleeperId: "1",
 
-            fantasyPositions: [
-              "WR",
-            ],
-          },
+        fullName: "John Smith",
 
-          {
-            sleeperId: "2",
+        active: true,
 
-            fullName:
-              "John Smith",
-
-            active: true,
-
-            fantasyPositions: [
-              "RB",
-            ],
-          },
-        ]);
-
-        const results =
-          cache.getByNormalizedName(
-            "John Smith",
-          );
-
-        expect(results).toHaveLength(
-          2,
-        );
+        fantasyPositions: ["WR"],
       },
-    );
 
-    it(
-      "clears the cache",
+      {
+        sleeperId: "2",
 
-      () => {
-        const cache =
-          new PlayerCache();
+        fullName: "John Smith",
 
-        cache.replace([
-          {
-            sleeperId: "1",
+        active: true,
 
-            fullName:
-              "Josh Allen",
-
-            active: true,
-
-            fantasyPositions: [
-              "QB",
-            ],
-          },
-        ]);
-
-        cache.clear();
-
-        expect(
-          cache.size,
-        ).toBe(0);
+        fantasyPositions: ["RB"],
       },
-    );
-  },
-);
+    ]);
+
+    const results = cache.getByNormalizedName("John Smith");
+
+    expect(results).toHaveLength(2);
+  });
+
+  it("clears the cache", () => {
+    const cache = new PlayerCache();
+
+    cache.replace([
+      {
+        sleeperId: "1",
+
+        fullName: "Josh Allen",
+
+        active: true,
+
+        fantasyPositions: ["QB"],
+      },
+    ]);
+
+    cache.clear();
+
+    expect(cache.size).toBe(0);
+  });
+});

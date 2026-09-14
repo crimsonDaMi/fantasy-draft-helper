@@ -1,11 +1,8 @@
-import {
-  User,
-  UserRepository,
-} from "../repositories/user.repository.js";
+import { User, UserRepository } from "../repositories/user.repository.js";
 
-export class AllowlistError extends Error { }
-export class DuplicateUsernameError extends Error { }
-export class InvalidCredentialsError extends Error { }
+export class AllowlistError extends Error {}
+export class DuplicateUsernameError extends Error {}
+export class InvalidCredentialsError extends Error {}
 
 export class AuthService {
   private readonly repository: UserRepository;
@@ -25,16 +22,11 @@ export class AuthService {
     );
   }
 
-  register(
-    username: string,
-    password: string,
-  ): { user: User; token: string } {
+  register(username: string, password: string): { user: User; token: string } {
     const normalizedUsername = username.trim().toLowerCase();
 
     if (!this.allowedUsernames.has(normalizedUsername)) {
-      throw new AllowlistError(
-        "This username is not on the league allowlist.",
-      );
+      throw new AllowlistError("This username is not on the league allowlist.");
     }
 
     if (this.repository.usernameExists(normalizedUsername)) {
@@ -43,31 +35,20 @@ export class AuthService {
       );
     }
 
-    const user = this.repository.createUser(
-      normalizedUsername,
-      password,
-    );
+    const user = this.repository.createUser(normalizedUsername, password);
 
     const session = this.repository.createSession(user.id);
 
     return { user, token: session.token };
   }
 
-  login(
-    username: string,
-    password: string,
-  ): { user: User; token: string } {
+  login(username: string, password: string): { user: User; token: string } {
     const normalizedUsername = username.trim().toLowerCase();
 
-    const user = this.repository.verifyPassword(
-      normalizedUsername,
-      password,
-    );
+    const user = this.repository.verifyPassword(normalizedUsername, password);
 
     if (!user) {
-      throw new InvalidCredentialsError(
-        "Incorrect username or password.",
-      );
+      throw new InvalidCredentialsError("Incorrect username or password.");
     }
 
     const session = this.repository.createSession(user.id);
@@ -75,15 +56,11 @@ export class AuthService {
     return { user, token: session.token };
   }
 
-  logout(
-    token: string,
-  ): void {
+  logout(token: string): void {
     this.repository.deleteSession(token);
   }
 
-  getUserForSession(
-    token: string,
-  ): User | undefined {
+  getUserForSession(token: string): User | undefined {
     return this.repository.getSession(token);
   }
 

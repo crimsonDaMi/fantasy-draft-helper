@@ -1,169 +1,99 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  RankingStoreService,
-} from "./ranking-store.service.js";
+import { RankingStoreService } from "./ranking-store.service.js";
 
-import {
-  mkdtempSync,
-  rmSync,
-} from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 
-import {
-  tmpdir,
-} from "node:os";
+import { tmpdir } from "node:os";
 
-import {
-  join,
-} from "node:path";
+import { join } from "node:path";
 
-describe(
-  "RankingStoreService",
+describe("RankingStoreService", () => {
+  it("stores matches", () => {
+    const store = new RankingStoreService(":memory:");
 
-  () => {
-    it(
-      "stores matches",
+    expect(store.hasRankings()).toBe(false);
 
-      () => {
-        const store =
-          new RankingStoreService(
-            ":memory:",
-          );
+    store.setMatches([
+      {
+        ranking: {
+          rank: 1,
 
-        expect(
-          store.hasRankings(),
-        ).toBe(false);
+          playerName: "Josh Allen",
 
-        store.setMatches([
-          {
-            ranking: {
-              rank: 1,
+          team: "BUF",
 
-              playerName:
-                "Josh Allen",
+          position: "QB",
+        },
 
-              team: "BUF",
-
-              position: "QB",
-            },
-
-            method: "NONE",
-          },
-        ]);
-
-        expect(
-          store.hasRankings(),
-        ).toBe(true);
-
-        expect(
-          store.getMatches(),
-        ).toHaveLength(1);
+        method: "NONE",
       },
-    );
+    ]);
 
-    it(
-      "clears matches",
+    expect(store.hasRankings()).toBe(true);
 
-      () => {
-        const store =
-          new RankingStoreService(
-            ":memory:",
-          );
+    expect(store.getMatches()).toHaveLength(1);
+  });
 
-        store.setMatches([
-          {
-            ranking: {
-              rank: 1,
+  it("clears matches", () => {
+    const store = new RankingStoreService(":memory:");
 
-              playerName:
-                "Josh Allen",
+    store.setMatches([
+      {
+        ranking: {
+          rank: 1,
 
-              team: "BUF",
+          playerName: "Josh Allen",
 
-              position: "QB",
-            },
+          team: "BUF",
 
-            method: "NONE",
-          },
-        ]);
+          position: "QB",
+        },
 
-        store.clear();
-
-        expect(
-          store.hasRankings(),
-        ).toBe(false);
+        method: "NONE",
       },
-    );
+    ]);
 
-    it(
-      "loads imported matches after the store is recreated",
+    store.clear();
 
-      () => {
-        const directory =
-          mkdtempSync(
-            join(
-              tmpdir(),
-              "fantasy-draft-helper-",
-            ),
-          );
+    expect(store.hasRankings()).toBe(false);
+  });
 
-        const databasePath = join(
-          directory,
-          "rankings.db",
-        );
+  it("loads imported matches after the store is recreated", () => {
+    const directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-"));
 
-        const firstStore =
-          new RankingStoreService(
-            databasePath,
-          );
+    const databasePath = join(directory, "rankings.db");
 
-        const rankingId =
-          firstStore.setMatches([
-            {
-              ranking: {
-                rank: 1,
+    const firstStore = new RankingStoreService(databasePath);
 
-                playerName:
-                  "Josh Allen",
+    const rankingId = firstStore.setMatches([
+      {
+        ranking: {
+          rank: 1,
 
-                team: "BUF",
+          playerName: "Josh Allen",
 
-                position: "QB",
-              },
+          team: "BUF",
 
-              method: "NONE",
-            },
-          ]);
+          position: "QB",
+        },
 
-        firstStore.close();
-
-        const recreatedStore =
-          new RankingStoreService(
-            databasePath,
-          );
-
-        expect(
-          recreatedStore.hasRanking(
-            rankingId,
-          ),
-        ).toBe(true);
-
-        expect(
-          recreatedStore.getMatches(
-            rankingId,
-          ),
-        ).toHaveLength(1);
-
-        recreatedStore.close();
-        rmSync(directory, {
-          recursive: true,
-          force: true,
-        });
+        method: "NONE",
       },
-    );
-  },
-);
+    ]);
+
+    firstStore.close();
+
+    const recreatedStore = new RankingStoreService(databasePath);
+
+    expect(recreatedStore.hasRanking(rankingId)).toBe(true);
+
+    expect(recreatedStore.getMatches(rankingId)).toHaveLength(1);
+
+    recreatedStore.close();
+    rmSync(directory, {
+      recursive: true,
+      force: true,
+    });
+  });
+});

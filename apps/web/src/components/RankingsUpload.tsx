@@ -2,21 +2,13 @@ import { useState } from "react";
 
 import { importRankings } from "../api/fantasy-api";
 
-import type {
-  RankingImportError,
-  RankingImportSummary,
-} from "../types/api";
+import type { RankingImportError, RankingImportSummary } from "../types/api";
 
 interface RankingsUploadProps {
-  onImported: (
-    summary: RankingImportSummary,
-    rankingId: string,
-  ) => void;
+  onImported: (summary: RankingImportSummary, rankingId: string) => void;
 }
 
-export function RankingsUpload({
-  onImported,
-}: RankingsUploadProps) {
+export function RankingsUpload({ onImported }: RankingsUploadProps) {
   const [file, setFile] = useState<File>();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string>();

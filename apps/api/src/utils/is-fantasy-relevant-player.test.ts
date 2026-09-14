@@ -1,76 +1,47 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  isFantasyRelevantPlayer,
-} from "./is-fantasy-relevant-player.js";
+import { isFantasyRelevantPlayer } from "./is-fantasy-relevant-player.js";
 
-describe(
-  "isFantasyRelevantPlayer",
+describe("isFantasyRelevantPlayer", () => {
+  it("accepts an active fantasy player", () => {
+    expect(
+      isFantasyRelevantPlayer({
+        sleeperId: "1",
 
-  () => {
-    it(
-      "accepts an active fantasy player",
+        fullName: "Josh Allen",
 
-      () => {
-        expect(
-          isFantasyRelevantPlayer({
-            sleeperId: "1",
+        active: true,
 
-            fullName:
-              "Josh Allen",
+        fantasyPositions: ["QB"],
+      }),
+    ).toBe(true);
+  });
 
-            active: true,
+  it("rejects an inactive player", () => {
+    expect(
+      isFantasyRelevantPlayer({
+        sleeperId: "1",
 
-            fantasyPositions: [
-              "QB",
-            ],
-          }),
-        ).toBe(true);
-      },
-    );
+        fullName: "Retired Player",
 
-    it(
-      "rejects an inactive player",
+        active: false,
 
-      () => {
-        expect(
-          isFantasyRelevantPlayer({
-            sleeperId: "1",
+        fantasyPositions: ["QB"],
+      }),
+    ).toBe(false);
+  });
 
-            fullName:
-              "Retired Player",
+  it("rejects a player without fantasy positions", () => {
+    expect(
+      isFantasyRelevantPlayer({
+        sleeperId: "1",
 
-            active: false,
+        fullName: "Non Fantasy Player",
 
-            fantasyPositions: [
-              "QB",
-            ],
-          }),
-        ).toBe(false);
-      },
-    );
+        active: true,
 
-    it(
-      "rejects a player without fantasy positions",
-
-      () => {
-        expect(
-          isFantasyRelevantPlayer({
-            sleeperId: "1",
-
-            fullName:
-              "Non Fantasy Player",
-
-            active: true,
-
-            fantasyPositions: [],
-          }),
-        ).toBe(false);
-      },
-    );
-  },
-);
+        fantasyPositions: [],
+      }),
+    ).toBe(false);
+  });
+});

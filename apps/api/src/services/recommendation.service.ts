@@ -3,29 +3,20 @@ import {
   RecommendationResult,
 } from "../domain/recommendation.js";
 
-import {
-  AdpService,
-} from "./adp.service.js";
+import { AdpService } from "./adp.service.js";
 
-import {
-  DraftStateService,
-} from "./draft-state.service.js";
+import { DraftStateService } from "./draft-state.service.js";
 
-import {
-  RankingStoreService,
-} from "./ranking-store.service.js";
+import { RankingStoreService } from "./ranking-store.service.js";
 
 export class RecommendationService {
   constructor(
-    private readonly draftStateService:
-      DraftStateService,
+    private readonly draftStateService: DraftStateService,
 
-    private readonly rankingStoreService:
-      RankingStoreService,
+    private readonly rankingStoreService: RankingStoreService,
 
-    private readonly adpService:
-      AdpService,
-  ) { }
+    private readonly adpService: AdpService,
+  ) {}
 
   async getRecommendations(
     draftId: string,
@@ -36,24 +27,13 @@ export class RecommendationService {
 
     positions?: string[],
   ): Promise<RecommendationResult> {
-    const draftState =
-      await this.draftStateService
-        .getDraftState(
-          draftId,
-        );
+    const draftState = await this.draftStateService.getDraftState(draftId);
 
-    const draftedPlayerIds =
-      draftState.draftedPlayerIds;
+    const draftedPlayerIds = draftState.draftedPlayerIds;
 
-    const matches =
-      this.rankingStoreService
-        .getMatches(
-          rankingId,
-        );
+    const matches = this.rankingStoreService.getMatches(rankingId);
 
-    const adpBySleeperId =
-      await this.adpService
-        .getSnapshot();
+    const adpBySleeperId = await this.adpService.getSnapshot();
 
     const recommendations = matches
       .filter((match) => match.player !== undefined)
@@ -62,7 +42,7 @@ export class RecommendationService {
         !positions || positions.length === 0
           ? true
           : Boolean(match.player!.position) &&
-          positions.includes(match.player!.position!),
+            positions.includes(match.player!.position!),
       )
       .slice(0, limit)
       .map((match): Recommendation => {
@@ -75,32 +55,26 @@ export class RecommendationService {
             adpValue === undefined
               ? undefined
               : {
-                value: adpValue,
-                diff: Math.round((match.ranking.rank - adpValue) * 10) / 10,
-              },
+                  value: adpValue,
+                  diff: Math.round((match.ranking.rank - adpValue) * 10) / 10,
+                },
         };
       });
 
     return {
       recommendations,
 
-      draftedPlayerCount:
-        draftedPlayerIds.size,
+      draftedPlayerCount: draftedPlayerIds.size,
 
-      draftStatus:
-        draftState.draft.status,
+      draftStatus: draftState.draft.status,
 
-      totalPicks:
-        draftState.picks.length,
+      totalPicks: draftState.picks.length,
 
-      lastPick:
-        draftState.picks.at(-1),
+      lastPick: draftState.picks.at(-1),
 
-      lastUpdatedAt:
-        draftState.lastUpdatedAt.toISOString(),
+      lastUpdatedAt: draftState.lastUpdatedAt.toISOString(),
 
-      generatedAt:
-        new Date().toISOString(),
+      generatedAt: new Date().toISOString(),
     };
   }
 }

@@ -1,6 +1,4 @@
-import {
-  Ranking,
-} from "./ranking.js";
+import { Ranking } from "./ranking.js";
 
 export interface RankingImportError {
   row: number;

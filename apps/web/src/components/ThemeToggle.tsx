@@ -12,23 +12,21 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
   return (
-    <div className="theme-toggle" role="radiogroup" aria-label="Color theme" >
-      {
-        THEMES.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={theme === value}
-            className={`theme-toggle__option${theme === value ? " theme-toggle__option--active" : ""
-              }`
-            }
-            onClick={() => onChange(value)}
-          >
-            {label}
-          </button >
-        ))
-      }
-    </div >
+    <div className="theme-toggle" role="radiogroup" aria-label="Color theme">
+      {THEMES.map(({ value, label }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={theme === value}
+          className={`theme-toggle__option${
+            theme === value ? " theme-toggle__option--active" : ""
+          }`}
+          onClick={() => onChange(value)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }

@@ -6,63 +6,41 @@ import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  createAppDependencies,
-} from "./app-dependencies.js";
+import { createAppDependencies } from "./app-dependencies.js";
 
-import {
-  createAuthRoutes,
-} from "./routes/auth.routes.js";
+import { createAuthRoutes } from "./routes/auth.routes.js";
 
-import {
-  createDraftsRoutes,
-} from "./routes/drafts.routes.js";
+import { createDraftsRoutes } from "./routes/drafts.routes.js";
 
-import {
-  createPlayersRoutes,
-} from "./routes/players.routes.js";
+import { createPlayersRoutes } from "./routes/players.routes.js";
 
-import {
-  HttpError,
-} from "./utils/http-error.js";
+import { HttpError } from "./utils/http-error.js";
 
-import multipart from
-  "@fastify/multipart";
+import multipart from "@fastify/multipart";
 
-import {
-  createRankingsRoutes,
-} from "./routes/rankings.routes.js";
+import { createRankingsRoutes } from "./routes/rankings.routes.js";
 
-import {
-  createRecommendationsRoutes,
-} from "./routes/recommendations.routes.js";
+import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
     logger: true,
   });
 
-  const dependencies =
-    createAppDependencies();
+  const dependencies = createAppDependencies();
 
   await app.register(cors, {
     origin: true,
     credentials: true,
   });
 
-  await app.register(
-    cookie,
-  );
+  await app.register(cookie);
 
-  await app.register(
-    multipart,
-    {
-      limits: {
-        fileSize:
-          1024 * 1024,
-      },
+  await app.register(multipart, {
+    limits: {
+      fileSize: 1024 * 1024,
     },
-  );
+  });
 
   app.get(
     "/health",
@@ -74,11 +52,7 @@ export async function buildApp() {
     },
   );
 
-  await app.register(
-    createAuthRoutes(
-      dependencies.authService,
-    ),
-  );
+  await app.register(createAuthRoutes(dependencies.authService));
 
   const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 
@@ -111,11 +85,7 @@ export async function buildApp() {
     ),
   );
 
-  await app.register(
-    createPlayersRoutes(
-      dependencies.playerService,
-    ),
-  );
+  await app.register(createPlayersRoutes(dependencies.playerService));
 
   await app.register(
     createRankingsRoutes(
@@ -150,39 +120,33 @@ export async function buildApp() {
     return reply.sendFile("index.html");
   });
 
-  app.setErrorHandler(
-    (error, request, reply) => {
-      request.log.error(error);
+  app.setErrorHandler((error, request, reply) => {
+    request.log.error(error);
 
-      if (error instanceof ZodError) {
-        return reply.status(400).send({
-          error: "VALIDATION_ERROR",
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        error: "VALIDATION_ERROR",
 
-          message:
-            "Invalid request parameters",
+        message: "Invalid request parameters",
 
-          details: error.issues,
-        });
-      }
-
-      if (error instanceof HttpError) {
-        return reply
-          .status(error.statusCode)
-          .send({
-            error: "SLEEPER_API_ERROR",
-
-            message: error.message,
-          });
-      }
-
-      return reply.status(500).send({
-        error: "INTERNAL_SERVER_ERROR",
-
-        message:
-          "An unexpected error occurred",
+        details: error.issues,
       });
-    },
-  );
+    }
+
+    if (error instanceof HttpError) {
+      return reply.status(error.statusCode).send({
+        error: "SLEEPER_API_ERROR",
+
+        message: error.message,
+      });
+    }
+
+    return reply.status(500).send({
+      error: "INTERNAL_SERVER_ERROR",
+
+      message: "An unexpected error occurred",
+    });
+  });
 
   return app;
 }

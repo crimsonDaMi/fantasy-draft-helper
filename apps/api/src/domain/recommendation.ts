@@ -1,15 +1,8 @@
-import {
-  Player,
-} from "./player.js";
+import { Player } from "./player.js";
 
-import {
-  Ranking,
-} from "./ranking.js";
+import { Ranking } from "./ranking.js";
 
-import {
-  DraftPick,
-  DraftStatus,
-} from "./draft.js";
+import { DraftPick, DraftStatus } from "./draft.js";
 
 export interface Recommendation {
   ranking: Ranking;

@@ -11,27 +11,27 @@
 
 :root,
 :root[data-theme="forest"] {
-  --color-bg: #14211B;
-  --color-surface: #1C2C24;
-  --color-surface-raised: #24362C;
+  --color-bg: #14211b;
+  --color-surface: #1c2c24;
+  --color-surface-raised: #24362c;
   --color-border: rgba(241, 244, 240, 0.08);
-  --color-text: #F1F4F0;
-  --color-text-muted: #8FA396;
-  --color-accent: #E8A33D;
-  --color-accent-text: #14211B;
-  --color-danger: #E8623D;
+  --color-text: #f1f4f0;
+  --color-text-muted: #8fa396;
+  --color-accent: #e8a33d;
+  --color-accent-text: #14211b;
+  --color-danger: #e8623d;
 }
 
 :root[data-theme="steel"] {
   --color-bg: #121212;
-  --color-surface: #1C1C18;
-  --color-surface-raised: #26261F;
+  --color-surface: #1c1c18;
+  --color-surface-raised: #26261f;
   --color-border: rgba(255, 255, 255, 0.08);
-  --color-text: #F5F3EE;
-  --color-text-muted: #9C9585;
-  --color-accent: #FFB612;
+  --color-text: #f5f3ee;
+  --color-text-muted: #9c9585;
+  --color-accent: #ffb612;
   --color-accent-text: #121212;
-  --color-danger: #E15241;
+  --color-danger: #e15241;
 }
 
 * {
@@ -59,7 +59,8 @@ body {
   padding: 0 20px 40px;
 }
 
-h1, h2 {
+h1,
+h2 {
   font-family: var(--font-display);
   font-weight: 600;
   margin: 0;

@@ -1,135 +1,81 @@
-import {
-  FastifyInstance,
-} from "fastify";
+import { FastifyInstance } from "fastify";
 
-import {
-  RankingImportService,
-} from "../services/ranking-import.service.js";
+import { RankingImportService } from "../services/ranking-import.service.js";
 
-import {
-  RankingStoreService,
-} from "../services/ranking-store.service.js";
+import { RankingStoreService } from "../services/ranking-store.service.js";
 
 export function createRankingsRoutes(
-  rankingImportService:
-    RankingImportService,
+  rankingImportService: RankingImportService,
 
-  rankingStoreService:
-    RankingStoreService,
+  rankingStoreService: RankingStoreService,
 ) {
-  return async function rankingsRoutes(
-    app: FastifyInstance,
-  ) {
+  return async function rankingsRoutes(app: FastifyInstance) {
     app.post(
       "/rankings",
 
       async (request, reply) => {
-        const file =
-          await request.file();
+        const file = await request.file();
 
         if (!file) {
-          return reply
-            .status(400)
-            .send({
-              error:
-                "CSV file is required",
-            });
+          return reply.status(400).send({
+            error: "CSV file is required",
+          });
         }
 
-        const allowedMimeTypes =
-          new Set([
-            "text/csv",
+        const allowedMimeTypes = new Set([
+          "text/csv",
 
-            "application/vnd.ms-excel",
+          "application/vnd.ms-excel",
 
-            "application/octet-stream",
-          ]);
+          "application/octet-stream",
+        ]);
 
-        if (
-          !allowedMimeTypes.has(
-            file.mimetype,
-          )
-        ) {
-          return reply
-            .status(400)
-            .send({
-              error:
-                "File must be a CSV",
-            });
+        if (!allowedMimeTypes.has(file.mimetype)) {
+          return reply.status(400).send({
+            error: "File must be a CSV",
+          });
         }
 
-        const csvContent =
-          await file.toBuffer();
+        const csvContent = await file.toBuffer();
 
-        const result =
-          await rankingImportService.importCsv(
-            csvContent.toString(
-              "utf-8",
-            ),
-          );
+        const result = await rankingImportService.importCsv(
+          csvContent.toString("utf-8"),
+        );
 
-        const rankingId =
-          rankingStoreService.setMatches(
-            result.matches,
-          );
+        const rankingId = rankingStoreService.setMatches(result.matches);
 
         return {
           rankingId,
 
-          summary:
-            result.summary,
+          summary: result.summary,
 
-          validationErrors:
-            result.importResult.errors,
+          validationErrors: result.importResult.errors,
 
-          unmatchedPlayers:
-            result.matches
-              .filter(
-                (match) =>
-                  match.method === "NONE",
-              )
-              .map(
-                (match) => ({
-                  rank:
-                    match.ranking.rank,
+          unmatchedPlayers: result.matches
+            .filter((match) => match.method === "NONE")
+            .map((match) => ({
+              rank: match.ranking.rank,
 
-                  name:
-                    match.ranking.playerName,
+              name: match.ranking.playerName,
 
-                  team:
-                    match.ranking.team,
+              team: match.ranking.team,
 
-                  position:
-                    match.ranking.position,
-                }),
-              ),
+              position: match.ranking.position,
+            })),
 
-          ambiguousPlayers:
-            result.matches
-              .filter(
-                (match) =>
-                  match.method === "AMBIGUOUS",
-              )
-              .map(
-                (match) => ({
-                  rank:
-                    match.ranking.rank,
+          ambiguousPlayers: result.matches
+            .filter((match) => match.method === "AMBIGUOUS")
+            .map((match) => ({
+              rank: match.ranking.rank,
 
-                  name:
-                    match.ranking.playerName,
+              name: match.ranking.playerName,
 
-                  candidates:
-                    match.candidates?.map(
-                      (player) => ({
-                        sleeperId:
-                          player.sleeperId,
+              candidates: match.candidates?.map((player) => ({
+                sleeperId: player.sleeperId,
 
-                        fullName:
-                          player.fullName,
-                      }),
-                    ),
-                }),
-              ),
+                fullName: player.fullName,
+              })),
+            })),
         };
       },
     );
@@ -138,23 +84,15 @@ export function createRankingsRoutes(
       "/rankings/status",
 
       async () => {
-        const matches =
-          rankingStoreService
-            .getMatches();
+        const matches = rankingStoreService.getMatches();
 
         return {
-          loaded:
-            rankingStoreService
-              .hasRankings(),
+          loaded: rankingStoreService.hasRankings(),
 
-          rankingCount:
-            matches.length,
+          rankingCount: matches.length,
 
-          matchedCount:
-            matches.filter(
-              (match) =>
-                match.player !== undefined,
-            ).length,
+          matchedCount: matches.filter((match) => match.player !== undefined)
+            .length,
         };
       },
     );

@@ -1,8 +1,4 @@
-export type DraftStatus =
-  | "PRE_DRAFT"
-  | "DRAFTING"
-  | "COMPLETE"
-  | "UNKNOWN";
+export type DraftStatus = "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
 
 export interface Draft {
   id: string;

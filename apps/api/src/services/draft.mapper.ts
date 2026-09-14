@@ -1,17 +1,8 @@
-import {
-  Draft,
-  DraftPick,
-  DraftStatus,
-} from "../domain/draft.js";
+import { Draft, DraftPick, DraftStatus } from "../domain/draft.js";
 
-import {
-  SleeperDraft,
-  SleeperDraftPick,
-} from "../types/sleeper.js";
+import { SleeperDraft, SleeperDraftPick } from "../types/sleeper.js";
 
-export function mapDraftStatus(
-  status: string,
-): DraftStatus {
+export function mapDraftStatus(status: string): DraftStatus {
   switch (status) {
     case "pre_draft":
       return "PRE_DRAFT";
@@ -27,15 +18,11 @@ export function mapDraftStatus(
   }
 }
 
-export function mapSleeperDraft(
-  draft: SleeperDraft,
-): Draft {
+export function mapSleeperDraft(draft: SleeperDraft): Draft {
   return {
     id: draft.draft_id,
 
-    status: mapDraftStatus(
-      draft.status,
-    ),
+    status: mapDraftStatus(draft.status),
 
     sport: draft.sport,
 
@@ -47,9 +34,7 @@ export function mapSleeperDraft(
   };
 }
 
-export function mapSleeperDraftPick(
-  pick: SleeperDraftPick,
-): DraftPick | null {
+export function mapSleeperDraftPick(pick: SleeperDraftPick): DraftPick | null {
   if (!pick.player_id) {
     return null;
   }
@@ -63,10 +48,7 @@ export function mapSleeperDraftPick(
 
     draftSlot: pick.draft_slot,
 
-    rosterId:
-      pick.roster_id !== undefined
-        ? String(pick.roster_id)
-        : undefined,
+    rosterId: pick.roster_id !== undefined ? String(pick.roster_id) : undefined,
 
     pickedBy: pick.picked_by,
 

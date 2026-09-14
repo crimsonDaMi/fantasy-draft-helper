@@ -1,6 +1,4 @@
-export function normalizePlayerName(
-  name: string,
-): string {
+export function normalizePlayerName(name: string): string {
   return name
     .toLowerCase()
     .trim()

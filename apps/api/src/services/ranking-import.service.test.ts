@@ -1,58 +1,34 @@
-import {
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { describe, expect, it } from "vitest";
 
-import {
-  RankingCsvService,
-} from "./ranking-csv.service.js";
+import { RankingCsvService } from "./ranking-csv.service.js";
 
-import {
-  RankingImportService,
-} from "./ranking-import.service.js";
+import { RankingImportService } from "./ranking-import.service.js";
 
-import {
-  PlayerService,
-} from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
-import {
-  vi,
-} from "vitest";
+import { vi } from "vitest";
 
-describe(
-  "RankingImportService",
+describe("RankingImportService", () => {
+  it("imports the example ranking CSV", async () => {
+    const csvService = new RankingCsvService();
 
-  () => {
-    it(
-      "imports the example ranking CSV",
+    const matchingService = {
+      matchRankings: () => [],
+    };
 
-      async () => {
-        const csvService =
-          new RankingCsvService();
+    const playerService = {
+      ensurePlayersLoaded: vi.fn().mockResolvedValue(undefined),
+    } as unknown as PlayerService;
 
-        const matchingService = {
-          matchRankings: () => [],
-        };
+    const service = new RankingImportService(
+      csvService,
 
-        const playerService = {
-          ensurePlayersLoaded:
-            vi.fn().mockResolvedValue(
-              undefined,
-            ),
-        } as unknown as PlayerService;
+      matchingService as never,
 
-        const service =
-          new RankingImportService(
-            csvService,
+      playerService as never,
+    );
 
-            matchingService as never,
-
-            playerService as never,
-          );
-
-        const result =
-          await service.importCsv(`
+    const result = await service.importCsv(`
 player_id,Rank,Name,Team,Position,Tier,Expert Rank
 9221,1,Jahmyr Gibbs,DET,RB,S,1.13
 9509,2,Bijan Robinson,ATL,RB,S,1.88
@@ -62,54 +38,39 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 4984,37,Josh Allen,BUF,QB,D,38.50
 `);
 
-        expect(
-          result.importResult.errors,
-        ).toHaveLength(0);
+    expect(result.importResult.errors).toHaveLength(0);
 
-        expect(
-          result.importResult.rankings,
-        ).toHaveLength(6);
+    expect(result.importResult.rankings).toHaveLength(6);
 
-        expect(
-          result.importResult.rankings[5],
-        ).toMatchObject({
-          rank: 37,
+    expect(result.importResult.rankings[5]).toMatchObject({
+      rank: 37,
 
-          playerName:
-            "Josh Allen",
+      playerName: "Josh Allen",
 
-          position: "QB",
-        });
-      },
+      position: "QB",
+    });
+  });
+
+  it("loads players before matching rankings", async () => {
+    const csvService = new RankingCsvService();
+
+    const matchingService = {
+      matchRankings: () => [],
+    };
+
+    const playerService = {
+      ensurePlayersLoaded: vi.fn().mockResolvedValue(undefined),
+    } as unknown as PlayerService;
+
+    const service = new RankingImportService(
+      csvService,
+
+      matchingService as never,
+
+      playerService as never,
     );
 
-    it(
-      "loads players before matching rankings",
-      async () => {
-        const csvService =
-          new RankingCsvService();
-
-        const matchingService = {
-          matchRankings: () => [],
-        };
-
-        const playerService = {
-          ensurePlayersLoaded:
-            vi.fn().mockResolvedValue(
-              undefined,
-            ),
-        } as unknown as PlayerService;
-
-        const service =
-          new RankingImportService(
-            csvService,
-
-            matchingService as never,
-
-            playerService as never,
-          );
-
-        await service.importCsv(`
+    await service.importCsv(`
 player_id,Rank,Name,Team,Position,Tier,Expert Rank
 9221,1,Jahmyr Gibbs,DET,RB,S,1.13
 9509,2,Bijan Robinson,ATL,RB,S,1.88
@@ -117,12 +78,8 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 9493,4,Puka Nacua,LAR,WR,S,4.00
 11604,20,Brock Bowers,LV,TE,C,20.88
 4984,37,Josh Allen,BUF,QB,D,38.50
-`,);
+`);
 
-        expect(
-          playerService.ensurePlayersLoaded,
-        ).toHaveBeenCalledTimes(1);
-      },
-    );
-  },
-);
+    expect(playerService.ensurePlayersLoaded).toHaveBeenCalledTimes(1);
+  });
+});

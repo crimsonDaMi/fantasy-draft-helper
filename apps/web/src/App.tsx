@@ -71,14 +71,12 @@ function App() {
         />
       </header>
 
-      {
-        data && (
-          <>
-            <PositionFilter selected={positions} onChange={setPositions} />
-            <RecommendationsList recommendations={data.recommendations} />
-          </>
-        )
-      }
+      {data && (
+        <>
+          <PositionFilter selected={positions} onChange={setPositions} />
+          <RecommendationsList recommendations={data.recommendations} />
+        </>
+      )}
 
       <details
         className="draft-setup"
@@ -106,7 +104,9 @@ function App() {
                   <p>Errors: {rankingSummary.errors}</p>
                 </>
               ) : (
-                <p>✓ Rankings loaded ({rankingSummary.matched} players matched)</p>
+                <p>
+                  ✓ Rankings loaded ({rankingSummary.matched} players matched)
+                </p>
               )}
             </div>
           )}
@@ -121,7 +121,7 @@ function App() {
           />
         </div>
       </details>
-    </main >
+    </main>
   );
 }
 

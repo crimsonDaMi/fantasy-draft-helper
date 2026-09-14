@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type {
-  AuthUser,
-} from "../api/fantasy-api";
+import type { AuthUser } from "../api/fantasy-api";
 
 import {
   getCurrentUser,
@@ -32,37 +30,27 @@ export function useAuth(): UseAuthResult {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = useCallback(
-    async (username: string, password: string) => {
-      setError(undefined);
-      try {
-        const loggedInUser = await apiLogin(username, password);
-        setUser(loggedInUser);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Login failed.",
-        );
-        throw err;
-      }
-    },
-    [],
-  );
+  const login = useCallback(async (username: string, password: string) => {
+    setError(undefined);
+    try {
+      const loggedInUser = await apiLogin(username, password);
+      setUser(loggedInUser);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
+      throw err;
+    }
+  }, []);
 
-  const register = useCallback(
-    async (username: string, password: string) => {
-      setError(undefined);
-      try {
-        const registeredUser = await apiRegister(username, password);
-        setUser(registeredUser);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Registration failed.",
-        );
-        throw err;
-      }
-    },
-    [],
-  );
+  const register = useCallback(async (username: string, password: string) => {
+    setError(undefined);
+    try {
+      const registeredUser = await apiRegister(username, password);
+      setUser(registeredUser);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed.");
+      throw err;
+    }
+  }, []);
 
   const logout = useCallback(async () => {
     await apiLogout();

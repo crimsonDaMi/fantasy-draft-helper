@@ -1,61 +1,37 @@
-import {
-  DraftState,
-} from "../domain/draft-state.js";
+import { DraftState } from "../domain/draft-state.js";
 
-import {
-  Player,
-} from "../domain/player.js";
+import { Player } from "../domain/player.js";
 
-import {
-  DraftService,
-} from "./draft.service.js";
+import { DraftService } from "./draft.service.js";
 
-import {
-  PlayerService,
-} from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
-import {
-  isFantasyRelevantPlayer,
-} from "../utils/is-fantasy-relevant-player.js";
+import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 
 export class DraftStateService {
   constructor(
     private readonly draftService: DraftService,
 
     private readonly playerService: PlayerService,
-  ) { }
+  ) {}
 
-  async getDraftState(
-    draftId: string,
-  ): Promise<DraftState> {
-    await this.playerService
-      .ensurePlayersLoaded();
+  async getDraftState(draftId: string): Promise<DraftState> {
+    await this.playerService.ensurePlayersLoaded();
 
-    const [
-      draft,
-      picks,
-    ] = await Promise.all([
-      this.draftService.getDraft(
-        draftId,
-      ),
+    const [draft, picks] = await Promise.all([
+      this.draftService.getDraft(draftId),
 
-      this.draftService.getDraftPicks(
-        draftId,
-      ),
+      this.draftService.getDraftPicks(draftId),
     ]);
 
-    const draftedPlayerIds = new Set(
-      picks.map((pick) => pick.playerId),
+    const draftedPlayerIds = new Set(picks.map((pick) => pick.playerId));
+
+    const allPlayers = this.playerService.getAllPlayers();
+
+    const availablePlayers = this.getAvailablePlayers(
+      allPlayers,
+      draftedPlayerIds,
     );
-
-    const allPlayers =
-      this.playerService.getAllPlayers();
-
-    const availablePlayers =
-      this.getAvailablePlayers(
-        allPlayers,
-        draftedPlayerIds,
-      );
 
     return {
       draft,
@@ -77,12 +53,8 @@ export class DraftStateService {
   ): Player[] {
     return players.filter(
       (player) =>
-        isFantasyRelevantPlayer(
-          player
-        ) &&
-        !draftedPlayerIds.has(
-          player.sleeperId,
-        ),
+        isFantasyRelevantPlayer(player) &&
+        !draftedPlayerIds.has(player.sleeperId),
     );
   }
 }

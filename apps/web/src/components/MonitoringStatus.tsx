@@ -55,7 +55,9 @@ export function MonitoringStatus({
   return (
     <div>
       <div className="status-bar">
-        <span className={`status-bar__dot${isLive ? " status-bar__dot--live" : ""}`} />
+        <span
+          className={`status-bar__dot${isLive ? " status-bar__dot--live" : ""}`}
+        />
         <span>{statusText}</span>
 
         {draftedPlayerCount !== undefined && (
@@ -94,11 +96,7 @@ export function MonitoringStatus({
       {error && (
         <div className="status-bar status-bar__error">
           <span>{error}</span>
-          <button
-            type="button"
-            className="status-bar__retry"
-            onClick={onRetry}
-          >
+          <button type="button" className="status-bar__retry" onClick={onRetry}>
             Retry
           </button>
         </div>

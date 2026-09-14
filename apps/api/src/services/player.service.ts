@@ -1,40 +1,26 @@
-import {
-  SleeperClient,
-} from "../clients/sleeper.client.js";
+import { SleeperClient } from "../clients/sleeper.client.js";
 
-import {
-  PlayerCache,
-} from "../cache/player.cache.js";
+import { PlayerCache } from "../cache/player.cache.js";
 
-import {
-  Player,
-} from "../domain/player.js";
+import { Player } from "../domain/player.js";
 
-import {
-  mapSleeperPlayer,
-} from "./player.mapper.js";
+import { mapSleeperPlayer } from "./player.mapper.js";
 
 export class PlayerService {
-  private playersLoadPromise?:
-    Promise<void>;
+  private playersLoadPromise?: Promise<void>;
 
   constructor(
     private readonly sleeperClient: SleeperClient,
 
     private readonly playerCache: PlayerCache,
-  ) { }
+  ) {}
 
   async refreshPlayers(): Promise<void> {
-    const response =
-      await this.sleeperClient.getNFLPlayers();
+    const response = await this.sleeperClient.getNFLPlayers();
 
-    const players =
-      Object.values(response)
-        .map(mapSleeperPlayer);
+    const players = Object.values(response).map(mapSleeperPlayer);
 
-    this.playerCache.replace(
-      players,
-    );
+    this.playerCache.replace(players);
   }
 
   async ensurePlayersLoaded(): Promise<void> {
@@ -43,40 +29,29 @@ export class PlayerService {
     }
 
     if (!this.playersLoadPromise) {
-      this.playersLoadPromise =
-        this.refreshPlayers();
+      this.playersLoadPromise = this.refreshPlayers();
     }
 
     try {
       await this.playersLoadPromise;
     } finally {
-      this.playersLoadPromise =
-        undefined;
+      this.playersLoadPromise = undefined;
     }
   }
 
-  getPlayerById(
-    sleeperId: string,
-  ): Player | undefined {
-    return this.playerCache.getById(
-      sleeperId,
-    );
+  getPlayerById(sleeperId: string): Player | undefined {
+    return this.playerCache.getById(sleeperId);
   }
 
-  findPlayersByName(
-    name: string,
-  ): Player[] {
-    return this.playerCache
-      .getByNormalizedName(name);
+  findPlayersByName(name: string): Player[] {
+    return this.playerCache.getByNormalizedName(name);
   }
 
   getAllPlayers(): Player[] {
     return this.playerCache.getAll();
   }
 
-  getCacheUpdatedAt():
-    | Date
-    | undefined {
+  getCacheUpdatedAt(): Date | undefined {
     return this.playerCache.updatedAt;
   }
 }

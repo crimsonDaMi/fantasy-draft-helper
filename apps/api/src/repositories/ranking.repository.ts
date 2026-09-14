@@ -1,18 +1,10 @@
-import {
-  randomUUID,
-} from "node:crypto";
+import { randomUUID } from "node:crypto";
 
-import {
-  DatabaseSync,
-} from "node:sqlite";
+import { DatabaseSync } from "node:sqlite";
 
-import {
-  openDatabase,
-} from "./database.js";
+import { openDatabase } from "./database.js";
 
-import {
-  PlayerMatch,
-} from "../domain/player-match.js";
+import { PlayerMatch } from "../domain/player-match.js";
 
 interface RankingPlayerRow {
   match_json: string;
@@ -21,12 +13,8 @@ interface RankingPlayerRow {
 export class RankingRepository {
   private readonly database: DatabaseSync;
 
-  constructor(
-    databasePath?: string,
-  ) {
-    this.database = openDatabase(
-      databasePath,
-    );
+  constructor(databasePath?: string) {
+    this.database = openDatabase(databasePath);
 
     this.database.exec(`
       PRAGMA foreign_keys = ON;
@@ -57,10 +45,7 @@ export class RankingRepository {
     `);
   }
 
-  create(
-    matches: PlayerMatch[],
-    name = "Imported ranking",
-  ): string {
+  create(matches: PlayerMatch[], name = "Imported ranking"): string {
     const rankingId = randomUUID();
     const createdAt = new Date().toISOString();
 
@@ -72,15 +57,10 @@ export class RankingRepository {
           `INSERT INTO rankings (id, name, created_at)
            VALUES (?, ?, ?)`,
         )
-        .run(
-          rankingId,
-          name,
-          createdAt,
-        );
+        .run(rankingId, name, createdAt);
 
-      const insertPlayer = this.database
-        .prepare(
-          `INSERT INTO ranking_players (
+      const insertPlayer = this.database.prepare(
+        `INSERT INTO ranking_players (
              ranking_id,
              rank,
              name,
@@ -91,7 +71,7 @@ export class RankingRepository {
              match_status,
              match_json
            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        );
+      );
 
       for (const match of matches) {
         insertPlayer.run(
@@ -116,9 +96,7 @@ export class RankingRepository {
     return rankingId;
   }
 
-  getMatches(
-    rankingId: string,
-  ): PlayerMatch[] {
+  getMatches(rankingId: string): PlayerMatch[] {
     const rows = this.database
       .prepare(
         `SELECT match_json
@@ -128,14 +106,10 @@ export class RankingRepository {
       )
       .all(rankingId) as unknown as RankingPlayerRow[];
 
-    return rows.map(
-      (row) => JSON.parse(row.match_json) as PlayerMatch,
-    );
+    return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
   }
 
-  hasRanking(
-    rankingId: string,
-  ): boolean {
+  hasRanking(rankingId: string): boolean {
     const row = this.database
       .prepare(
         `SELECT 1 AS found
@@ -143,9 +117,7 @@ export class RankingRepository {
          WHERE id = ?
          LIMIT 1`,
       )
-      .get(rankingId) as unknown as
-      | { found: number }
-      | undefined;
+      .get(rankingId) as unknown as { found: number } | undefined;
 
     return row !== undefined;
   }
@@ -158,9 +130,7 @@ export class RankingRepository {
          ORDER BY created_at DESC, rowid DESC
          LIMIT 1`,
       )
-      .get() as unknown as
-      | { id: string }
-      | undefined;
+      .get() as unknown as { id: string } | undefined;
 
     return row?.id;
   }
@@ -177,9 +147,7 @@ export class RankingRepository {
     this.database.close();
   }
 
-  private getMatchStatus(
-    match: PlayerMatch,
-  ): string {
+  private getMatchStatus(match: PlayerMatch): string {
     if (match.player !== undefined) {
       return "MATCHED";
     }

@@ -1,26 +1,14 @@
-import {
-  PlayerMatch,
-} from "../domain/player-match.js";
+import { PlayerMatch } from "../domain/player-match.js";
 
-import {
-  RankingImportResult,
-} from "../domain/ranking-import.js";
+import { RankingImportResult } from "../domain/ranking-import.js";
 
-import {
-  PlayerMatchingService,
-} from "./player-matching.service.js";
+import { PlayerMatchingService } from "./player-matching.service.js";
 
-import {
-  RankingCsvService,
-} from "./ranking-csv.service.js";
+import { RankingCsvService } from "./ranking-csv.service.js";
 
-import {
-  RankingImportSummary,
-} from "../domain/ranking-import-summary.js";
+import { RankingImportSummary } from "../domain/ranking-import-summary.js";
 
-import {
-  PlayerService,
-} from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
 export interface ProcessedRankingImport {
   importResult: RankingImportResult;
@@ -32,38 +20,21 @@ export interface ProcessedRankingImport {
 
 export class RankingImportService {
   constructor(
-    private readonly csvService:
-      RankingCsvService,
+    private readonly csvService: RankingCsvService,
 
-    private readonly matchingService:
-      PlayerMatchingService,
+    private readonly matchingService: PlayerMatchingService,
 
-    private readonly playerService:
-      PlayerService,
-  ) { }
+    private readonly playerService: PlayerService,
+  ) {}
 
-  async importCsv(
-    csvContent: string,
-  ): Promise<ProcessedRankingImport> {
-    const importResult =
-      this.csvService.parse(
-        csvContent,
-      );
+  async importCsv(csvContent: string): Promise<ProcessedRankingImport> {
+    const importResult = this.csvService.parse(csvContent);
 
-    await this.playerService
-      .ensurePlayersLoaded();
+    await this.playerService.ensurePlayersLoaded();
 
-    const matches =
-      this.matchingService
-        .matchRankings(
-          importResult.rankings,
-        );
+    const matches = this.matchingService.matchRankings(importResult.rankings);
 
-    const summary =
-      this.createSummary(
-        importResult,
-        matches,
-      );
+    const summary = this.createSummary(importResult, matches);
 
     return {
       importResult,
@@ -79,27 +50,18 @@ export class RankingImportService {
 
     matches: PlayerMatch[],
   ): RankingImportSummary {
-    const matched =
-      matches.filter(
-        (match) =>
-          match.player !== undefined,
-      ).length;
+    const matched = matches.filter(
+      (match) => match.player !== undefined,
+    ).length;
 
-    const unmatched =
-      matches.filter(
-        (match) =>
-          match.method === "NONE",
-      ).length;
+    const unmatched = matches.filter((match) => match.method === "NONE").length;
 
-    const ambiguous =
-      matches.filter(
-        (match) =>
-          match.method === "AMBIGUOUS",
-      ).length;
+    const ambiguous = matches.filter(
+      (match) => match.method === "AMBIGUOUS",
+    ).length;
 
     return {
-      imported:
-        importResult.rankings.length,
+      imported: importResult.rankings.length,
 
       matched,
 
@@ -107,8 +69,7 @@ export class RankingImportService {
 
       ambiguous,
 
-      errors:
-        importResult.errors.length,
+      errors: importResult.errors.length,
     };
   }
 }

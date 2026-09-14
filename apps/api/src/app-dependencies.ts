@@ -1,61 +1,35 @@
-import {
-  AdpClient,
-} from "./clients/adp.client.js";
+import { AdpClient } from "./clients/adp.client.js";
 
-import {
-  AuthService,
-} from "./services/auth.service.js";
+import { AuthService } from "./services/auth.service.js";
 
-import {
-  PlayerCache,
-} from "./cache/player.cache.js";
+import { PlayerCache } from "./cache/player.cache.js";
 
-import {
-  SleeperClient,
-} from "./clients/sleeper.client.js";
+import { SleeperClient } from "./clients/sleeper.client.js";
 
-import {
-  AdpService,
-} from "./services/adp.service.js";
+import { AdpService } from "./services/adp.service.js";
 
-import {
-  DraftService,
-} from "./services/draft.service.js";
+import { DraftService } from "./services/draft.service.js";
 
-import {
-  PlayerService,
-} from "./services/player.service.js";
+import { PlayerService } from "./services/player.service.js";
 
-import {
-  DraftStateService,
-} from "./services/draft-state.service.js";
+import { DraftStateService } from "./services/draft-state.service.js";
 
-import {
-  RankingCsvService,
-} from "./services/ranking-csv.service.js";
+import { RankingCsvService } from "./services/ranking-csv.service.js";
 
-import {
-  PlayerMatchingService,
-} from "./services/player-matching.service.js";
+import { PlayerMatchingService } from "./services/player-matching.service.js";
 
-import {
-  RankingImportService,
-} from "./services/ranking-import.service.js";
+import { RankingImportService } from "./services/ranking-import.service.js";
 
-import {
-  RankingStoreService,
-} from "./services/ranking-store.service.js";
+import { RankingStoreService } from "./services/ranking-store.service.js";
 
-import {
-  RecommendationService,
-} from "./services/recommendation.service.js";
+import { RecommendationService } from "./services/recommendation.service.js";
 
 export interface AppDependencies {
   sleeperClient: SleeperClient;
 
   authService: AuthService;
 
-  adpService: AdpService,
+  adpService: AdpService;
 
   draftService: DraftService;
 
@@ -72,10 +46,8 @@ export interface AppDependencies {
   recommendationService: RecommendationService;
 }
 
-export function createAppDependencies():
-  AppDependencies {
-  const sleeperClient =
-    new SleeperClient();
+export function createAppDependencies(): AppDependencies {
+  const sleeperClient = new SleeperClient();
 
   const allowedUsernames = (process.env.ALLOWED_USERNAMES ?? "")
     .split(",")
@@ -87,63 +59,41 @@ export function createAppDependencies():
     allowedUsernames,
   );
 
-  const adpClient =
-    new AdpClient();
+  const adpClient = new AdpClient();
 
-  const adpService =
-    new AdpService(adpClient);
+  const adpService = new AdpService(adpClient);
 
-  const playerCache =
-    new PlayerCache();
+  const playerCache = new PlayerCache();
 
-  const draftService =
-    new DraftService(
-      sleeperClient,
-    );
+  const draftService = new DraftService(sleeperClient);
 
-  const playerService =
-    new PlayerService(
-      sleeperClient,
-      playerCache,
-    );
+  const playerService = new PlayerService(sleeperClient, playerCache);
 
-  const draftStateService =
-    new DraftStateService(
-      draftService,
-      playerService,
-    );
+  const draftStateService = new DraftStateService(draftService, playerService);
 
-  const rankingCsvService =
-    new RankingCsvService();
+  const rankingCsvService = new RankingCsvService();
 
-  const playerMatchingService =
-    new PlayerMatchingService(
-      playerService,
-    );
+  const playerMatchingService = new PlayerMatchingService(playerService);
 
-  const rankingImportService =
-    new RankingImportService(
-      rankingCsvService,
+  const rankingImportService = new RankingImportService(
+    rankingCsvService,
 
-      playerMatchingService,
+    playerMatchingService,
 
-      playerService,
-    );
+    playerService,
+  );
 
-  const rankingStoreService =
-    new RankingStoreService(
-      process.env
-        .RANKINGS_DATABASE_PATH,
-    );
+  const rankingStoreService = new RankingStoreService(
+    process.env.RANKINGS_DATABASE_PATH,
+  );
 
-  const recommendationService =
-    new RecommendationService(
-      draftStateService,
+  const recommendationService = new RecommendationService(
+    draftStateService,
 
-      rankingStoreService,
+    rankingStoreService,
 
-      adpService,
-    );
+    adpService,
+  );
 
   return {
     sleeperClient,
