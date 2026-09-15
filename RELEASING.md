@@ -92,7 +92,8 @@ something, bump the patch version instead.
 
 ## Telling league mates about an update
 
-Deployed instances pin an explicit version tag in `docker-compose.yml` (not `latest`),
+Deployed instances — whether self-run per person or a shared hosted instance
+(see [`deploy/pi/README.md`](deploy/pi/README.md)) — pin an explicit version tag in `docker-compose.yml` (not `latest`),
 so updates are deliberate rather than automatic:
 
 ```yaml

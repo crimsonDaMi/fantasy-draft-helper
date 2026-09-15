@@ -38,6 +38,19 @@ Install dependencies from the repository root:
 pnpm install
 ```
 
+## Deployment Options
+
+This app can run two ways:
+
+- **Self-run locally**, per-user, via the `docker-compose.yml` in this
+  repo's root — each person runs their own instance during their own
+  draft. See "Run Locally" below.
+- **Centrally hosted**, one instance shared by a whole league, with
+  authentication gating access. [`deploy/pi/README.md`](deploy/pi/README.md)
+  documents a real working example of this (Raspberry Pi + Tailscale
+  Funnel, no port forwarding or owned domain required) — adaptable to
+  any always-on device.
+
 ## Run Locally
 
 Start the API and web app together:
@@ -327,14 +340,16 @@ covers functional correctness in more depth.
 
 1. Run `pnpm dev`.
 2. Open [http://localhost:5173](http://localhost:5173).
-3. Upload [test-data/example-rankings.csv](test-data/example-rankings.csv).
-4. Confirm the import summary and matched count.
-5. Enter a valid Sleeper draft ID and start monitoring.
-6. Confirm draft status, pick progress, freshness time, and recommendations appear.
-7. During an active draft, confirm a reported pick removes that player after the next refresh.
-8. Confirm a completed draft displays the completed state and stops polling.
-9. Try an invalid draft ID and confirm the error is shown without an endless polling loop.
-10. Try an invalid CSV and confirm row-level errors and re-import guidance are shown.
+3. Set `ALLOWED_USERNAMES` (e.g. `ALLOWED_USERNAMES=smoketest pnpm --filter @fantasy-draft-helper/api dev`),
+   register that username, and log in.
+4. Upload [test-data/example-rankings.csv](test-data/example-rankings.csv).
+5. Confirm the import summary and matched count.
+6. Enter a valid Sleeper draft ID and start monitoring.
+7. Confirm draft status, pick progress, freshness time, and recommendations appear.
+8. During an active draft, confirm a reported pick removes that player after the next refresh.
+9. Confirm a completed draft displays the completed state and stops polling.
+10. Try an invalid draft ID and confirm the error is shown without an endless polling loop.
+11. Try an invalid CSV and confirm row-level errors and re-import guidance are shown.
 
 Sleeper may delay exposing picks through its API. Recommendations represent the latest state returned by Sleeper and may briefly be stale during that delay.
 
