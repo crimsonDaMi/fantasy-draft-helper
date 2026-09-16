@@ -6,6 +6,8 @@ import { createRecommendationsRoutes } from "./recommendations.routes.js";
 
 import { HttpError } from "../utils/http-error.js";
 
+const TEST_USER = { id: "test-user", username: "testuser" };
+
 function createTestApp(
   recommendationResult: unknown,
   options: {
@@ -14,6 +16,11 @@ function createTestApp(
   } = {},
 ) {
   const app = Fastify();
+
+  app.decorateRequest("user", undefined);
+  app.addHook("onRequest", async (request) => {
+    request.user = TEST_USER;
+  });
 
   const recommendationService = {
     getRecommendations: async () => recommendationResult,
@@ -157,6 +164,11 @@ describe("recommendations routes", () => {
   it("maps an invalid draft error from Sleeper", async () => {
     const app = Fastify();
 
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+
     const recommendationService = {
       getRecommendations: async () => {
         throw new HttpError(404, "Draft was not found");
@@ -220,6 +232,11 @@ describe("recommendations routes", () => {
   it("parses and forwards the positions filter", async () => {
     const app = Fastify();
 
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+
     const getRecommendations = vi.fn(async () => recommendationResult);
 
     const recommendationService = {
@@ -245,6 +262,7 @@ describe("recommendations routes", () => {
     expect(getRecommendations).toHaveBeenCalledWith(
       "draft-1",
       "ranking-1",
+      TEST_USER.id,
       20,
       ["RB", "WR"],
     );
@@ -254,6 +272,11 @@ describe("recommendations routes", () => {
 
   it("omits positions when the query param is absent", async () => {
     const app = Fastify();
+
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
 
     const getRecommendations = vi.fn(async () => recommendationResult);
 
@@ -280,6 +303,7 @@ describe("recommendations routes", () => {
     expect(getRecommendations).toHaveBeenCalledWith(
       "draft-1",
       "ranking-1",
+      TEST_USER.id,
       20,
       undefined,
     );

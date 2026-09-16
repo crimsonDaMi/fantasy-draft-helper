@@ -14,30 +14,31 @@ export class RankingStoreService {
         : repositoryOrPath;
   }
 
-  setMatches(matches: PlayerMatch[]): string {
-    return this.repository.create(matches);
+  setMatches(matches: PlayerMatch[], userId: string): string {
+    return this.repository.create(matches, userId);
   }
 
-  getMatches(rankingId?: string): PlayerMatch[] {
-    const selectedRankingId = rankingId ?? this.repository.getLatestRankingId();
+  getMatches(userId: string, rankingId?: string): PlayerMatch[] {
+    const selectedRankingId =
+      rankingId ?? this.repository.getLatestRankingId(userId);
 
     if (!selectedRankingId) {
       return [];
     }
 
-    return this.repository.getMatches(selectedRankingId);
+    return this.repository.getMatches(selectedRankingId, userId);
   }
 
-  hasRanking(rankingId: string): boolean {
-    return this.repository.hasRanking(rankingId);
+  hasRanking(rankingId: string, userId: string): boolean {
+    return this.repository.hasRanking(rankingId, userId);
   }
 
-  clear(): void {
-    this.repository.clear();
+  clear(userId: string): void {
+    this.repository.clear(userId);
   }
 
-  hasRankings(): boolean {
-    return this.repository.hasRankings();
+  hasRankings(userId: string): boolean {
+    return this.repository.hasRankings(userId);
   }
 
   close(): void {

@@ -54,6 +54,8 @@ export async function buildApp() {
 
   await app.register(createAuthRoutes(dependencies.authService));
 
+  app.decorateRequest("user", undefined);
+
   const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 
   app.addHook("onRequest", async (request, reply) => {
@@ -76,6 +78,8 @@ export async function buildApp() {
         message: "Login required",
       });
     }
+
+    request.user = user;
   });
 
   await app.register(

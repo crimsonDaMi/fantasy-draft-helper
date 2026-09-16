@@ -6,8 +6,15 @@ import { describe, expect, it } from "vitest";
 
 import { createRankingsRoutes } from "./rankings.routes.js";
 
+const TEST_USER = { id: "test-user", username: "testuser" };
+
 function createTestApp(importResult: unknown, matches: unknown[] = []) {
   const app = Fastify();
+
+  app.decorateRequest("user", undefined);
+  app.addHook("onRequest", async (request) => {
+    request.user = TEST_USER;
+  });
 
   app.register(multipart, {
     limits: {

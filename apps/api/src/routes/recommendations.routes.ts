@@ -38,7 +38,9 @@ export function createRecommendationsRoutes(
       "/drafts/:draftId/recommendations",
 
       async (request, reply) => {
-        if (!rankingStoreService.hasRankings()) {
+        const userId = request.user!.id;
+
+        if (!rankingStoreService.hasRankings(userId)) {
           return reply.status(400).send({
             error: "No rankings have been imported",
           });
@@ -49,7 +51,7 @@ export function createRecommendationsRoutes(
         const { rankingId, limit, positions } =
           recommendationsQuerySchema.parse(request.query);
 
-        if (!rankingStoreService.hasRanking(rankingId)) {
+        if (!rankingStoreService.hasRanking(rankingId, userId)) {
           return reply.status(404).send({
             error: "Ranking was not found",
           });
@@ -58,6 +60,7 @@ export function createRecommendationsRoutes(
         const result = await recommendationService.getRecommendations(
           draftId,
           rankingId,
+          userId,
           limit,
           positions,
         );

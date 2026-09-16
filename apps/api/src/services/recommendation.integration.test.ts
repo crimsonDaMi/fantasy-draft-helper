@@ -20,6 +20,8 @@ import type {
   SleeperPlayersResponse,
 } from "../types/sleeper.js";
 
+const TEST_USER_ID = "test-user";
+
 interface DraftFixture {
   draft: SleeperDraft;
   picks: SleeperDraftPick[];
@@ -69,62 +71,66 @@ function createRecommendationFixture(fixture: DraftFixture) {
 
   const rankingStore = new RankingStoreService(":memory:");
 
-  const rankingId = rankingStore.setMatches([
-    {
-      ranking: {
-        rank: 1,
-        playerName: "Player One",
-        team: "BUF",
-        position: "QB",
+  const rankingId = rankingStore.setMatches(
+    [
+      {
+        ranking: {
+          rank: 1,
+          playerName: "Player One",
+          team: "BUF",
+          position: "QB",
+        },
+        player: {
+          sleeperId: "1",
+          fullName: "Player One",
+          team: "BUF",
+          position: "QB",
+          active: true,
+          fantasyPositions: ["QB"],
+        },
+        method: "SLEEPER_ID",
       },
-      player: {
-        sleeperId: "1",
-        fullName: "Player One",
-        team: "BUF",
-        position: "QB",
-        active: true,
-        fantasyPositions: ["QB"],
+      {
+        ranking: {
+          rank: 2,
+          playerName: "Player Two",
+          team: "MIA",
+          position: "RB",
+        },
+        player: {
+          sleeperId: "2",
+          fullName: "Player Two",
+          team: "MIA",
+          position: "RB",
+          active: true,
+          fantasyPositions: ["RB"],
+        },
+        method: "SLEEPER_ID",
       },
-      method: "SLEEPER_ID",
-    },
-    {
-      ranking: {
-        rank: 2,
-        playerName: "Player Two",
-        team: "MIA",
-        position: "RB",
+      {
+        ranking: {
+          rank: 3,
+          playerName: "Unmatched Player",
+        },
+        method: "NONE",
       },
-      player: {
-        sleeperId: "2",
-        fullName: "Player Two",
-        team: "MIA",
-        position: "RB",
-        active: true,
-        fantasyPositions: ["RB"],
+      {
+        ranking: {
+          rank: 4,
+          playerName: "Ambiguous Player",
+        },
+        method: "AMBIGUOUS",
+        candidates: [],
       },
-      method: "SLEEPER_ID",
-    },
-    {
-      ranking: {
-        rank: 3,
-        playerName: "Unmatched Player",
-      },
-      method: "NONE",
-    },
-    {
-      ranking: {
-        rank: 4,
-        playerName: "Ambiguous Player",
-      },
-      method: "AMBIGUOUS",
-      candidates: [],
-    },
-  ]);
+    ],
+    TEST_USER_ID,
+  );
 
   return {
     fixture,
     rankingStore,
     rankingId,
+    userId: TEST_USER_ID,
     service: new RecommendationService(
       draftStateService,
       rankingStore,
@@ -150,6 +156,7 @@ describe("recommendation flow", () => {
     const beforePick = await flow.service.getRecommendations(
       "draft-1",
       flow.rankingId,
+      flow.userId,
       10,
     );
 
@@ -166,6 +173,7 @@ describe("recommendation flow", () => {
     const afterPick = await flow.service.getRecommendations(
       "draft-1",
       flow.rankingId,
+      flow.userId,
       10,
     );
 
@@ -195,6 +203,7 @@ describe("recommendation flow", () => {
     const result = await flow.service.getRecommendations(
       "draft-1",
       flow.rankingId,
+      flow.userId,
       10,
     );
 
@@ -229,6 +238,7 @@ describe("recommendation flow", () => {
     const result = await flow.service.getRecommendations(
       "draft-1",
       flow.rankingId,
+      flow.userId,
       10,
     );
 

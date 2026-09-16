@@ -4,34 +4,28 @@ import {
 } from "../domain/recommendation.js";
 
 import { AdpService } from "./adp.service.js";
-
 import { DraftStateService } from "./draft-state.service.js";
-
 import { RankingStoreService } from "./ranking-store.service.js";
 
 export class RecommendationService {
   constructor(
     private readonly draftStateService: DraftStateService,
-
     private readonly rankingStoreService: RankingStoreService,
-
     private readonly adpService: AdpService,
   ) {}
 
   async getRecommendations(
     draftId: string,
-
     rankingId: string,
-
+    userId: string,
     limit: number,
-
     positions?: string[],
   ): Promise<RecommendationResult> {
     const draftState = await this.draftStateService.getDraftState(draftId);
 
     const draftedPlayerIds = draftState.draftedPlayerIds;
 
-    const matches = this.rankingStoreService.getMatches(rankingId);
+    const matches = this.rankingStoreService.getMatches(userId, rankingId);
 
     const adpBySleeperId = await this.adpService.getSnapshot();
 
@@ -63,17 +57,11 @@ export class RecommendationService {
 
     return {
       recommendations,
-
       draftedPlayerCount: draftedPlayerIds.size,
-
       draftStatus: draftState.draft.status,
-
       totalPicks: draftState.picks.length,
-
       lastPick: draftState.picks.at(-1),
-
       lastUpdatedAt: draftState.lastUpdatedAt.toISOString(),
-
       generatedAt: new Date().toISOString(),
     };
   }

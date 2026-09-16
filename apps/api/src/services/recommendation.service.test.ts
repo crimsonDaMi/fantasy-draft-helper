@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { RecommendationService } from "./recommendation.service.js";
 
+const TEST_USER_ID = "test-user";
+
 const noopAdpService = {
   getSnapshot: async () => new Map<string, number>(),
 };
@@ -78,6 +80,8 @@ describe("RecommendationService", () => {
       "draft-1",
 
       "ranking-1",
+
+      TEST_USER_ID,
 
       10,
     );
@@ -166,6 +170,8 @@ describe("RecommendationService", () => {
       "draft-1",
 
       "ranking-1",
+
+      TEST_USER_ID,
 
       10,
     );
@@ -275,6 +281,8 @@ describe("RecommendationService", () => {
 
       "ranking-1",
 
+      TEST_USER_ID,
+
       10,
 
       ["RB"],
@@ -362,6 +370,8 @@ describe("RecommendationService", () => {
       "draft-1",
 
       "ranking-1",
+
+      TEST_USER_ID,
 
       10,
 
@@ -451,6 +461,8 @@ describe("RecommendationService", () => {
 
       "ranking-1",
 
+      TEST_USER_ID,
+
       10,
 
       ["RB"],
@@ -502,7 +514,12 @@ describe("RecommendationService", () => {
       adpService as never,
     );
 
-    const result = await service.getRecommendations("draft-1", "ranking-1", 10);
+    const result = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+    );
 
     expect(result.recommendations[0]?.adp).toEqual({
       value: 3.7,
@@ -549,7 +566,12 @@ describe("RecommendationService", () => {
       adpService as never,
     );
 
-    const result = await service.getRecommendations("draft-1", "ranking-1", 10);
+    const result = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+    );
 
     expect(result.recommendations[0]?.adp).toBeUndefined();
   });

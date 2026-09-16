@@ -8,55 +8,63 @@ import { tmpdir } from "node:os";
 
 import { join } from "node:path";
 
+const TEST_USER_ID = "test-user";
+
 describe("RankingStoreService", () => {
   it("stores matches", () => {
     const store = new RankingStoreService(":memory:");
 
-    expect(store.hasRankings()).toBe(false);
+    expect(store.hasRankings(TEST_USER_ID)).toBe(false);
 
-    store.setMatches([
-      {
-        ranking: {
-          rank: 1,
+    store.setMatches(
+      [
+        {
+          ranking: {
+            rank: 1,
 
-          playerName: "Josh Allen",
+            playerName: "Josh Allen",
 
-          team: "BUF",
+            team: "BUF",
 
-          position: "QB",
+            position: "QB",
+          },
+
+          method: "NONE",
         },
+      ],
+      TEST_USER_ID,
+    );
 
-        method: "NONE",
-      },
-    ]);
+    expect(store.hasRankings(TEST_USER_ID)).toBe(true);
 
-    expect(store.hasRankings()).toBe(true);
-
-    expect(store.getMatches()).toHaveLength(1);
+    expect(store.getMatches(TEST_USER_ID)).toHaveLength(1);
   });
 
   it("clears matches", () => {
     const store = new RankingStoreService(":memory:");
 
-    store.setMatches([
-      {
-        ranking: {
-          rank: 1,
+    store.setMatches(
+      [
+        {
+          ranking: {
+            rank: 1,
 
-          playerName: "Josh Allen",
+            playerName: "Josh Allen",
 
-          team: "BUF",
+            team: "BUF",
 
-          position: "QB",
+            position: "QB",
+          },
+
+          method: "NONE",
         },
+      ],
+      TEST_USER_ID,
+    );
 
-        method: "NONE",
-      },
-    ]);
+    store.clear(TEST_USER_ID);
 
-    store.clear();
-
-    expect(store.hasRankings()).toBe(false);
+    expect(store.hasRankings(TEST_USER_ID)).toBe(false);
   });
 
   it("loads imported matches after the store is recreated", () => {
@@ -66,29 +74,32 @@ describe("RankingStoreService", () => {
 
     const firstStore = new RankingStoreService(databasePath);
 
-    const rankingId = firstStore.setMatches([
-      {
-        ranking: {
-          rank: 1,
+    const rankingId = firstStore.setMatches(
+      [
+        {
+          ranking: {
+            rank: 1,
 
-          playerName: "Josh Allen",
+            playerName: "Josh Allen",
 
-          team: "BUF",
+            team: "BUF",
 
-          position: "QB",
+            position: "QB",
+          },
+
+          method: "NONE",
         },
-
-        method: "NONE",
-      },
-    ]);
+      ],
+      TEST_USER_ID,
+    );
 
     firstStore.close();
 
     const recreatedStore = new RankingStoreService(databasePath);
 
-    expect(recreatedStore.hasRanking(rankingId)).toBe(true);
+    expect(recreatedStore.hasRanking(rankingId, TEST_USER_ID)).toBe(true);
 
-    expect(recreatedStore.getMatches(rankingId)).toHaveLength(1);
+    expect(recreatedStore.getMatches(TEST_USER_ID, rankingId)).toHaveLength(1);
 
     recreatedStore.close();
     rmSync(directory, {

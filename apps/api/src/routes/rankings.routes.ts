@@ -14,6 +14,8 @@ export function createRankingsRoutes(
       "/rankings",
 
       async (request, reply) => {
+        const userId = request.user!.id;
+
         const file = await request.file();
 
         if (!file) {
@@ -42,7 +44,10 @@ export function createRankingsRoutes(
           csvContent.toString("utf-8"),
         );
 
-        const rankingId = rankingStoreService.setMatches(result.matches);
+        const rankingId = rankingStoreService.setMatches(
+          result.matches,
+          userId,
+        );
 
         return {
           rankingId,
@@ -83,11 +88,13 @@ export function createRankingsRoutes(
     app.get(
       "/rankings/status",
 
-      async () => {
-        const matches = rankingStoreService.getMatches();
+      async (request) => {
+        const userId = request.user!.id;
+
+        const matches = rankingStoreService.getMatches(userId);
 
         return {
-          loaded: rankingStoreService.hasRankings(),
+          loaded: rankingStoreService.hasRankings(userId),
 
           rankingCount: matches.length,
 

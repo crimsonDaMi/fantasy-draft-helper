@@ -21,6 +21,7 @@ export class RankingRepository {
 
       CREATE TABLE IF NOT EXISTS rankings (
         id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
         name TEXT NOT NULL,
         created_at TEXT NOT NULL
       );
@@ -42,10 +43,17 @@ export class RankingRepository {
 
       CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
         ON ranking_players (ranking_id, rank, id);
+
+      CREATE INDEX IF NOT EXISTS rankings_user_id_created_at
+        ON rankings (user_id, created_at);
     `);
   }
 
-  create(matches: PlayerMatch[], name = "Imported ranking"): string {
+  create(
+    matches: PlayerMatch[],
+    userId: string,
+    name = "Imported ranking",
+  ): string {
     const rankingId = randomUUID();
     const createdAt = new Date().toISOString();
 
@@ -54,23 +62,23 @@ export class RankingRepository {
     try {
       this.database
         .prepare(
-          `INSERT INTO rankings (id, name, created_at)
-           VALUES (?, ?, ?)`,
+          `INSERT INTO rankings (id, user_id, name, created_at)
+           VALUES (?, ?, ?, ?)`,
         )
-        .run(rankingId, name, createdAt);
+        .run(rankingId, userId, name, createdAt);
 
       const insertPlayer = this.database.prepare(
         `INSERT INTO ranking_players (
-             ranking_id,
-             rank,
-             name,
-             position,
-             team,
-             tier,
-             sleeper_id,
-             match_status,
-             match_json
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           ranking_id,
+           rank,
+           name,
+           position,
+           team,
+           tier,
+           sleeper_id,
+           match_status,
+           match_json
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       );
 
       for (const match of matches) {
@@ -96,51 +104,53 @@ export class RankingRepository {
     return rankingId;
   }
 
-  getMatches(rankingId: string): PlayerMatch[] {
+  getMatches(rankingId: string, userId: string): PlayerMatch[] {
     const rows = this.database
       .prepare(
-        `SELECT match_json
+        `SELECT ranking_players.match_json AS match_json
          FROM ranking_players
-         WHERE ranking_id = ?
-         ORDER BY rank ASC, id ASC`,
+         JOIN rankings ON rankings.id = ranking_players.ranking_id
+         WHERE ranking_players.ranking_id = ? AND rankings.user_id = ?
+         ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
       )
-      .all(rankingId) as unknown as RankingPlayerRow[];
+      .all(rankingId, userId) as unknown as RankingPlayerRow[];
 
     return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
   }
 
-  hasRanking(rankingId: string): boolean {
+  hasRanking(rankingId: string, userId: string): boolean {
     const row = this.database
       .prepare(
         `SELECT 1 AS found
          FROM rankings
-         WHERE id = ?
+         WHERE id = ? AND user_id = ?
          LIMIT 1`,
       )
-      .get(rankingId) as unknown as { found: number } | undefined;
+      .get(rankingId, userId) as unknown as { found: number } | undefined;
 
     return row !== undefined;
   }
 
-  getLatestRankingId(): string | undefined {
+  getLatestRankingId(userId: string): string | undefined {
     const row = this.database
       .prepare(
         `SELECT id
          FROM rankings
+         WHERE user_id = ?
          ORDER BY created_at DESC, rowid DESC
          LIMIT 1`,
       )
-      .get() as unknown as { id: string } | undefined;
+      .get(userId) as unknown as { id: string } | undefined;
 
     return row?.id;
   }
 
-  hasRankings(): boolean {
-    return this.getLatestRankingId() !== undefined;
+  hasRankings(userId: string): boolean {
+    return this.getLatestRankingId(userId) !== undefined;
   }
 
-  clear(): void {
-    this.database.exec("DELETE FROM rankings");
+  clear(userId: string): void {
+    this.database.prepare(`DELETE FROM rankings WHERE user_id = ?`).run(userId);
   }
 
   close(): void {
