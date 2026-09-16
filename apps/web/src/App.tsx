@@ -46,6 +46,7 @@ function App() {
           <h1>Fantasy Draft Helper</h1>
           <div className="app-header__controls">
             <ThemeToggle theme={theme} onChange={setTheme} />
+            <span className="app-header__user">{auth.user.username}</span>
             <button
               type="button"
               className="theme-toggle__option"
