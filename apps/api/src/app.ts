@@ -6,7 +6,7 @@ import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createAppDependencies } from "./app-dependencies.js";
+import { AppDependencies, createAppDependencies } from "./app-dependencies.js";
 
 import { createAuthRoutes } from "./routes/auth.routes.js";
 
@@ -22,12 +22,12 @@ import { createRankingsRoutes } from "./routes/rankings.routes.js";
 
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
 
-export async function buildApp() {
+export async function buildApp(
+  dependencies: AppDependencies = createAppDependencies(),
+) {
   const app = Fastify({
     logger: true,
   });
-
-  const dependencies = createAppDependencies();
 
   await app.register(cors, {
     origin: true,
