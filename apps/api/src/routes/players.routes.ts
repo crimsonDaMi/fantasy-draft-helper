@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 
-import { PlayerService } from "../services/player.service.js";
+import { PlayerService, RefreshCooldownError } from "../services/player.service.js";
 
 export function createPlayersRoutes(playerService: PlayerService) {
   return async function playersRoutes(app: FastifyInstance) {
@@ -23,8 +23,20 @@ export function createPlayersRoutes(playerService: PlayerService) {
     app.post(
       "/players/refresh",
 
-      async () => {
-        await playerService.refreshPlayers();
+      async (request, reply) => {
+        try {
+          await playerService.refreshPlayersWithCooldown();
+        } catch (error) {
+          if (error instanceof RefreshCooldownError) {
+            return reply.status(429).send({
+              error: "REFRESH_COOLDOWN",
+              message: error.message,
+              retryAfterMs: error.retryAfterMs,
+            });
+          }
+
+          throw error;
+        }
 
         return {
           status: "ok",

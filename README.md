@@ -268,7 +268,22 @@ This is a **soft dependency**, not a formal API contract:
   league uses a different format (e.g. `"Redraft PPR ADP"`,
   `"Dynasty PPR ADP"`).
 
-  ## Authentication Setup
+## Player Cache Refresh Cooldown
+
+`POST /players/refresh` is rate-limited to once per 24 hours, regardless of
+which authenticated user calls it. This follows Sleeper's own API guidance:
+["You do not need to call this endpoint more than once per
+day."](https://docs.sleeper.com/) — the full player dataset is several
+megabytes, and Sleeper explicitly asks integrators not to poll it more
+often than that.
+
+A refresh attempted before the cooldown elapses returns `429 Too Many
+Requests` with a `retryAfterMs` field indicating how long to wait. The
+cooldown applies globally to the shared player cache, not per-user — since
+player data is objectively the same for everyone, there's no reason for
+each person to have their own cooldown window.
+
+## Authentication Setup
 
 Access is restricted to a hardcoded allowlist of usernames — proportionate
 for a small, known league rather than open signup. Configure it via an
