@@ -20,6 +20,21 @@ export class ApiRequestError extends Error {
   }
 }
 
+type UnauthorizedListener = () => void;
+
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+export function onUnauthorized(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
+}
+
+function notifyUnauthorized(): void {
+  for (const listener of unauthorizedListeners) {
+    listener();
+  }
+}
+
 async function getErrorMessage(response: Response): Promise<string> {
   try {
     const error = await response.json();
@@ -46,6 +61,9 @@ export async function importRankings(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
     throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
@@ -79,6 +97,9 @@ export async function getRecommendations(
   );
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
     throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 

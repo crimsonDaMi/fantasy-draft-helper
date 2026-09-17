@@ -4,6 +4,7 @@ import type { AuthUser } from "../api/fantasy-api";
 
 import {
   getCurrentUser,
+  onUnauthorized,
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
@@ -28,6 +29,13 @@ export function useAuth(): UseAuthResult {
       .then(setUser)
       .catch(() => setUser(undefined))
       .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    return onUnauthorized(() => {
+      setUser(undefined);
+      setError("Your session expired. Please log in again.");
+    });
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
