@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+} from "vitest";
 
 import {
   getRecommendations,
@@ -66,7 +74,9 @@ describe("onUnauthorized notifications", () => {
   it("does not notify listeners for non-401 errors", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(mockFetchResponse(404, { message: "Not found" })),
+      vi
+        .fn()
+        .mockResolvedValue(mockFetchResponse(404, { message: "Not found" })),
     );
 
     await expect(getRecommendations("draft-1", "ranking-1")).rejects.toThrow();
@@ -92,13 +102,11 @@ describe("onUnauthorized notifications", () => {
   it("does not notify listeners when login fails with 401 (wrong credentials, not an expired session)", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          mockFetchResponse(401, {
-            message: "Incorrect username or password.",
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        mockFetchResponse(401, {
+          message: "Incorrect username or password.",
+        }),
+      ),
     );
 
     await expect(login("someone", "wrongpassword")).rejects.toThrow();
@@ -109,7 +117,10 @@ describe("onUnauthorized notifications", () => {
   it("stops notifying an unsubscribed listener", async () => {
     unsubscribe();
 
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockFetchResponse(401, {})));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(mockFetchResponse(401, {})),
+    );
 
     await expect(getRecommendations("draft-1", "ranking-1")).rejects.toThrow();
 

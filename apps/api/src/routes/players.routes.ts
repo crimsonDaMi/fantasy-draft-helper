@@ -1,6 +1,9 @@
 import { FastifyInstance } from "fastify";
 
-import { PlayerService, RefreshCooldownError } from "../services/player.service.js";
+import {
+  PlayerService,
+  RefreshCooldownError,
+} from "../services/player.service.js";
 
 export function createPlayersRoutes(playerService: PlayerService) {
   return async function playersRoutes(app: FastifyInstance) {

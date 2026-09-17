@@ -38,7 +38,7 @@ describe("players routes", () => {
     const app = Fastify();
 
     const playerService = {
-      refreshPlayersWithCooldown: async () => { },
+      refreshPlayersWithCooldown: async () => {},
       getAllPlayers: () => [{ sleeperId: "1" }],
       getCacheUpdatedAt: () => new Date(),
     };

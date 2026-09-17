@@ -27,7 +27,7 @@ export class PlayerService {
     private readonly sleeperClient: SleeperClient,
 
     private readonly playerCache: PlayerCache,
-  ) { }
+  ) {}
 
   async refreshPlayers(): Promise<void> {
     const response = await this.sleeperClient.getNFLPlayers();
