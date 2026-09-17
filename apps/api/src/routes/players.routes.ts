@@ -23,7 +23,7 @@ export function createPlayersRoutes(playerService: PlayerService) {
     app.post(
       "/players/refresh",
 
-      async (request, reply) => {
+      async (_request, reply) => {
         try {
           await playerService.refreshPlayersWithCooldown();
         } catch (error) {
