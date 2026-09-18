@@ -102,6 +102,18 @@ services:
     image: ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0
 ```
 
+**Before announcing an update, check whether the release changed the
+SQLite schema** (a new/altered column in any `repositories/*.ts` file's
+`CREATE TABLE`). There's no migration system — deploying a schema-changing
+release against an existing data volume crashes on startup with a
+`no such column` error, since `CREATE TABLE IF NOT EXISTS` is a no-op
+against a table that already exists under the old schema (see
+`deploy/pi/README.md`'s Operational Notes for the full explanation and
+fix). If a release touched the schema, say so explicitly when announcing
+it — anyone updating needs to know their existing data won't survive
+(`docker compose down -v`, not just `down`, followed by re-registration
+and re-upload) rather than discovering it from a crash loop.
+
 When a new version is ready:
 
 1. Confirm the release workflow finished successfully (Actions tab) so the

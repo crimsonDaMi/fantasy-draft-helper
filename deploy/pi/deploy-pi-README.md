@@ -132,3 +132,15 @@ docker compose up -d
   this repository** — share it directly with league mates instead.
   Documenting the exact public hostname in a searchable public repo would
   make the home server easier to find than necessary.
+- **Schema changes require a volume drop.** No migration system exists (a
+  deliberate choice — see DEVELOPMENT_PLAN.md's #6 entry). Deploying any
+  version that changes the SQLite schema (e.g. v0.7.0's addition of
+  `user_id` to `rankings`) against the existing `draft-helper-data` volume
+  will crash on startup with a `no such column` error, since
+  `CREATE TABLE IF NOT EXISTS` is a no-op against a table that already
+  exists under the old schema. Fix: `docker compose down -v` (not just
+  `down`) before `docker compose up -d` — this discards all existing
+  rankings/users/sessions, so re-registration and re-upload is required
+  afterward. There's no way to detect this in advance short of knowing a
+  given release touched the schema; when in doubt, check the release's
+  commit history for repository/migration changes before deploying.
