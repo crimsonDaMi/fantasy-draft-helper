@@ -4,36 +4,28 @@
   --radius-sm: 4px;
   --radius-md: 10px;
 
+  /*
+    Default theme: Tundra. Overridden at runtime by useTheme.ts,
+    driven by the registry in themes.ts — see index.html's
+    inline script for how a previously-selected theme survives reload
+    without a flash of these defaults.
+  */
+  --color-bg: #203731;
+  --color-surface: #2a463f;
+  --color-surface-raised: #33544b;
+  --color-border: #f1f4f014;
+  --color-text: #f1f4f0;
+  --color-text-muted: #8fa396;
+  --color-accent: #ffb612;
+  --color-accent-text: #14211b;
+  --color-danger: #e8623d;
+
   font: 17px/1.5 var(--font-body);
   font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
 }
 
 :root,
-:root[data-theme="forest"] {
-  --color-bg: #14211b;
-  --color-surface: #1c2c24;
-  --color-surface-raised: #24362c;
-  --color-border: rgba(241, 244, 240, 0.08);
-  --color-text: #f1f4f0;
-  --color-text-muted: #8fa396;
-  --color-accent: #e8a33d;
-  --color-accent-text: #14211b;
-  --color-danger: #e8623d;
-}
-
-:root[data-theme="steel"] {
-  --color-bg: #121212;
-  --color-surface: #1c1c18;
-  --color-surface-raised: #26261f;
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-text: #f5f3ee;
-  --color-text-muted: #9c9585;
-  --color-accent: #ffb612;
-  --color-accent-text: #121212;
-  --color-danger: #e15241;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -416,7 +408,7 @@ button {
   color: var(--color-text-muted);
 }
 
-/* Theme toggle */
+/* Theme select */
 
 .app-header__top {
   display: flex;
@@ -424,32 +416,36 @@ button {
   justify-content: space-between;
   gap: 12px;
 }
-
-.theme-toggle {
-  display: inline-flex;
+.theme-select {
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.theme-toggle__option {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
   cursor: pointer;
 }
 
-.theme-toggle__option--active {
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+.theme-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.theme-toggle__option:focus-visible {
+/* Small header buttons (e.g. Log out) */
+
+.header-button {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }

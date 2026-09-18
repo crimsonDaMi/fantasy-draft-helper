@@ -5,9 +5,13 @@
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem("draft-helper-theme");
-          if (stored === "forest" || stored === "steel") {
-            document.documentElement.dataset.theme = stored;
+          var stored = JSON.parse(localStorage.getItem("draft-helper-theme"));
+          if (stored && stored.tokens) {
+            var root = document.documentElement.style;
+            Object.keys(stored.tokens).forEach(function (key) {
+              var cssVar = "--color-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+              root.setProperty(cssVar, stored.tokens[key]);
+            });
           }
         } catch (e) {}
       })();

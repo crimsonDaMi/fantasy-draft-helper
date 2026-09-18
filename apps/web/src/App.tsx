@@ -7,7 +7,7 @@ import { RecommendationsList } from "./components/RecommendationsList";
 import { useDraftRecommendations } from "./hooks/useDraftRecommendations";
 import type { RankingImportSummary } from "./types/api";
 import { PositionFilter } from "./components/PositionFilter";
-import { ThemeToggle } from "./components/ThemeToggle";
+import { ThemeSelect } from "./components/ThemeSelect";
 import { LoginForm } from "./components/LoginForm";
 import { isDebugUi } from "./config";
 import { useTheme } from "./hooks/useTheme";
@@ -45,11 +45,11 @@ function App() {
         <div className="app-header__top">
           <h1>Fantasy Draft Helper</h1>
           <div className="app-header__controls">
-            <ThemeToggle theme={theme} onChange={setTheme} />
+            <ThemeSelect themeId={theme} onChange={setTheme} />
             <span className="app-header__user">{auth.user.username}</span>
             <button
               type="button"
-              className="theme-toggle__option"
+              className="header-button"
               onClick={() => void auth.logout()}
             >
               Log out
