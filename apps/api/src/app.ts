@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import { ZodError } from "zod";
 import fastifyStatic from "@fastify/static";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +22,12 @@ import multipart from "@fastify/multipart";
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
 
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const { version: APP_VERSION } = JSON.parse(
+  readFileSync(path.join(__dirname, "../../../package.json"), "utf-8"),
+) as { version: string };
 
 export async function buildApp(
   dependencies: AppDependencies = createAppDependencies(),
@@ -48,6 +55,7 @@ export async function buildApp(
     async () => {
       return {
         status: "ok",
+        version: APP_VERSION,
       };
     },
   );
@@ -106,8 +114,6 @@ export async function buildApp(
       dependencies.rankingStoreService,
     ),
   );
-
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
   await app.register(fastifyStatic, {
     root: path.join(__dirname, "../../web/dist"),

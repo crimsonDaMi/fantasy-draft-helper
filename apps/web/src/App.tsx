@@ -45,6 +45,7 @@ function App() {
         <div className="app-header__top">
           <h1>Fantasy Draft Helper</h1>
           <div className="app-header__controls">
+            <span className="app-header__version">v{__APP_VERSION__}</span>
             <ThemeSelect themeId={theme} onChange={setTheme} />
             <span className="app-header__user">{auth.user.username}</span>
             <button
