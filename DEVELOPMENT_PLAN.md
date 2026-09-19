@@ -76,7 +76,48 @@ discussion, that happened once Phase 3 as a whole was considered done,
 which it now is. Next step: decide what (if anything) goes on a future
 version of this plan — there's no pre-agreed Phase 4.
 
-## Decision framing for Phases 2 & 3
+## Phase 4 — Ranking Editor (in progress)
+
+Not one of the original eight candidate features above — proposed and
+scoped after Phase 3 completed, with no pre-agreed plan to build it.
+Full requirements: [`docs/ranking-editor-requirements.md`](docs/ranking-editor-requirements.md).
+
+In short: a drag-and-drop UI for editing a user's rankings — reordering
+players, moving them between tiers, adding/removing tier boundaries, and
+moving players in and out of an "unranked" pool — as its own route,
+separate from the draft-monitoring view.
+
+**Progress so far:**
+
+- Tier-normalization logic (`apps/api/src/utils/tier.ts`,
+  `normalize-ranking-tiers.ts`): converts CSV tier values (numeric or
+  letter) to the app's single internal representation (`S`, then `A`-`Z`,
+  numeric 1:1 via `S=1, A=2, B=3, ...`), and resolves missing/unrecognized
+  tiers by borrowing from nearby rows — forward to the nearest
+  worse-ranked tiered row, or for trailing untiered rows, one tier worse
+  than the last tiered row (capped at `Z`). Wired into
+  `RankingImportService.importCsv` so every import normalizes tiers
+  before matching. Full test coverage in `tier.test.ts` and
+  `normalize-ranking-tiers.test.ts`.
+- No schema change needed for this piece — `ranking_players.tier` already
+  existed as a plain `TEXT` column; only its _meaning_ changed, from
+  "whatever the CSV said" to "always a normalized internal label."
+
+**Still to build:**
+
+- Four mutation API endpoints: `PATCH`/`DELETE` on a ranking's player
+  entries (move/add, remove), `POST`/`DELETE` on tier boundaries
+  (insert, remove-and-merge) — see the requirements doc's "API surface"
+  section for the agreed shapes.
+- An "unranked, active-this-season players" endpoint (set difference
+  against the current ranking).
+- Frontend: `react-router-dom` (no routing exists yet — this is the
+  first route beyond the single existing view), `@dnd-kit` for drag and
+  drop, and the editor UI itself (tier groups, unranked side panel,
+  explicit add/remove-tier controls, numeric/alphabetical tier display
+  toggle).
+- Re-import-while-editor-is-open behavior (full replace, per the
+  requirements doc).
 
 Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model

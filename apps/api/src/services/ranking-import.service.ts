@@ -10,6 +10,8 @@ import { RankingImportSummary } from "../domain/ranking-import-summary.js";
 
 import { PlayerService } from "./player.service.js";
 
+import { normalizeRankingTiers } from "../utils/normalize-ranking-tiers.js";
+
 export interface ProcessedRankingImport {
   importResult: RankingImportResult;
 
@@ -28,7 +30,12 @@ export class RankingImportService {
   ) {}
 
   async importCsv(csvContent: string): Promise<ProcessedRankingImport> {
-    const importResult = this.csvService.parse(csvContent);
+    const parsedResult = this.csvService.parse(csvContent);
+
+    const importResult = {
+      ...parsedResult,
+      rankings: normalizeRankingTiers(parsedResult.rankings),
+    };
 
     await this.playerService.ensurePlayersLoaded();
 

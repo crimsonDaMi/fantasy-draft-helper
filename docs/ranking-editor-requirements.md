@@ -1,6 +1,8 @@
 # Ranking Editor — Requirements
 
-**Status:** Fully validated. Ready for implementation planning.
+**Status:** Fully validated. Implementation in progress — see
+[`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md)'s Phase 4 section for
+current build status.
 
 ## Context
 
@@ -10,10 +12,10 @@ primary purpose, but there's no need to support editing rankings and
 monitoring an active draft at the same time. The user can switch between
 the draft view and the ranking editor view.
 
-*(This amends the original framing, which assumed the editor lived inside
+_(This amends the original framing, which assumed the editor lived inside
 the draft view — clarified during requirements validation: no
 simultaneous draft-monitoring + editing support is needed, at least for
-now, so a dedicated route is simpler and sufficient.)*
+now, so a dedicated route is simpler and sufficient.)_
 
 ## Requirements
 
