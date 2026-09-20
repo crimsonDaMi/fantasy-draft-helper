@@ -116,5 +116,24 @@ export function createRankingEditorRoutes(
         return { tiers };
       },
     );
+
+    // Active, fantasy-relevant players not currently part of this ranking —
+    // the "unranked" pool for the editor's side panel.
+    app.get(
+      "/rankings/:rankingId/unranked-players",
+
+      async (request) => {
+        const userId = request.user!.id;
+
+        const { rankingId } = rankingParamsSchema.parse(request.params);
+
+        const players = await rankingEditorService.getUnrankedPlayers(
+          rankingId,
+          userId,
+        );
+
+        return { players };
+      },
+    );
   };
 }

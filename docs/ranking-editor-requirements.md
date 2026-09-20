@@ -93,6 +93,7 @@ PATCH  /rankings/:rankingId/players/:sleeperId   { rank, tier }
 DELETE /rankings/:rankingId/players/:sleeperId
 POST   /rankings/:rankingId/tiers                { position }
 DELETE /rankings/:rankingId/tiers/:position
+GET    /rankings/:rankingId/unranked-players
 ```
 
 `rank` and `position` are both 1-based. `PATCH .../players/:sleeperId`

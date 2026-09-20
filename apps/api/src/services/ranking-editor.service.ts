@@ -2,11 +2,15 @@ import { FantasyPosition } from "../domain/ranking.js";
 
 import { PlayerMatch } from "../domain/player-match.js";
 
+import { Player } from "../domain/player.js";
+
 import { RankingTier } from "../domain/ranking-tier.js";
 
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
 import { HttpError } from "../utils/http-error.js";
+
+import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 
 import { PlayerService } from "./player.service.js";
 
@@ -91,6 +95,35 @@ export class RankingEditorService {
     this.assertOwnership(rankingId, userId);
 
     return this.repository.removeTier(rankingId, position);
+  }
+
+  /**
+   * Active, fantasy-relevant players not currently part of this ranking —
+   * the pool shown in the editor's "unranked" side panel. Requirement #6
+   * in docs/ranking-editor-requirements.md.
+   */
+  async getUnrankedPlayers(
+    rankingId: string,
+    userId: string,
+  ): Promise<Player[]> {
+    this.assertOwnership(rankingId, userId);
+
+    await this.playerService.ensurePlayersLoaded();
+
+    const rankedSleeperIds = new Set(
+      this.repository
+        .getMatches(rankingId, userId)
+        .map((match) => match.player?.sleeperId)
+        .filter((sleeperId): sleeperId is string => sleeperId !== undefined),
+    );
+
+    return this.playerService
+      .getAllPlayers()
+      .filter(
+        (player) =>
+          isFantasyRelevantPlayer(player) &&
+          !rankedSleeperIds.has(player.sleeperId),
+      );
   }
 
   private assertOwnership(rankingId: string, userId: string): void {

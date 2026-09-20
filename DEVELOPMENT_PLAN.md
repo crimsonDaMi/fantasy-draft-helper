@@ -111,8 +111,11 @@ separate from the draft-monitoring view.
   remove-and-merge). Tiers are now tracked as their own ordered list
   (`ranking_tiers` table) so an empty tier can exist before any player
   is dropped into it. See the requirements doc's "API surface" section.
-- An "unranked, active-this-season players" endpoint (set difference
-  against the current ranking).
+- ~~An "unranked, active-this-season players" endpoint~~ — done.
+  `GET /rankings/:rankingId/unranked-players`, backed by
+  `RankingEditorService.getUnrankedPlayers` (reuses
+  `isFantasyRelevantPlayer` and `PlayerService.getAllPlayers`, diffed
+  against the ranking's matched Sleeper IDs).
 - Frontend: `react-router-dom` (no routing exists yet — this is the
   first route beyond the single existing view), `@dnd-kit` for drag and
   drop, and the editor UI itself (tier groups, unranked side panel,
