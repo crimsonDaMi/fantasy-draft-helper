@@ -105,10 +105,12 @@ separate from the draft-monitoring view.
 
 **Still to build:**
 
-- Four mutation API endpoints: `PATCH`/`DELETE` on a ranking's player
-  entries (move/add, remove), `POST`/`DELETE` on tier boundaries
-  (insert, remove-and-merge) — see the requirements doc's "API surface"
-  section for the agreed shapes.
+- ~~Four mutation API endpoints~~ — done. `PATCH`/`DELETE` on
+  `/rankings/:rankingId/players/:sleeperId` (move/add, remove);
+  `POST`/`DELETE` on `/rankings/:rankingId/tiers[/:position]` (insert,
+  remove-and-merge). Tiers are now tracked as their own ordered list
+  (`ranking_tiers` table) so an empty tier can exist before any player
+  is dropped into it. See the requirements doc's "API surface" section.
 - An "unranked, active-this-season players" endpoint (set difference
   against the current ranking).
 - Frontend: `react-router-dom` (no routing exists yet — this is the

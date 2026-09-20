@@ -18,6 +18,10 @@ import { RankingCsvService } from "./services/ranking-csv.service.js";
 
 import { PlayerMatchingService } from "./services/player-matching.service.js";
 
+import { RankingRepository } from "./repositories/ranking.repository.js";
+
+import { RankingEditorService } from "./services/ranking-editor.service.js";
+
 import { RankingImportService } from "./services/ranking-import.service.js";
 
 import { RankingStoreService } from "./services/ranking-store.service.js";
@@ -40,6 +44,8 @@ export interface AppDependencies {
   draftStateService: DraftStateService;
 
   rankingImportService: RankingImportService;
+
+  rankingEditorService: RankingEditorService;
 
   rankingStoreService: RankingStoreService;
 
@@ -83,8 +89,15 @@ export function createAppDependencies(): AppDependencies {
     playerService,
   );
 
-  const rankingStoreService = new RankingStoreService(
+  const rankingRepository = new RankingRepository(
     process.env.RANKINGS_DATABASE_PATH,
+  );
+
+  const rankingStoreService = new RankingStoreService(rankingRepository);
+
+  const rankingEditorService = new RankingEditorService(
+    rankingRepository,
+    playerService,
   );
 
   const recommendationService = new RecommendationService(
@@ -111,6 +124,8 @@ export function createAppDependencies(): AppDependencies {
     draftStateService,
 
     rankingImportService,
+
+    rankingEditorService,
 
     rankingStoreService,
 

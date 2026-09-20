@@ -19,6 +19,8 @@ import { HttpError } from "./utils/http-error.js";
 
 import multipart from "@fastify/multipart";
 
+import { createRankingEditorRoutes } from "./routes/ranking-editor.routes.js";
+
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
 
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
@@ -105,6 +107,10 @@ export async function buildApp(
 
       dependencies.rankingStoreService,
     ),
+  );
+
+  await app.register(
+    createRankingEditorRoutes(dependencies.rankingEditorService),
   );
 
   await app.register(

@@ -86,6 +86,25 @@ import/display format:
   matching common "S-tier" usage elsewhere (fan rankings, gaming tier
   lists).
 
+## API surface
+
+```
+PATCH  /rankings/:rankingId/players/:sleeperId   { rank, tier }
+DELETE /rankings/:rankingId/players/:sleeperId
+POST   /rankings/:rankingId/tiers                { position }
+DELETE /rankings/:rankingId/tiers/:position
+```
+
+`rank` and `position` are both 1-based. `PATCH .../players/:sleeperId`
+moves the player if they're already ranked, or adds them (pulling name/
+team/position from the Sleeper player cache) if they aren't — the same
+endpoint serves requirements #3 and #7. `DELETE .../players/:sleeperId`
+is requirement #8. Tiers are tracked as their own ordered, possibly-empty
+list per ranking (not just inferred from players' tier values), so a "+"
+insert can create a tier with nothing in it yet. Removing a tier merges
+into the tier below, except for the bottommost tier, which merges
+upward instead (no tier below it to merge into).
+
 ## Display
 
 No debug/production split for the editor view — a single view for both
