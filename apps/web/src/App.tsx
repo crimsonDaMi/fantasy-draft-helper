@@ -1,29 +1,15 @@
-import { useState } from "react";
+import { NavLink, Route, Routes } from "react-router-dom";
 
-import { DraftForm } from "./components/DraftForm";
-import { MonitoringStatus } from "./components/MonitoringStatus";
-import { RankingsUpload } from "./components/RankingsUpload";
-import { RecommendationsList } from "./components/RecommendationsList";
-import { useDraftRecommendations } from "./hooks/useDraftRecommendations";
-import type { RankingImportSummary } from "./types/api";
-import { PositionFilter } from "./components/PositionFilter";
+import { DraftDashboard } from "./components/DraftDashboard";
+import { RankingEditorPage } from "./components/RankingEditorPage";
 import { ThemeSelect } from "./components/ThemeSelect";
 import { LoginForm } from "./components/LoginForm";
-import { isDebugUi } from "./config";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./hooks/useAuth";
 
 function App() {
-  const [draftId, setDraftId] = useState<string>();
-  const [rankingId, setRankingId] = useState<string>();
-  const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
-  const [positions, setPositions] = useState<string[]>([]);
-  const [setupOpen, setSetupOpen] = useState(() => !draftId || !rankingId);
   const [theme, setTheme] = useTheme();
   const auth = useAuth();
-
-  const { data, error, isLoading, pollingIntervalMs, retry } =
-    useDraftRecommendations(draftId, rankingId, positions);
 
   if (auth.isLoading) {
     return null;
@@ -57,72 +43,31 @@ function App() {
             </button>
           </div>
         </div>
-        <MonitoringStatus
-          draftId={draftId}
-          rankingId={rankingId}
-          draftStatus={data?.draftStatus}
-          totalPicks={data?.totalPicks}
-          draftedPlayerCount={data?.draftedPlayerCount}
-          lastPick={data?.lastPick}
-          generatedAt={data?.generatedAt}
-          lastUpdatedAt={data?.lastUpdatedAt}
-          pollingIntervalMs={pollingIntervalMs}
-          isLoading={isLoading}
-          error={error}
-          onRetry={retry}
-        />
+        <nav className="app-nav">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+            }
+          >
+            Draft
+          </NavLink>
+          <NavLink
+            to="/rankings/edit"
+            className={({ isActive }) =>
+              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
+            }
+          >
+            Edit rankings
+          </NavLink>
+        </nav>
       </header>
 
-      {data && (
-        <>
-          <PositionFilter selected={positions} onChange={setPositions} />
-          <RecommendationsList recommendations={data.recommendations} />
-        </>
-      )}
-
-      <details
-        className="draft-setup"
-        open={setupOpen}
-        onToggle={(event) => setSetupOpen(event.currentTarget.open)}
-      >
-        <summary>Draft setup</summary>
-        <div className="draft-setup__content">
-          <RankingsUpload
-            onImported={(summary, importedRankingId) => {
-              setRankingSummary(summary);
-              setRankingId(importedRankingId);
-            }}
-          />
-
-          {rankingSummary && (
-            <div>
-              {isDebugUi ? (
-                <>
-                  <h2>Rankings imported</h2>
-                  <p>Imported: {rankingSummary.imported}</p>
-                  <p>Matched: {rankingSummary.matched}</p>
-                  <p>Unmatched: {rankingSummary.unmatched}</p>
-                  <p>Ambiguous: {rankingSummary.ambiguous}</p>
-                  <p>Errors: {rankingSummary.errors}</p>
-                </>
-              ) : (
-                <p>
-                  ✓ Rankings loaded ({rankingSummary.matched} players matched)
-                </p>
-              )}
-            </div>
-          )}
-
-          <DraftForm
-            onSubmit={(id) => {
-              setDraftId(id);
-              if (rankingId) {
-                setSetupOpen(false);
-              }
-            }}
-          />
-        </div>
-      </details>
+      <Routes>
+        <Route path="/" element={<DraftDashboard />} />
+        <Route path="/rankings/edit" element={<RankingEditorPage />} />
+      </Routes>
     </main>
   );
 }
