@@ -116,11 +116,25 @@ separate from the draft-monitoring view.
   `RankingEditorService.getUnrankedPlayers` (reuses
   `isFantasyRelevantPlayer` and `PlayerService.getAllPlayers`, diffed
   against the ranking's matched Sleeper IDs).
-- Frontend: `react-router-dom` (no routing exists yet — this is the
-  first route beyond the single existing view), `@dnd-kit` for drag and
-  drop, and the editor UI itself (tier groups, unranked side panel,
-  explicit add/remove-tier controls, numeric/alphabetical tier display
-  toggle).
+- ~~Frontend routing~~ — done. `react-router-dom` added; `/` is the
+  existing draft dashboard, `/rankings/edit` is the new ranking editor
+  route.
+- ~~Read-only ranking editor UI~~ — done. Tiers rendered as grouped
+  sections in rank order plus an unranked side panel, backed by
+  `GET /rankings/:rankingId` and `GET /rankings/:rankingId/unranked-players`
+  via TanStack Query.
+- ~~Drag-and-drop mutations~~ — done. `@dnd-kit/core` +
+  `@dnd-kit/sortable` + `@dnd-kit/utilities`, wired to the existing
+  PATCH/DELETE player endpoints. Local state reorders immediately on
+  drag (dnd-kit needs this to feel responsive); the mutation fires on
+  drop, and both the ranking-detail and ranking-unranked queries are
+  invalidated on settle so the UI reconciles to the server's actual
+  (renumbered) state right after. Cross-tier drops translate a
+  within-tier drop index to the PATCH endpoint's whole-ranking rank by
+  summing the preceding tiers' player counts (`computeGlobalRank`,
+  unit-tested directly rather than via simulated drags).
+  Still open: explicit add/remove-tier controls, numeric/alphabetical
+  tier display toggle.
 - Re-import-while-editor-is-open behavior (full replace, per the
   requirements doc).
 

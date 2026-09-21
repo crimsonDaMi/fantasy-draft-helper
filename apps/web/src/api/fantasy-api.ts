@@ -2,6 +2,7 @@ import type {
   ApiPlayer,
   RankingDetailResponse,
   RankingImportResponse,
+  RankingPlayerDto,
   RankingStatusResponse,
   RecommendationsResponse,
 } from "../types/api";
@@ -207,6 +208,54 @@ export async function getUnrankedPlayers(
   const response = await fetch(
     `${API_BASE_URL}/rankings/${rankingId}/unranked-players`,
     { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function moveRankingPlayer(
+  rankingId: string,
+  sleeperId: string,
+  rank: number,
+  tier: string,
+): Promise<{ players: RankingPlayerDto[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/rankings/${rankingId}/players/${sleeperId}`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rank, tier }),
+    },
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function removeRankingPlayer(
+  rankingId: string,
+  sleeperId: string,
+): Promise<{ players: RankingPlayerDto[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/rankings/${rankingId}/players/${sleeperId}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    },
   );
 
   if (!response.ok) {
