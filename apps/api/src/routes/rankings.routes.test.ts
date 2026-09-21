@@ -30,6 +30,7 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
     setMatches: () => "ranking-1",
     getMatches: () => matches,
     hasRankings: () => matches.length > 0,
+    getLatestRankingId: () => (matches.length > 0 ? "ranking-1" : undefined),
   };
 
   app.register(
@@ -159,6 +160,7 @@ describe("rankings routes", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       loaded: true,
+      rankingId: "ranking-1",
       rankingCount: 2,
       matchedCount: 1,
     });

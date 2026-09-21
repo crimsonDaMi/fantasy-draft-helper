@@ -18,6 +18,10 @@ export class RankingStoreService {
     return this.repository.create(matches, userId);
   }
 
+  getLatestRankingId(userId: string): string | undefined {
+    return this.repository.getLatestRankingId(userId);
+  }
+
   getMatches(userId: string, rankingId?: string): PlayerMatch[] {
     const selectedRankingId =
       rankingId ?? this.repository.getLatestRankingId(userId);

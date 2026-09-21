@@ -96,6 +96,8 @@ export function createRankingsRoutes(
         return {
           loaded: rankingStoreService.hasRankings(userId),
 
+          rankingId: rankingStoreService.getLatestRankingId(userId),
+
           rankingCount: matches.length,
 
           matchedCount: matches.filter((match) => match.player !== undefined)

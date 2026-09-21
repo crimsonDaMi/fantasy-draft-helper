@@ -7,6 +7,7 @@ import { createRankingEditorRoutes } from "./ranking-editor.routes.js";
 const TEST_USER = { id: "test-user", username: "testuser" };
 
 function createTestApp(rankingEditorService: {
+  getRanking?: (...args: unknown[]) => unknown;
   movePlayer?: (...args: unknown[]) => unknown;
   removePlayer?: (...args: unknown[]) => unknown;
   insertTier?: (...args: unknown[]) => unknown;
@@ -26,6 +27,42 @@ function createTestApp(rankingEditorService: {
 }
 
 describe("ranking editor routes", () => {
+  it("returns ranking detail (players and tiers)", async () => {
+    const getRanking = vi.fn(() => ({
+      players: [
+        {
+          ranking: { rank: 1, playerName: "Player One", tier: "S" },
+          player: { sleeperId: "1", fullName: "Player One" },
+          method: "SLEEPER_ID",
+        },
+      ],
+      tiers: [{ label: "S", position: 1, playerCount: 1 }],
+    }));
+
+    const app = createTestApp({ getRanking });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rankings/ranking-1",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      players: [
+        {
+          ranking: { rank: 1, playerName: "Player One", tier: "S" },
+          player: { sleeperId: "1", fullName: "Player One" },
+          method: "SLEEPER_ID",
+        },
+      ],
+      tiers: [{ label: "S", position: 1, playerCount: 1 }],
+    });
+
+    expect(getRanking).toHaveBeenCalledWith("ranking-1", TEST_USER.id);
+
+    await app.close();
+  });
+
   it("moves a player and returns the updated ranking", async () => {
     const movePlayer = vi.fn(async () => [
       {

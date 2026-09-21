@@ -553,3 +553,97 @@ button {
   font-size: 12px;
   color: var(--color-text-muted);
 }
+
+.app-header__version {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Ranking editor */
+
+.ranking-editor {
+  padding: 16px 0;
+}
+
+.ranking-editor__layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.ranking-editor__tiers {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ranking-editor__tier {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.ranking-editor__tier h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  margin: 0 0 8px;
+  color: var(--color-accent);
+}
+
+.ranking-editor__unranked {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.ranking-editor__unranked h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+}
+
+.ranking-editor__player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-editor__player-list li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.ranking-editor__player-list li:last-child {
+  border-bottom: none;
+}
+
+.ranking-editor__rank {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.ranking-editor__name {
+  font-weight: 500;
+}
+
+.ranking-editor__meta {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  margin-left: auto;
+  white-space: nowrap;
+}

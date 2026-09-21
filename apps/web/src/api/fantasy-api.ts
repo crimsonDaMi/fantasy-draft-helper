@@ -1,5 +1,8 @@
 import type {
+  ApiPlayer,
+  RankingDetailResponse,
   RankingImportResponse,
+  RankingStatusResponse,
   RecommendationsResponse,
 } from "../types/api";
 
@@ -164,4 +167,54 @@ export async function getCurrentUser(): Promise<AuthUser | undefined> {
 
   const body = (await response.json()) as { user: AuthUser };
   return body.user;
+}
+
+export async function getRankingsStatus(): Promise<RankingStatusResponse> {
+  const response = await fetch(`${API_BASE_URL}/rankings/status`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function getRanking(
+  rankingId: string,
+): Promise<RankingDetailResponse> {
+  const response = await fetch(`${API_BASE_URL}/rankings/${rankingId}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function getUnrankedPlayers(
+  rankingId: string,
+): Promise<{ players: ApiPlayer[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/rankings/${rankingId}/unranked-players`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
 }

@@ -107,4 +107,27 @@ describe("RankingStoreService", () => {
       force: true,
     });
   });
+
+  it("returns the latest ranking id", () => {
+    const store = new RankingStoreService(":memory:");
+
+    expect(store.getLatestRankingId(TEST_USER_ID)).toBeUndefined();
+
+    const rankingId = store.setMatches(
+      [
+        {
+          ranking: {
+            rank: 1,
+            playerName: "Josh Allen",
+            team: "BUF",
+            position: "QB",
+          },
+          method: "NONE",
+        },
+      ],
+      TEST_USER_ID,
+    );
+
+    expect(store.getLatestRankingId(TEST_USER_ID)).toBe(rankingId);
+  });
 });

@@ -92,3 +92,40 @@ export interface RankingImportError {
 
   message: string;
 }
+
+export interface RankingPlayerDto {
+  ranking: {
+    rank: number;
+    playerName: string;
+    team?: string;
+    position?: string;
+    sleeperPlayerId?: string;
+    tier?: string;
+  };
+
+  player?: ApiPlayer;
+
+  method: string;
+
+  candidates?: ApiPlayer[];
+
+  warnings?: string[];
+}
+
+export interface RankingTierDto {
+  label: string;
+  position: number;
+  playerCount: number;
+}
+
+export interface RankingDetailResponse {
+  players: RankingPlayerDto[];
+  tiers: RankingTierDto[];
+}
+
+export interface RankingStatusResponse {
+  loaded: boolean;
+  rankingId?: string;
+  rankingCount: number;
+  matchedCount: number;
+}

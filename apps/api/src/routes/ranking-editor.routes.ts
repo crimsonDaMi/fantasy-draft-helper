@@ -29,6 +29,19 @@ export function createRankingEditorRoutes(
   rankingEditorService: RankingEditorService,
 ) {
   return async function rankingEditorRoutes(app: FastifyInstance) {
+    // Full ranking detail — entry state for the ranking editor.
+    app.get(
+      "/rankings/:rankingId",
+
+      async (request) => {
+        const userId = request.user!.id;
+
+        const { rankingId } = rankingParamsSchema.parse(request.params);
+
+        return rankingEditorService.getRanking(rankingId, userId);
+      },
+    );
+
     // Move an existing ranked player, or add a previously-unranked one,
     // to a new rank/tier position.
     app.patch(

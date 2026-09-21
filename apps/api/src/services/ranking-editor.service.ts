@@ -126,6 +126,24 @@ export class RankingEditorService {
       );
   }
 
+  /**
+   * Full ranking detail (players in rank order plus the tier list) — the
+   * entry state for the ranking editor. Reuses the same repository query
+   * as the recommendation flow rather than a second, lighter path: see
+   * discussion in DEVELOPMENT_PLAN.md's Phase 4 notes.
+   */
+  getRanking(
+    rankingId: string,
+    userId: string,
+  ): { players: PlayerMatch[]; tiers: RankingTier[] } {
+    this.assertOwnership(rankingId, userId);
+
+    return {
+      players: this.repository.getMatches(rankingId, userId),
+      tiers: this.repository.getTiers(rankingId),
+    };
+  }
+
   private assertOwnership(rankingId: string, userId: string): void {
     if (!this.repository.hasRanking(rankingId, userId)) {
       throw new HttpError(404, "Ranking was not found");

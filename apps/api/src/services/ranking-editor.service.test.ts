@@ -137,6 +137,49 @@ describe("RankingEditorService", () => {
     });
   });
 
+  describe("getRanking", () => {
+    it("returns players and tiers for the owning user", () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create(
+        [match(1, "S", "1"), match(2, "A", "2")],
+        USER_ID,
+      );
+
+      const playerService = createFixturePlayerService();
+
+      const service = new RankingEditorService(
+        repository,
+        playerService as never,
+      );
+
+      const result = service.getRanking(rankingId, USER_ID);
+
+      expect(result.players.map((m) => m.player?.sleeperId)).toEqual([
+        "1",
+        "2",
+      ]);
+      expect(result.tiers.map((t) => t.label)).toEqual(["S", "A"]);
+    });
+
+    it("throws 404 when the ranking does not belong to the user", () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create([match(1, "S", "1")], USER_ID);
+
+      const playerService = createFixturePlayerService();
+
+      const service = new RankingEditorService(
+        repository,
+        playerService as never,
+      );
+
+      expect(() => service.getRanking(rankingId, OTHER_USER_ID)).toThrow(
+        "Ranking was not found",
+      );
+    });
+  });
+
   describe("removePlayer", () => {
     it("removes a ranked player", () => {
       const repository = new RankingRepository(":memory:");
