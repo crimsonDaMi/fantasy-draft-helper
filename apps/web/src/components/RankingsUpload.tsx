@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { importRankings } from "../api/fantasy-api";
 
@@ -9,6 +10,7 @@ interface RankingsUploadProps {
 }
 
 export function RankingsUpload({ onImported }: RankingsUploadProps) {
+  const queryClient = useQueryClient();
   const [file, setFile] = useState<File>();
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string>();
@@ -32,6 +34,14 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
       const result = await importRankings(file);
 
       onImported(result.summary, result.rankingId);
+
+      // A re-import fully replaces the ranking (requirement #9 — no
+      // merge with in-progress editor edits); the backend already
+      // creates a brand-new ranking rather than mutating the old one.
+      // Invalidate the cached status so the editor route (mutually
+      // exclusive with this one) never renders a stale cached
+      // rankingId on its next mount.
+      void queryClient.invalidateQueries({ queryKey: ["ranking-status"] });
 
       if (result.validationErrors.length > 0) {
         setValidationErrors(result.validationErrors);

@@ -2,6 +2,22 @@ import type { ApiPlayer, RankingPlayerDto, RankingTierDto } from "../types/api";
 
 export const UNRANKED_CONTAINER = "unranked";
 
+export type TierDisplayMode = "alpha" | "numeric";
+
+/** Formats a tier's heading text per the editor's display toggle — the
+ * user can view labels as their internal alphabetical form (S, A, B, ...)
+ * or the equivalent numeric position (1, 2, 3, ...). Both come straight
+ * from the tier data the backend already returns (`label` and
+ * `position`); no new label<->number mapping is needed here — the
+ * backend's S=1/A=2/... mapping (utils/tier.ts) stays backend-only. */
+export function formatTierHeading(
+  label: string,
+  position: number,
+  mode: TierDisplayMode,
+): string {
+  return `Tier ${mode === "numeric" ? position : label}`;
+}
+
 export interface EditorPlayer {
   sleeperId: string;
   fullName: string;

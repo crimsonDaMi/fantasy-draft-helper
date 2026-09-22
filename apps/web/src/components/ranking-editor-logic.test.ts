@@ -4,6 +4,7 @@ import {
   buildContainers,
   computeGlobalRank,
   findContainer,
+  formatTierHeading,
   type Containers,
 } from "./ranking-editor-logic";
 
@@ -101,5 +102,17 @@ describe("computeGlobalRank", () => {
     };
 
     expect(computeGlobalRank(containers, ["S", "A"], "S", 0)).toBe(1);
+  });
+});
+
+describe("formatTierHeading", () => {
+  it("renders the alphabetical label by default", () => {
+    expect(formatTierHeading("S", 1, "alpha")).toBe("Tier S");
+    expect(formatTierHeading("B", 3, "alpha")).toBe("Tier B");
+  });
+
+  it("renders the numeric position in numeric mode", () => {
+    expect(formatTierHeading("S", 1, "numeric")).toBe("Tier 1");
+    expect(formatTierHeading("B", 3, "numeric")).toBe("Tier 3");
   });
 });

@@ -22,16 +22,21 @@ import {
   getRanking,
   getRankingsStatus,
   getUnrankedPlayers,
+  insertTier,
   moveRankingPlayer,
   removeRankingPlayer,
+  removeTier,
 } from "../api/fantasy-api";
+import type { RankingTierDto } from "../types/api";
 import {
   UNRANKED_CONTAINER,
   buildContainers,
   computeGlobalRank,
   findContainer,
+  formatTierHeading,
   type Containers,
   type EditorPlayer,
+  type TierDisplayMode,
 } from "./ranking-editor-logic";
 
 interface SortablePlayerProps {
@@ -70,12 +75,22 @@ function SortablePlayer({ player, rank }: SortablePlayerProps) {
   );
 }
 
+interface TierRemoveControl {
+  canRemove: boolean;
+  isConfirming: boolean;
+  isPending: boolean;
+  onRequestRemove: () => void;
+  onConfirmRemove: () => void;
+  onCancelRemove: () => void;
+}
+
 interface DroppableContainerProps {
   id: string;
   title: string;
   players: EditorPlayer[];
   showRank: boolean;
   className: string;
+  removeControl?: TierRemoveControl;
 }
 
 function DroppableContainer({
@@ -84,12 +99,39 @@ function DroppableContainer({
   players,
   showRank,
   className,
+  removeControl,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
 
   return (
     <div className={className}>
-      <h3>{title}</h3>
+      <div className="ranking-editor__tier-header">
+        <h3>{title}</h3>
+        {removeControl?.canRemove &&
+          (removeControl.isConfirming ? (
+            <span className="ranking-editor__tier-confirm">
+              <span>Merge {players.length} player(s) into the next tier?</span>
+              <button
+                type="button"
+                onClick={removeControl.onConfirmRemove}
+                disabled={removeControl.isPending}
+              >
+                Confirm
+              </button>
+              <button type="button" onClick={removeControl.onCancelRemove}>
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="ranking-editor__tier-remove"
+              onClick={removeControl.onRequestRemove}
+            >
+              Remove tier
+            </button>
+          ))}
+      </div>
       <SortableContext
         items={players.map((player) => player.sleeperId)}
         strategy={verticalListSortingStrategy}
@@ -132,6 +174,10 @@ export function RankingEditorPage() {
 
   const [containers, setContainers] = useState<Containers>({});
   const [isDragging, setIsDragging] = useState(false);
+  const [tierDisplayMode, setTierDisplayMode] =
+    useState<TierDisplayMode>("alpha");
+  const [confirmingRemoveTierPosition, setConfirmingRemoveTierPosition] =
+    useState<number>();
 
   // Re-derive local drag state from the server whenever a *new* server
   // snapshot arrives, using React's render-time "adjusting state when a
@@ -177,6 +223,15 @@ export function RankingEditorPage() {
     });
   }
 
+  function settleTierQueries() {
+    // Tier boundary changes only shift tier labels/assignments within
+    // the existing ranking — the unranked pool is untouched, so only
+    // ranking-detail needs to reconcile.
+    void queryClient.invalidateQueries({
+      queryKey: ["ranking-detail", rankingId],
+    });
+  }
+
   const moveMutation = useMutation({
     mutationFn: ({
       sleeperId,
@@ -195,6 +250,30 @@ export function RankingEditorPage() {
       removeRankingPlayer(rankingId!, sleeperId),
     onSettled: settleQueries,
   });
+
+  const insertTierMutation = useMutation({
+    mutationFn: ({ position }: { position: number }) =>
+      insertTier(rankingId!, position),
+    onSettled: settleTierQueries,
+  });
+
+  const removeTierMutation = useMutation({
+    mutationFn: ({ position }: { position: number }) =>
+      removeTier(rankingId!, position),
+    onSuccess: () => setConfirmingRemoveTierPosition(undefined),
+    onSettled: settleTierQueries,
+  });
+
+  function handleRemoveTierClick(tier: RankingTierDto) {
+    const playerCount = containers[tier.label]?.length ?? 0;
+
+    if (playerCount === 0) {
+      removeTierMutation.mutate({ position: tier.position });
+      return;
+    }
+
+    setConfirmingRemoveTierPosition(tier.position);
+  }
 
   function handleDragStart() {
     setIsDragging(true);
@@ -345,7 +424,37 @@ export function RankingEditorPage() {
 
   return (
     <section className="ranking-editor">
-      <h2>Edit rankings</h2>
+      <div className="ranking-editor__toolbar">
+        <h2>Edit rankings</h2>
+        <div
+          className="ranking-editor__tier-mode-toggle"
+          role="group"
+          aria-label="Tier label format"
+        >
+          <button
+            type="button"
+            className={
+              tierDisplayMode === "alpha"
+                ? "ranking-editor__mode-button ranking-editor__mode-button--active"
+                : "ranking-editor__mode-button"
+            }
+            onClick={() => setTierDisplayMode("alpha")}
+          >
+            Letters
+          </button>
+          <button
+            type="button"
+            className={
+              tierDisplayMode === "numeric"
+                ? "ranking-editor__mode-button ranking-editor__mode-button--active"
+                : "ranking-editor__mode-button"
+            }
+            onClick={() => setTierDisplayMode("numeric")}
+          >
+            Numbers
+          </button>
+        </div>
+      </div>
 
       <DndContext
         sensors={sensors}
@@ -356,15 +465,49 @@ export function RankingEditorPage() {
       >
         <div className="ranking-editor__layout">
           <div className="ranking-editor__tiers">
+            <button
+              type="button"
+              className="ranking-editor__tier-add"
+              onClick={() => insertTierMutation.mutate({ position: 1 })}
+              disabled={insertTierMutation.isPending}
+            >
+              + Add tier here
+            </button>
             {tiers.map((tier) => (
-              <DroppableContainer
-                key={tier.label}
-                id={tier.label}
-                title={`Tier ${tier.label}`}
-                players={containers[tier.label] ?? []}
-                showRank
-                className="ranking-editor__tier"
-              />
+              <div key={tier.label}>
+                <DroppableContainer
+                  id={tier.label}
+                  title={formatTierHeading(
+                    tier.label,
+                    tier.position,
+                    tierDisplayMode,
+                  )}
+                  players={containers[tier.label] ?? []}
+                  showRank
+                  className="ranking-editor__tier"
+                  removeControl={{
+                    canRemove: tiers.length > 1,
+                    isConfirming:
+                      confirmingRemoveTierPosition === tier.position,
+                    isPending: removeTierMutation.isPending,
+                    onRequestRemove: () => handleRemoveTierClick(tier),
+                    onConfirmRemove: () =>
+                      removeTierMutation.mutate({ position: tier.position }),
+                    onCancelRemove: () =>
+                      setConfirmingRemoveTierPosition(undefined),
+                  }}
+                />
+                <button
+                  type="button"
+                  className="ranking-editor__tier-add"
+                  onClick={() =>
+                    insertTierMutation.mutate({ position: tier.position + 1 })
+                  }
+                  disabled={insertTierMutation.isPending}
+                >
+                  + Add tier here
+                </button>
+              </div>
             ))}
           </div>
 

@@ -4,6 +4,7 @@ import type {
   RankingImportResponse,
   RankingPlayerDto,
   RankingStatusResponse,
+  RankingTierDto,
   RecommendationsResponse,
 } from "../types/api";
 
@@ -252,6 +253,49 @@ export async function removeRankingPlayer(
 ): Promise<{ players: RankingPlayerDto[] }> {
   const response = await fetch(
     `${API_BASE_URL}/rankings/${rankingId}/players/${sleeperId}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function insertTier(
+  rankingId: string,
+  position: number,
+): Promise<{ tiers: RankingTierDto[] }> {
+  const response = await fetch(`${API_BASE_URL}/rankings/${rankingId}/tiers`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ position }),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
+export async function removeTier(
+  rankingId: string,
+  position: number,
+): Promise<{ tiers: RankingTierDto[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/rankings/${rankingId}/tiers/${position}`,
     {
       method: "DELETE",
       credentials: "include",

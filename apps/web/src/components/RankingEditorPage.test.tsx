@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   getUnrankedPlayers: vi.fn(),
   moveRankingPlayer: vi.fn(),
   removeRankingPlayer: vi.fn(),
+  insertTier: vi.fn(),
+  removeTier: vi.fn(),
 }));
 
 vi.mock("../api/fantasy-api", () => ({
@@ -18,6 +20,8 @@ vi.mock("../api/fantasy-api", () => ({
   getUnrankedPlayers: mocks.getUnrankedPlayers,
   moveRankingPlayer: mocks.moveRankingPlayer,
   removeRankingPlayer: mocks.removeRankingPlayer,
+  insertTier: mocks.insertTier,
+  removeTier: mocks.removeTier,
 }));
 
 function renderWithClient() {

@@ -133,10 +133,46 @@ separate from the draft-monitoring view.
   within-tier drop index to the PATCH endpoint's whole-ranking rank by
   summing the preceding tiers' player counts (`computeGlobalRank`,
   unit-tested directly rather than via simulated drags).
-  Still open: explicit add/remove-tier controls, numeric/alphabetical
-  tier display toggle.
-- Re-import-while-editor-is-open behavior (full replace, per the
-  requirements doc).
+- ~~Explicit add/remove-tier controls~~ — done. `RankingEditorPage`
+  gets a "+ Add tier here" button above and below every tier (calling
+  the existing `POST /rankings/:rankingId/tiers`), and a "Remove tier"
+  button per tier group (`DELETE /rankings/:rankingId/tiers/:position`).
+  Removing an empty tier happens immediately; removing a non-empty tier
+  shows an inline confirm/cancel prompt naming the player count before
+  merging, rather than a `window.confirm()`. The remove control is
+  hidden entirely when only one tier remains, matching the backend's
+  existing refusal. Both mutations invalidate only `ranking-detail`
+  (tier boundaries never touch the unranked pool). No backend changes
+  needed — the endpoints and repository logic already existed and were
+  already tested.
+- ~~Numeric/alphabetical tier display toggle~~ — done. A "Letters" /
+  "Numbers" toggle in the editor toolbar controls a local
+  `tierDisplayMode` state (not persisted — a low-stakes default to
+  reset per session, no per-user display-preference concept exists
+  elsewhere in the app). `formatTierHeading` in
+  `ranking-editor-logic.ts` picks between the tier's existing `label`
+  and `position` fields, both already returned by
+  `GET /rankings/:rankingId` — no new S=1/A=2/... mapping was needed
+  on the frontend; the backend's mapping in `utils/tier.ts` stayed
+  backend-only.
+- ~~Re-import-while-editor-is-open behavior~~ — confirmed already
+  mostly satisfied, one small addition made. `POST /rankings` already
+  creates a brand-new ranking rather than merging with any
+  in-progress edits, and the draft dashboard and ranking editor are
+  mutually exclusive routes, so navigating to `/rankings/edit` after
+  a re-import remounts `RankingEditorPage` and refetches
+  `ranking-status` fresh (default TanStack Query `staleTime` is 0).
+  The one gap — a cached `ranking-status` result rendering stale for
+  a moment before its background refetch resolves — was closed by
+  having `RankingsUpload`'s `onImported` handler invalidate the
+  `ranking-status` query on successful import. No polling or
+  websocket added.
+
+Phase 4 is now complete per the requirements doc — all nine numbered
+requirements and the full "Still to build" list above are implemented
+and tested. Deferred items (keyboard-operable drag-and-drop fallback,
+touch support) remain intentionally out of scope, per the
+requirements doc's "Deferred, but tracked for the future" section.
 
 Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model
