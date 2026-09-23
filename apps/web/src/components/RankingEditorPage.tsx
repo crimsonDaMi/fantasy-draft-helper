@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   PointerSensor,
-  closestCorners,
+  closestCenter,
+  getFirstCollision,
+  pointerWithin,
+  rectIntersection,
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
 } from "@dnd-kit/core";
@@ -32,7 +36,6 @@ import {
   UNRANKED_CONTAINER,
   buildContainers,
   computeGlobalRank,
-  findContainer,
   formatTierHeading,
   type Containers,
   type EditorPlayer,
@@ -58,6 +61,7 @@ function SortablePlayer({ player, rank }: SortablePlayerProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    touchAction: "none",
   };
 
   return (
@@ -73,7 +77,7 @@ function SortablePlayer({ player, rank }: SortablePlayerProps) {
       </span>
     </li>
   );
-}
+};
 
 interface TierRemoveControl {
   canRemove: boolean;
@@ -174,6 +178,37 @@ export function RankingEditorPage() {
 
   const [containers, setContainers] = useState<Containers>({});
   const [isDragging, setIsDragging] = useState(false);
+  const lastOverId = useRef<string | null>(null);
+
+  // sleeperId -> containing tier/unranked label, O(1) lookup. Recomputed
+  // only when `containers` actually changes (a drop settles), not on
+  // every pointer-move frame during a drag.
+  const playerContainerMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [containerId, players] of Object.entries(containers)) {
+      for (const player of players) {
+        map.set(player.sleeperId, containerId);
+      }
+    }
+    return map;
+  }, [containers]);
+
+  // O(1) replacement for the ranking-editor-logic.ts findContainer()
+  // helper, which does a full Object.keys(containers).find(...).some(...)
+  // scan across every player in every container. That's cheap enough for
+  // one-off calls (still used in tests / handleDragEnd's first lookup
+  // pattern elsewhere) but far too slow to call from handleDragOver,
+  // which fires continuously during a drag.
+  const resolveContainer = useCallback(
+    (id: string): string | undefined => {
+      if (id in containers) {
+        return id;
+      }
+      return playerContainerMap.get(id);
+    },
+    [containers, playerContainerMap],
+  );
+
   const [tierDisplayMode, setTierDisplayMode] =
     useState<TierDisplayMode>("alpha");
   const [confirmingRemoveTierPosition, setConfirmingRemoveTierPosition] =
@@ -212,6 +247,48 @@ export function RankingEditorPage() {
     useSensor(PointerSensor, {
       activationConstraint: { distance: 4 },
     }),
+  );
+
+  // ~360 sortable player rows makes the default collision detection
+  // (comparing every row on every pointer-move) expensive enough to
+  // visibly stall drags. Use the cheap pointerWithin check to find
+  // which tier/unranked container the pointer is over first, then run
+  // the more expensive closestCenter only against that container's
+  // rows — the standard dnd-kit pattern for large multi-container
+  // sortable lists.
+  const collisionDetectionStrategy: CollisionDetection = useCallback(
+    (args) => {
+      const pointerIntersections = pointerWithin(args);
+      const intersections =
+        pointerIntersections.length > 0
+          ? pointerIntersections
+          : rectIntersection(args);
+      let overId = getFirstCollision(intersections, "id");
+
+      if (overId != null) {
+        const overIdStr = String(overId);
+        const targetContainer =
+          playerContainerMap.get(overIdStr) ?? overIdStr;
+
+        if (containers[targetContainer]?.length) {
+          const closest = closestCenter({
+            ...args,
+            droppableContainers: args.droppableContainers.filter(
+              (container) =>
+                playerContainerMap.get(String(container.id)) ===
+                targetContainer || container.id === targetContainer,
+            ),
+          });
+          overId = closest[0]?.id ?? overId;
+        }
+
+        lastOverId.current = String(overId);
+        return [{ id: overId }];
+      }
+
+      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+    },
+    [containers, playerContainerMap],
   );
 
   function settleQueries() {
@@ -277,6 +354,7 @@ export function RankingEditorPage() {
 
   function handleDragStart() {
     setIsDragging(true);
+    lastOverId.current = null;
   }
 
   // Cross-container moves only — same-container reordering is handled
@@ -291,8 +369,8 @@ export function RankingEditorPage() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const activeContainer = findContainer(containers, activeId);
-    const overContainer = findContainer(containers, overId);
+    const activeContainer = resolveContainer(activeId);
+    const overContainer = resolveContainer(overId);
 
     if (
       !activeContainer ||
@@ -344,8 +422,8 @@ export function RankingEditorPage() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const activeContainer = findContainer(containers, activeId);
-    const finalContainer = findContainer(containers, overId) ?? overId;
+    const activeContainer = resolveContainer(activeId);
+    const finalContainer = resolveContainer(overId) ?? overId;
 
     if (!activeContainer) {
       return;
@@ -458,7 +536,7 @@ export function RankingEditorPage() {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
