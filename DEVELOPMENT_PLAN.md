@@ -76,7 +76,7 @@ discussion, that happened once Phase 3 as a whole was considered done,
 which it now is. Next step: decide what (if anything) goes on a future
 version of this plan — there's no pre-agreed Phase 4.
 
-## Phase 4 — Ranking Editor (in progress)
+## Phase 4 — Ranking Editor (complete)
 
 Not one of the original eight candidate features above — proposed and
 scoped after Phase 3 completed, with no pre-agreed plan to build it.
@@ -173,6 +173,20 @@ requirements and the full "Still to build" list above are implemented
 and tested. Deferred items (keyboard-operable drag-and-drop fallback,
 touch support) remain intentionally out of scope, per the
 requirements doc's "Deferred, but tracked for the future" section.
+
+**Post-completion fix — drag-and-drop performance at scale (v0.7.x follow-up).**
+Once real rankings (~360 players across 12 tiers) were tested, drag-and-drop
+became unusably slow — traced via Firefox profiling to dnd-kit's
+`useSortable` overhead scaling with the _total_ number of simultaneously
+mounted sortable nodes across the whole page, not the active tier's size.
+Fixed by virtualizing each tier and the unranked panel with
+`@tanstack/react-virtual`, so only visible rows (+ overscan) are mounted as
+sortable nodes at any time; the actively-dragged row is force-kept-mounted
+if it scrolls outside the visible window, since dnd-kit moves it via a CSS
+transform on its own DOM node rather than a floating overlay. A residual
+few-ms pickup delay was profiled and confirmed to be one-time JS engine
+JIT warmup plus normal browser paint cost, not an app-level bottleneck —
+no further action needed there.
 
 Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model

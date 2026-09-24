@@ -1,8 +1,7 @@
 # Ranking Editor — Requirements
 
-**Status:** Fully validated. Implementation in progress — see
-[`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md)'s Phase 4 section for
-current build status.
+**Status:** Complete. See [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md)'s
+Phase 4 section for implementation and verification details.
 
 ## Context
 
