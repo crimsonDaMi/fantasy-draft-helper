@@ -49,6 +49,8 @@ export function buildContainers(
     containers[tier.label] = [];
   }
 
+  const rankedIds = new Set<string>();
+
   for (const entry of players) {
     if (!entry.player) {
       continue;
@@ -61,9 +63,12 @@ export function buildContainers(
       containers[tier] = [];
     }
     containers[tier].push(toEditorPlayer(entry.player));
+    rankedIds.add(entry.player.sleeperId);
   }
 
-  containers[UNRANKED_CONTAINER] = unranked.map(toEditorPlayer);
+  containers[UNRANKED_CONTAINER] = unranked
+    .filter((player) => !rankedIds.has(player.sleeperId))
+    .map(toEditorPlayer);
 
   return containers;
 }
