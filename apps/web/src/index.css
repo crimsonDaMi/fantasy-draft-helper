@@ -611,14 +611,18 @@ button {
 }
 
 .ranking-editor__player-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.ranking-editor__player-list-inner {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 
-.ranking-editor__player-list li {
+.ranking-editor__player-list-inner li {
   display: flex;
   gap: 8px;
   align-items: baseline;
@@ -629,10 +633,8 @@ button {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-}
-
-.ranking-editor__player-list li:last-child {
-  border-bottom: none;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .ranking-editor__rank {

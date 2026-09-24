@@ -5,6 +5,7 @@ import {
   computeGlobalRank,
   findContainer,
   formatTierHeading,
+  withForcedActiveRow,
   type Containers,
 } from "./ranking-editor-logic";
 
@@ -114,5 +115,42 @@ describe("formatTierHeading", () => {
   it("renders the numeric position in numeric mode", () => {
     expect(formatTierHeading("S", 1, "numeric")).toBe("Tier 1");
     expect(formatTierHeading("B", 3, "numeric")).toBe("Tier 3");
+  });
+});
+
+describe("withForcedActiveRow", () => {
+  const players = [
+    { sleeperId: "1", fullName: "One" },
+    { sleeperId: "2", fullName: "Two" },
+    { sleeperId: "3", fullName: "Three" },
+  ];
+
+  it("returns the visible rows unchanged when there is no active drag", () => {
+    const visible = [{ index: 0, start: 0 }];
+    expect(withForcedActiveRow(visible, players, undefined)).toEqual(visible);
+  });
+
+  it("returns the visible rows unchanged when the active item is already visible", () => {
+    const visible = [
+      { index: 0, start: 0 },
+      { index: 1, start: 36 },
+    ];
+    expect(withForcedActiveRow(visible, players, "2")).toEqual(visible);
+  });
+
+  it("adds the active item's row when it has scrolled out of the visible window", () => {
+    const visible = [{ index: 0, start: 0 }];
+    const result = withForcedActiveRow(visible, players, "3");
+    expect(result).toEqual([
+      { index: 0, start: 0 },
+      { index: 2, start: 72 },
+    ]);
+  });
+
+  it("ignores an active id that does not belong to this container", () => {
+    const visible = [{ index: 0, start: 0 }];
+    expect(withForcedActiveRow(visible, players, "not-in-this-tier")).toEqual(
+      visible,
+    );
   });
 });

@@ -107,3 +107,47 @@ export function computeGlobalRank(
 
   return rank;
 }
+
+export const PLAYER_ROW_HEIGHT = 36;
+
+export interface VirtualRow {
+  index: number;
+  start: number;
+}
+
+/**
+ * Merges the virtualizer's visible-range rows with the currently
+ * dragged item's row, if that item belongs to this container but has
+ * scrolled outside the visible window. Without this, a long drag (top
+ * of a 180-player tier to the bottom) would unmount the dragged node
+ * mid-drag once it scrolls out of view, breaking the drag — dnd-kit
+ * moves the dragged node via a CSS transform on its own mounted DOM
+ * node, not a floating overlay, so that node must stay mounted for the
+ * whole drag.
+ */
+export function withForcedActiveRow(
+  visibleRows: VirtualRow[],
+  players: { sleeperId: string }[],
+  activeId: string | undefined,
+): VirtualRow[] {
+  if (!activeId) {
+    return visibleRows;
+  }
+
+  if (visibleRows.some((row) => players[row.index]?.sleeperId === activeId)) {
+    return visibleRows;
+  }
+
+  const activeIndex = players.findIndex(
+    (player) => player.sleeperId === activeId,
+  );
+
+  if (activeIndex === -1) {
+    return visibleRows;
+  }
+
+  return [
+    ...visibleRows,
+    { index: activeIndex, start: activeIndex * PLAYER_ROW_HEIGHT },
+  ].sort((a, b) => a.index - b.index);
+}

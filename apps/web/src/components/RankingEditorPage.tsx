@@ -12,6 +12,7 @@ import {
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -21,6 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 import {
   getRanking,
@@ -37,6 +39,8 @@ import {
   buildContainers,
   computeGlobalRank,
   formatTierHeading,
+  withForcedActiveRow,
+  PLAYER_ROW_HEIGHT,
   type Containers,
   type EditorPlayer,
   type TierDisplayMode,
@@ -45,9 +49,10 @@ import {
 interface SortablePlayerProps {
   player: EditorPlayer;
   rank?: number;
+  offsetTop: number;
 }
 
-function SortablePlayer({ player, rank }: SortablePlayerProps) {
+function SortablePlayer({ player, rank, offsetTop }: SortablePlayerProps) {
   const {
     attributes,
     listeners,
@@ -57,7 +62,11 @@ function SortablePlayer({ player, rank }: SortablePlayerProps) {
     isDragging,
   } = useSortable({ id: player.sleeperId });
 
-  const style = {
+  const style: React.CSSProperties = {
+    position: "absolute",
+    top: offsetTop,
+    left: 0,
+    right: 0,
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
@@ -77,7 +86,7 @@ function SortablePlayer({ player, rank }: SortablePlayerProps) {
       </span>
     </li>
   );
-};
+}
 
 interface TierRemoveControl {
   canRemove: boolean;
@@ -95,6 +104,7 @@ interface DroppableContainerProps {
   showRank: boolean;
   className: string;
   removeControl?: TierRemoveControl;
+  activeId?: string;
 }
 
 function DroppableContainer({
@@ -104,8 +114,32 @@ function DroppableContainer({
   showRank,
   className,
   removeControl,
+  activeId,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
+  const scrollElementRef = useRef<HTMLDivElement>(null);
+
+  const setScrollRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      scrollElementRef.current = node;
+      setNodeRef(node);
+    },
+    [setNodeRef],
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- @tanstack/react-virtual's API is inherently incompatible with React Compiler memoization; harmless since Compiler isn't enabled in this project.
+  const virtualizer = useVirtualizer({
+    count: players.length,
+    getScrollElement: () => scrollElementRef.current,
+    estimateSize: () => PLAYER_ROW_HEIGHT,
+    overscan: 8,
+  });
+
+  const virtualRows = withForcedActiveRow(
+    virtualizer.getVirtualItems(),
+    players,
+    activeId,
+  );
 
   return (
     <div className={className}>
@@ -140,15 +174,27 @@ function DroppableContainer({
         items={players.map((player) => player.sleeperId)}
         strategy={verticalListSortingStrategy}
       >
-        <ol className="ranking-editor__player-list" ref={setNodeRef}>
-          {players.map((player, index) => (
-            <SortablePlayer
-              key={player.sleeperId}
-              player={player}
-              rank={showRank ? index + 1 : undefined}
-            />
-          ))}
-        </ol>
+        <div ref={setScrollRef} className="ranking-editor__player-list">
+          <ol
+            className="ranking-editor__player-list-inner"
+            style={{ height: virtualizer.getTotalSize() }}
+          >
+            {virtualRows.map((virtualRow) => {
+              const player = players[virtualRow.index];
+              if (!player) {
+                return null;
+              }
+              return (
+                <SortablePlayer
+                  key={player.sleeperId}
+                  player={player}
+                  rank={showRank ? virtualRow.index + 1 : undefined}
+                  offsetTop={virtualRow.start}
+                />
+              );
+            })}
+          </ol>
+        </div>
       </SortableContext>
     </div>
   );
@@ -179,6 +225,7 @@ export function RankingEditorPage() {
   const [containers, setContainers] = useState<Containers>({});
   const [isDragging, setIsDragging] = useState(false);
   const lastOverId = useRef<string | null>(null);
+  const [draggingPlayerId, setDraggingPlayerId] = useState<string>();
 
   // sleeperId -> containing tier/unranked label, O(1) lookup. Recomputed
   // only when `containers` actually changes (a drop settles), not on
@@ -267,8 +314,7 @@ export function RankingEditorPage() {
 
       if (overId != null) {
         const overIdStr = String(overId);
-        const targetContainer =
-          playerContainerMap.get(overIdStr) ?? overIdStr;
+        const targetContainer = playerContainerMap.get(overIdStr) ?? overIdStr;
 
         if (containers[targetContainer]?.length) {
           const closest = closestCenter({
@@ -352,8 +398,9 @@ export function RankingEditorPage() {
     setConfirmingRemoveTierPosition(tier.position);
   }
 
-  function handleDragStart() {
+  function handleDragStart(event: DragStartEvent) {
     setIsDragging(true);
+    setDraggingPlayerId(String(event.active.id));
     lastOverId.current = null;
   }
 
@@ -413,6 +460,7 @@ export function RankingEditorPage() {
 
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false);
+    setDraggingPlayerId(undefined);
 
     const { active, over } = event;
     if (!over || !rankingId) {
@@ -563,6 +611,7 @@ export function RankingEditorPage() {
                   players={containers[tier.label] ?? []}
                   showRank
                   className="ranking-editor__tier"
+                  activeId={draggingPlayerId}
                   removeControl={{
                     canRemove: tiers.length > 1,
                     isConfirming:
@@ -596,6 +645,7 @@ export function RankingEditorPage() {
               players={containers[UNRANKED_CONTAINER] ?? []}
               showRank={false}
               className="ranking-editor__unranked"
+              activeId={draggingPlayerId}
             />
           </aside>
         </div>
