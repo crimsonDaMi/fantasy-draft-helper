@@ -2,7 +2,7 @@ import { Player } from "./player.js";
 
 import { Ranking } from "./ranking.js";
 
-export type PlayerMatchMethod =
+type PlayerMatchMethod =
   | "SLEEPER_ID"
   | "NAME_POSITION_TEAM"
   | "NAME_POSITION"
@@ -11,7 +11,7 @@ export type PlayerMatchMethod =
   | "NONE"
   | "AMBIGUOUS";
 
-export type PlayerMatchWarning = "ID_METADATA_MISMATCH";
+type PlayerMatchWarning = "ID_METADATA_MISMATCH";
 
 export interface PlayerMatch {
   ranking: Ranking;

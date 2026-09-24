@@ -12,7 +12,7 @@ const UNIVERSAL_TEXT = "#F1F4F0";
 const UNIVERSAL_TEXT_MUTED = "#8FA396";
 const UNIVERSAL_DANGER = "#E8623D";
 
-export interface ThemeTokens {
+interface ThemeTokens {
   bg: string;
   surface: string;
   surfaceRaised: string;

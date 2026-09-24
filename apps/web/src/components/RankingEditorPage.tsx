@@ -322,7 +322,7 @@ export function RankingEditorPage() {
             droppableContainers: args.droppableContainers.filter(
               (container) =>
                 playerContainerMap.get(String(container.id)) ===
-                targetContainer || container.id === targetContainer,
+                  targetContainer || container.id === targetContainer,
             ),
           });
           overId = closest[0]?.id ?? overId;
