@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   closestCenter,
   getFirstCollision,
@@ -69,7 +70,7 @@ function SortablePlayer({ player, rank, offsetTop }: SortablePlayerProps) {
     right: 0,
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0 : 1,
     touchAction: "none",
   };
 
@@ -105,6 +106,7 @@ interface DroppableContainerProps {
   className: string;
   removeControl?: TierRemoveControl;
   activeId?: string;
+  registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
 }
 
 function DroppableContainer({
@@ -115,6 +117,7 @@ function DroppableContainer({
   className,
   removeControl,
   activeId,
+  registerScrollElement,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -123,8 +126,9 @@ function DroppableContainer({
     (node: HTMLDivElement | null) => {
       scrollElementRef.current = node;
       setNodeRef(node);
+      registerScrollElement?.(id, node);
     },
-    [setNodeRef],
+    [setNodeRef, registerScrollElement, id],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library -- @tanstack/react-virtual's API is inherently incompatible with React Compiler memoization; harmless since Compiler isn't enabled in this project.
@@ -226,6 +230,19 @@ export function RankingEditorPage() {
   const [isDragging, setIsDragging] = useState(false);
   const lastOverId = useRef<string | null>(null);
   const [draggingPlayerId, setDraggingPlayerId] = useState<string>();
+  const [draggingPlayer, setDraggingPlayer] = useState<EditorPlayer>();
+  const scrollElements = useRef(new Map<string, HTMLDivElement>());
+
+  const registerScrollElement = useCallback(
+    (id: string, node: HTMLDivElement | null) => {
+      if (node) {
+        scrollElements.current.set(id, node);
+      } else {
+        scrollElements.current.delete(id);
+      }
+    },
+    [],
+  );
 
   // sleeperId -> containing tier/unranked label, O(1) lookup. Recomputed
   // only when `containers` actually changes (a drop settles), not on
@@ -255,6 +272,61 @@ export function RankingEditorPage() {
     },
     [containers, playerContainerMap],
   );
+
+  // Manual autoscroll replacing dnd-kit's built-in autoScroll (disabled
+  // above): dnd-kit's own autoscroll tracks the dragged node's ancestor
+  // chain, established early in the drag, and doesn't retarget when the
+  // pointer crosses into a different container's independently-scrolled
+  // (virtualized) viewport — it keeps scrolling the original container.
+  // This tracks the pointer directly and always scrolls whichever
+  // container is currently under it.
+  useEffect(() => {
+    if (!isDragging) {
+      return;
+    }
+
+    const EDGE_SIZE = 60;
+    const MAX_SPEED = 18;
+    let frame: number;
+    let pointerY = 0;
+
+    const onPointerMove = (event: PointerEvent) => {
+      pointerY = event.clientY;
+    };
+
+    const tick = () => {
+      const overContainer = lastOverId.current
+        ? (resolveContainer(lastOverId.current) ?? lastOverId.current)
+        : undefined;
+      const el = overContainer
+        ? scrollElements.current.get(overContainer)
+        : undefined;
+
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const distanceFromTop = pointerY - rect.top;
+        const distanceFromBottom = rect.bottom - pointerY;
+
+        if (distanceFromTop >= 0 && distanceFromTop < EDGE_SIZE) {
+          const speed = MAX_SPEED * (1 - distanceFromTop / EDGE_SIZE);
+          el.scrollTop -= speed;
+        } else if (distanceFromBottom >= 0 && distanceFromBottom < EDGE_SIZE) {
+          const speed = MAX_SPEED * (1 - distanceFromBottom / EDGE_SIZE);
+          el.scrollTop += speed;
+        }
+      }
+
+      frame = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    frame = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      cancelAnimationFrame(frame);
+    };
+  }, [isDragging, resolveContainer]);
 
   const [tierDisplayMode, setTierDisplayMode] =
     useState<TierDisplayMode>("alpha");
@@ -400,7 +472,14 @@ export function RankingEditorPage() {
 
   function handleDragStart(event: DragStartEvent) {
     setIsDragging(true);
-    setDraggingPlayerId(String(event.active.id));
+    const activeId = String(event.active.id);
+    setDraggingPlayerId(activeId);
+    const container = resolveContainer(activeId);
+    setDraggingPlayer(
+      container
+        ? containers[container]?.find((p) => p.sleeperId === activeId)
+        : undefined,
+    );
     lastOverId.current = null;
   }
 
@@ -461,6 +540,7 @@ export function RankingEditorPage() {
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false);
     setDraggingPlayerId(undefined);
+    setDraggingPlayer(undefined);
 
     const { active, over } = event;
     if (!over || !rankingId) {
@@ -588,6 +668,7 @@ export function RankingEditorPage() {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        autoScroll={false}
       >
         <div className="ranking-editor__layout">
           <div className="ranking-editor__tiers">
@@ -612,6 +693,7 @@ export function RankingEditorPage() {
                   showRank
                   className="ranking-editor__tier"
                   activeId={draggingPlayerId}
+                  registerScrollElement={registerScrollElement}
                   removeControl={{
                     canRemove: tiers.length > 1,
                     isConfirming:
@@ -646,9 +728,25 @@ export function RankingEditorPage() {
               showRank={false}
               className="ranking-editor__unranked"
               activeId={draggingPlayerId}
+              registerScrollElement={registerScrollElement}
             />
           </aside>
         </div>
+
+        <DragOverlay>
+          {draggingPlayer ? (
+            <div className="ranking-editor__drag-overlay">
+              <span className="ranking-editor__name">
+                {draggingPlayer.fullName}
+              </span>
+              <span className="ranking-editor__meta">
+                {draggingPlayer.position}
+                {draggingPlayer.position && draggingPlayer.team && " · "}
+                {draggingPlayer.team}
+              </span>
+            </div>
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </section>
   );
