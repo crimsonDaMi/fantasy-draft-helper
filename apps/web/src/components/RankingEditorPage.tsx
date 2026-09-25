@@ -738,7 +738,7 @@ export function RankingEditorPage() {
             ))}
           </div>
 
-          <aside>
+          <aside className="ranking-editor__unranked-sticky">
             <div className="ranking-editor__unranked-search-wrap">
               <input
                 type="search"
