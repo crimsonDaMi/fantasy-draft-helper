@@ -35,10 +35,13 @@ import {
   removeTier,
 } from "../api/fantasy-api";
 import type { RankingTierDto } from "../types/api";
+import { PositionFilter } from "./PositionFilter";
 import {
   UNRANKED_CONTAINER,
   buildContainers,
   computeGlobalRank,
+  filterPlayersByPosition,
+  filterPlayersByQuery,
   formatTierHeading,
   withForcedActiveRow,
   PLAYER_ROW_HEIGHT,
@@ -332,6 +335,8 @@ export function RankingEditorPage() {
     useState<TierDisplayMode>("alpha");
   const [confirmingRemoveTierPosition, setConfirmingRemoveTierPosition] =
     useState<number>();
+  const [positionFilter, setPositionFilter] = useState<string[]>([]);
+  const [unrankedSearch, setUnrankedSearch] = useState("");
 
   // Re-derive local drag state from the server whenever a *new* server
   // snapshot arrives, using React's render-time "adjusting state when a
@@ -662,6 +667,16 @@ export function RankingEditorPage() {
         </div>
       </div>
 
+      <div className="ranking-editor__global-filters">
+        <span className="ranking-editor__global-filters-label">
+          Filter by position
+        </span>
+        <PositionFilter
+          selected={positionFilter}
+          onChange={setPositionFilter}
+        />
+      </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
@@ -689,7 +704,10 @@ export function RankingEditorPage() {
                     tier.position,
                     tierDisplayMode,
                   )}
-                  players={containers[tier.label] ?? []}
+                  players={filterPlayersByPosition(
+                    containers[tier.label] ?? [],
+                    positionFilter,
+                  )}
                   showRank
                   className="ranking-editor__tier"
                   activeId={draggingPlayerId}
@@ -721,10 +739,26 @@ export function RankingEditorPage() {
           </div>
 
           <aside>
+            <div className="ranking-editor__unranked-search-wrap">
+              <input
+                type="search"
+                className="ranking-editor__unranked-search"
+                placeholder="Search unranked players…"
+                value={unrankedSearch}
+                onChange={(event) => setUnrankedSearch(event.target.value)}
+                aria-label="Search unranked players"
+              />
+            </div>
             <DroppableContainer
               id={UNRANKED_CONTAINER}
               title="Unranked"
-              players={containers[UNRANKED_CONTAINER] ?? []}
+              players={filterPlayersByQuery(
+                filterPlayersByPosition(
+                  containers[UNRANKED_CONTAINER] ?? [],
+                  positionFilter,
+                ),
+                unrankedSearch,
+              )}
               showRank={false}
               className="ranking-editor__unranked"
               activeId={draggingPlayerId}

@@ -4,6 +4,8 @@ import {
   buildContainers,
   computeGlobalRank,
   findContainer,
+  filterPlayersByPosition,
+  filterPlayersByQuery,
   formatTierHeading,
   withForcedActiveRow,
   type Containers,
@@ -152,5 +154,59 @@ describe("withForcedActiveRow", () => {
     expect(withForcedActiveRow(visible, players, "not-in-this-tier")).toEqual(
       visible,
     );
+  });
+});
+
+describe("filterPlayersByPosition", () => {
+  const players = [
+    { sleeperId: "1", fullName: "Josh Allen", position: "QB", team: "BUF" },
+    { sleeperId: "2", fullName: "D.J. Moore", position: "WR", team: "CHI" },
+    { sleeperId: "3", fullName: "Josh Jacobs", position: "RB", team: "GB" },
+  ];
+
+  it("returns the same array when no positions are selected", () => {
+    expect(filterPlayersByPosition(players, [])).toBe(players);
+  });
+
+  it("keeps only players matching a selected position", () => {
+    const result = filterPlayersByPosition(players, ["RB"]);
+    expect(result.map((p) => p.sleeperId)).toEqual(["3"]);
+  });
+
+  it("supports multiple selected positions", () => {
+    const result = filterPlayersByPosition(players, ["QB", "WR"]);
+    expect(result.map((p) => p.sleeperId)).toEqual(["1", "2"]);
+  });
+
+  it("excludes a player with no position when a filter is active", () => {
+    const noPosition = [{ sleeperId: "4", fullName: "No Position Guy" }];
+    expect(filterPlayersByPosition(noPosition, ["QB"])).toEqual([]);
+  });
+});
+
+describe("filterPlayersByQuery", () => {
+  const players = [
+    { sleeperId: "1", fullName: "Josh Allen", team: "BUF" },
+    { sleeperId: "2", fullName: "D.J. Moore", team: "CHI" },
+    { sleeperId: "3", fullName: "Josh Jacobs", team: "GB" },
+  ];
+
+  it("returns the same array when the query is empty", () => {
+    expect(filterPlayersByQuery(players, "")).toBe(players);
+  });
+
+  it("matches by case-insensitive name substring", () => {
+    const result = filterPlayersByQuery(players, "josh");
+    expect(result.map((p) => p.sleeperId)).toEqual(["1", "3"]);
+  });
+
+  it("matches by team", () => {
+    const result = filterPlayersByQuery(players, "chi");
+    expect(result.map((p) => p.sleeperId)).toEqual(["2"]);
+  });
+
+  it("trims and ignores case in the query", () => {
+    const result = filterPlayersByQuery(players, "  MOORE  ");
+    expect(result.map((p) => p.sleeperId)).toEqual(["2"]);
   });
 });

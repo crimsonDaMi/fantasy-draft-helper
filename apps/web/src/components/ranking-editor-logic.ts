@@ -156,3 +156,40 @@ export function withForcedActiveRow(
     { index: activeIndex, start: activeIndex * PLAYER_ROW_HEIGHT },
   ].sort((a, b) => a.index - b.index);
 }
+
+/** Position allow-list filter, usable on any container (tiers or
+ * unranked). Returns the same array reference when no filter is
+ * active, so it's a free no-op — important because tier/unranked
+ * arrays are recomputed on every render and this must not reintroduce
+ * per-frame cost during drags. */
+export function filterPlayersByPosition(
+  players: EditorPlayer[],
+  positions: string[],
+): EditorPlayer[] {
+  if (positions.length === 0) {
+    return players;
+  }
+
+  return players.filter(
+    (player) =>
+      player.position !== undefined && positions.includes(player.position),
+  );
+}
+
+/** Case-insensitive name/team substring search — used only for the
+ * unranked panel. Same no-op-when-empty behavior as above. */
+export function filterPlayersByQuery(
+  players: EditorPlayer[],
+  query: string,
+): EditorPlayer[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (normalizedQuery === "") {
+    return players;
+  }
+
+  return players.filter((player) => {
+    const haystack = `${player.fullName} ${player.team ?? ""}`.toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
+}
