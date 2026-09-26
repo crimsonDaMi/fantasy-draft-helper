@@ -14,8 +14,8 @@ export class RankingStoreService {
         : repositoryOrPath;
   }
 
-  setMatches(matches: PlayerMatch[], userId: string): string {
-    return this.repository.create(matches, userId);
+  setMatches(matches: PlayerMatch[], userId: string, name?: string): string {
+    return this.repository.create(matches, userId, name);
   }
 
   getLatestRankingId(userId: string): string | undefined {

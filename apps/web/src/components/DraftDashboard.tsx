@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { DraftForm } from "./DraftForm";
 import { MonitoringStatus } from "./MonitoringStatus";
 import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
+import { getRankingsStatus } from "../api/fantasy-api";
 import type { RankingImportSummary } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
@@ -16,14 +18,24 @@ export function DraftDashboard() {
   const [positions, setPositions] = useState<string[]>([]);
   const [setupOpen, setSetupOpen] = useState(() => !draftId || !rankingId);
 
+  const statusQuery = useQuery({
+    queryKey: ["ranking-status"],
+    queryFn: getRankingsStatus,
+  });
+
+  // Prefer a ranking imported/created in this session; otherwise fall
+  // back to whatever the account's latest ranking is (from an earlier
+  // session, or just created in the ranking editor).
+  const effectiveRankingId = rankingId ?? statusQuery.data?.rankingId;
+
   const { data, error, isLoading, pollingIntervalMs, retry } =
-    useDraftRecommendations(draftId, rankingId, positions);
+    useDraftRecommendations(draftId, effectiveRankingId, positions);
 
   return (
     <>
       <MonitoringStatus
         draftId={draftId}
-        rankingId={rankingId}
+        rankingId={effectiveRankingId}
         draftStatus={data?.draftStatus}
         totalPicks={data?.totalPicks}
         draftedPlayerCount={data?.draftedPlayerCount}
@@ -57,7 +69,7 @@ export function DraftDashboard() {
             }}
           />
 
-          {rankingSummary && (
+          {rankingSummary ? (
             <div>
               {isDebugUi ? (
                 <>
@@ -74,6 +86,13 @@ export function DraftDashboard() {
                 </p>
               )}
             </div>
+          ) : (
+            statusQuery.data?.loaded && (
+              <p>
+                ✓ Using your saved ranking ({statusQuery.data.matchedCount} of{" "}
+                {statusQuery.data.rankingCount} players matched)
+              </p>
+            )
           )}
 
           <DraftForm

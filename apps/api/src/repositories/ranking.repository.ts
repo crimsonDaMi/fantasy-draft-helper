@@ -79,6 +79,15 @@ export class RankingRepository {
     this.database.exec("BEGIN");
 
     try {
+      // Each user has exactly one active ranking at a time — importing a
+      // new CSV or starting a fresh ranking from the editor fully
+      // replaces whatever came before, on disk as well as in the UI.
+      // Cascades to ranking_players and ranking_tiers via their FK
+      // ON DELETE CASCADE, so no orphaned rows accumulate.
+      this.database
+        .prepare(`DELETE FROM rankings WHERE user_id = ?`)
+        .run(userId);
+
       this.database
         .prepare(
           `INSERT INTO rankings (id, user_id, name, created_at)

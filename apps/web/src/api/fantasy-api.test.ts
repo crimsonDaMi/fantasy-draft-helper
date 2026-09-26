@@ -13,6 +13,7 @@ import {
   importRankings,
   login,
   onUnauthorized,
+  createEmptyRanking,
 } from "./fantasy-api";
 
 function mockFetchResponse(status: number, body: unknown = {}) {
@@ -125,5 +126,16 @@ describe("onUnauthorized notifications", () => {
     await expect(getRecommendations("draft-1", "ranking-1")).rejects.toThrow();
 
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("notifies listeners when createEmptyRanking receives a 401", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(mockFetchResponse(401, {})),
+    );
+
+    await expect(createEmptyRanking()).rejects.toThrow();
+
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

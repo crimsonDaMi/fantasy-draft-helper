@@ -83,4 +83,25 @@ describe("RankingRepository", () => {
     expect(repository.hasRankings("user-a")).toBe(false);
     expect(repository.hasRankings("user-b")).toBe(true);
   });
+
+  it("replaces a user's previous ranking when creating a new one", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const firstRankingId = repository.create(createMatches(), "user-a");
+    const secondRankingId = repository.create(createMatches(), "user-a");
+
+    expect(repository.hasRanking(firstRankingId, "user-a")).toBe(false);
+    expect(repository.hasRanking(secondRankingId, "user-a")).toBe(true);
+    expect(repository.getLatestRankingId("user-a")).toBe(secondRankingId);
+  });
+
+  it("does not affect another user's ranking when replacing", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const otherUsersRankingId = repository.create(createMatches(), "user-b");
+
+    repository.create(createMatches(), "user-a");
+
+    expect(repository.hasRanking(otherUsersRankingId, "user-b")).toBe(true);
+  });
 });

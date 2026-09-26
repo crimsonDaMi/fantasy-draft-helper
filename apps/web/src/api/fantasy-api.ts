@@ -75,6 +75,23 @@ export async function importRankings(
   return response.json();
 }
 
+export async function createEmptyRanking(): Promise<{ rankingId: string }> {
+  const response = await fetch(`${API_BASE_URL}/rankings/new`, {
+    method: "POST",
+
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json();
+}
+
 export interface GetRecommendationsOptions {
   limit?: number;
   positions?: string[];

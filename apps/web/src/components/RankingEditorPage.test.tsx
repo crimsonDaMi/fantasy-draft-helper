@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   removeRankingPlayer: vi.fn(),
   insertTier: vi.fn(),
   removeTier: vi.fn(),
+  createEmptyRanking: vi.fn(),
 }));
 
 vi.mock("../api/fantasy-api", () => ({
@@ -22,6 +23,7 @@ vi.mock("../api/fantasy-api", () => ({
   removeRankingPlayer: mocks.removeRankingPlayer,
   insertTier: mocks.insertTier,
   removeTier: mocks.removeTier,
+  createEmptyRanking: mocks.createEmptyRanking,
 }));
 
 function renderWithClient() {
@@ -41,7 +43,7 @@ describe("RankingEditorPage", () => {
     vi.clearAllMocks();
   });
 
-  it("prompts to import a ranking when none exists", async () => {
+  it("offers to import or start a new ranking when none exists", async () => {
     mocks.getRankingsStatus.mockResolvedValue({
       loaded: false,
       rankingCount: 0,
@@ -51,7 +53,11 @@ describe("RankingEditorPage", () => {
     renderWithClient();
 
     expect(
-      await screen.findByText(/import a ranking on the draft tab first/i),
+      await screen.findByText(/import a ranking on the draft tab/i),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /start a new ranking/i }),
     ).toBeInTheDocument();
   });
 

@@ -33,6 +33,7 @@ import {
   moveRankingPlayer,
   removeRankingPlayer,
   removeTier,
+  createEmptyRanking,
 } from "../api/fantasy-api";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
@@ -182,6 +183,9 @@ function DroppableContainer({
         strategy={verticalListSortingStrategy}
       >
         <div ref={setScrollRef} className="ranking-editor__player-list">
+          {players.length === 0 && (
+            <p className="ranking-editor__empty-hint">Drop players here</p>
+          )}
           <ol
             className="ranking-editor__player-list-inner"
             style={{ height: virtualizer.getTotalSize() }}
@@ -367,6 +371,13 @@ export function RankingEditorPage() {
 
   const tiers = detailQuery.data?.tiers ?? [];
 
+  const hasAnyRankedPlayers = Object.entries(containers).some(
+    ([containerId, players]) =>
+      containerId !== UNRANKED_CONTAINER && players.length > 0,
+  );
+
+  const hasOnlyOneTier = tiers.length <= 1;
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 4 },
@@ -462,6 +473,13 @@ export function RankingEditorPage() {
       removeTier(rankingId!, position),
     onSuccess: () => setConfirmingRemoveTierPosition(undefined),
     onSettled: settleTierQueries,
+  });
+
+  const createEmptyRankingMutation = useMutation({
+    mutationFn: createEmptyRanking,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["ranking-status"] });
+    },
   });
 
   function handleRemoveTierClick(tier: RankingTierDto) {
@@ -614,9 +632,24 @@ export function RankingEditorPage() {
       <section className="ranking-editor">
         <h2>Edit rankings</h2>
         <p>
-          Import a ranking on the Draft tab first, then come back here to edit
-          it.
+          Import a ranking on the Draft tab, or start a new one here and build
+          it from scratch.
         </p>
+        <button
+          type="button"
+          className="ranking-editor__start-new"
+          onClick={() => createEmptyRankingMutation.mutate()}
+          disabled={createEmptyRankingMutation.isPending}
+        >
+          {createEmptyRankingMutation.isPending
+            ? "Starting…"
+            : "Start a new ranking"}
+        </button>
+        {createEmptyRankingMutation.isError && (
+          <p className="status-bar status-bar__error">
+            Failed to start a new ranking. Try again.
+          </p>
+        )}
       </section>
     );
   }
@@ -676,6 +709,22 @@ export function RankingEditorPage() {
           onChange={setPositionFilter}
         />
       </div>
+
+      {(!hasAnyRankedPlayers || hasOnlyOneTier) && (
+        <div className="ranking-editor__hints">
+          {!hasAnyRankedPlayers && (
+            <p className="ranking-editor__hint">
+              Drag players from the Unranked panel into a tier to start ranking
+              them.
+            </p>
+          )}
+          {hasOnlyOneTier && (
+            <p className="ranking-editor__hint">
+              Use "+ Add tier here" to create more tiers.
+            </p>
+          )}
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}

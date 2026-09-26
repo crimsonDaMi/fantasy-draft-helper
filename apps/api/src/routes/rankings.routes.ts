@@ -85,6 +85,24 @@ export function createRankingsRoutes(
       },
     );
 
+    app.post(
+      "/rankings/new",
+
+      async (request) => {
+        const userId = request.user!.id;
+
+        const rankingId = rankingStoreService.setMatches(
+          [],
+
+          userId,
+
+          "New ranking",
+        );
+
+        return { rankingId };
+      },
+    );
+
     app.get(
       "/rankings/status",
 

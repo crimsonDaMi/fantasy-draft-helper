@@ -2,7 +2,7 @@ import Fastify from "fastify";
 
 import multipart from "@fastify/multipart";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createRankingsRoutes } from "./rankings.routes.js";
 
@@ -164,6 +164,41 @@ describe("rankings routes", () => {
       rankingCount: 2,
       matchedCount: 1,
     });
+
+    await app.close();
+  });
+
+  it("creates an empty ranking and returns its id", async () => {
+    const setMatches = vi.fn(() => "ranking-2");
+
+    const app = Fastify();
+
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+
+    app.register(
+      createRankingsRoutes(
+        { importCsv: async () => ({}) } as never,
+
+        {
+          setMatches,
+          getMatches: () => [],
+          hasRankings: () => false,
+          getLatestRankingId: () => undefined,
+        } as never,
+      ),
+    );
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/rankings/new",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ rankingId: "ranking-2" });
+    expect(setMatches).toHaveBeenCalledWith([], TEST_USER.id, "New ranking");
 
     await app.close();
   });

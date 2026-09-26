@@ -613,6 +613,8 @@ button {
 .ranking-editor__player-list {
   max-height: 420px;
   overflow-y: auto;
+  min-height: 48px;
+  position: relative;
 }
 
 .ranking-editor__player-list-inner {
@@ -790,4 +792,40 @@ button {
 .ranking-editor__unranked-sticky {
   position: sticky;
   top: 16px;
+}
+
+.ranking-editor__start-new {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.ranking-editor__start-new:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ranking-editor__hints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 12px;
+}
+
+.ranking-editor__hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.ranking-editor__empty-hint {
+  margin: 0;
+  padding: 12px 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-style: italic;
 }
