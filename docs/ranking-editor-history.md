@@ -146,11 +146,19 @@ one by dragging players out of the unranked pool, via an explicit
   dropping the stale `source.fixAll.eslint` save action left over from
   the ESLint → oxlint switch.
 
+## Dev-mode CORS fix (resolved)
+
+- Under `pnpm dev` (web on 5173, API on 3000) the ranking editor's
+  PATCH/DELETE calls failed CORS preflight. Cause: `@fastify/cors`
+  defaults `methods` to `GET,HEAD,POST`. Fixed by listing
+  `GET, HEAD, POST, PATCH, DELETE` explicitly in `apps/api/src/app.ts`,
+  covered by a preflight test in `app.e2e.test.ts`. A Vite dev proxy
+  (same-origin dev, like prod) was considered and rejected as a larger
+  change than needed.
+
 ## Current backlog (not started)
 
-1. **Dev-mode CORS** on ranking-editor mutation endpoints (see
-   `CLAUDE.md`'s gotchas section) — no fix designed yet.
-2. **Unranked list long-name line wrap**: a long player name wraps to a
+1. **Unranked list long-name line wrap**: a long player name wraps to a
    second line in the unranked panel, pushing the row separator down
    into the next item, which visually reads as a strikethrough on the
    _next_ row's name.

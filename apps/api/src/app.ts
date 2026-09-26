@@ -43,6 +43,9 @@ export async function buildApp(
   await app.register(cors, {
     origin: true,
     credentials: true,
+    // @fastify/cors only allows GET/HEAD/POST by default; the ranking
+    // editor's PATCH/DELETE calls need these for cross-origin dev.
+    methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
   });
 
   await app.register(cookie);

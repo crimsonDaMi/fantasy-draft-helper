@@ -255,3 +255,32 @@ describe("multi-user isolation (end to end)", () => {
     dependencies.rankingStoreService.close();
   });
 });
+
+describe("CORS (cross-origin dev setup)", () => {
+  it.each(["PATCH", "DELETE"])(
+    "allows %s in preflight responses",
+    async (method) => {
+      const dependencies = createTestDependencies();
+      const app = await buildApp(dependencies);
+
+      const response = await app.inject({
+        method: "OPTIONS",
+        url: "/rankings/ranking-1/players/1",
+        headers: {
+          origin: "http://localhost:5173",
+          "access-control-request-method": method,
+        },
+      });
+
+      expect(response.statusCode).toBe(204);
+      expect(response.headers["access-control-allow-origin"]).toBe(
+        "http://localhost:5173",
+      );
+      expect(response.headers["access-control-allow-methods"]).toContain(
+        method,
+      );
+
+      dependencies.rankingStoreService.close();
+    },
+  );
+});

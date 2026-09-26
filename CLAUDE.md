@@ -48,8 +48,9 @@ is deliberately not used yet (still alpha, not fully Prettier-compatible).
 
 For anything touching the served production build (SPA routing, auth,
 Docker) or real-scale manual behavior (drag-and-drop, filtering), also run
-`pnpm smoke` and verify manually — don't rely on `pnpm dev` for this, see
-the CORS gotcha below.
+`pnpm smoke` and verify manually — `pnpm dev` runs the web app and API
+on different origins, so it doesn't exercise the same-origin production
+setup.
 
 ## Infrastructure gotchas worth knowing up front
 
@@ -63,23 +64,23 @@ the CORS gotcha below.
   `process.cwd()`-relative, i.e. inside `apps/api/`, not the repo root).
   Do not build a migration system without an explicit request — this is
   a deliberate decision, not an oversight.
-- **`pnpm dev` has a known CORS gap.** The web dev server and API run on
-  different origins in dev, so ranking-editor mutation endpoints
-  (PATCH/DELETE on `/rankings/:rankingId/players/:sleeperId`, tier
-  endpoints) fail CORS preflight. Not a problem in the production Docker
-  build (same-origin via `@fastify/static`). Use `pnpm smoke` to test
-  these locally, not `pnpm dev`.
+- **`pnpm dev` is cross-origin.** The web dev server (5173) calls the
+  API (3000) directly, so every non-simple request goes through CORS
+  preflight. `@fastify/cors` only allows GET/HEAD/POST by default; the
+  allowed `methods` list in `apps/api/src/app.ts` must include any new
+  HTTP method the web app starts using (currently PATCH and DELETE, for
+  the ranking editor). Production is same-origin via `@fastify/static`
+  and never hits this.
 - `apps/api/package.json`'s `dev` script echoes the current
   `ALLOWED_USERNAMES` value on startup — there's no `.env` file for the
   API, it's an env var only, exported manually or passed inline.
 
 ## Current backlog (ranking editor)
 
-Two items, not yet started — don't pick one up without confirming
+One item, not yet started — don't pick it up without confirming
 scope with the user first, same as every item resolved so far:
 
-1. **Dev-mode CORS** (see gotcha above) — no fix designed yet.
-2. **Unranked list long-name line wrap**: a long player name in the
+1. **Unranked list long-name line wrap**: a long player name in the
    unranked panel wraps to a second line within its list item, pushing
    the separator/border down into the next row — visually looks like the
    _next_ row's name is struck through.
@@ -87,6 +88,7 @@ scope with the user first, same as every item resolved so far:
 Full history of everything already resolved (the ranking editor's build,
 a major drag-and-drop performance investigation, several container-
 boundary bugs, the six-item polish backlog, the from-scratch-ranking
-feature, the oxlint migration, and the format-on-save fix) is in
-`docs/ranking-editor-history.md` — read it before re-investigating
-anything that looks like a already-solved problem in that area.
+feature, the oxlint migration, the format-on-save fix, and the dev-mode
+CORS fix) is in `docs/ranking-editor-history.md` — read it before
+re-investigating anything that looks like a already-solved problem in
+that area.
