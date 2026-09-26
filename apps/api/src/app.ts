@@ -25,6 +25,8 @@ import { createRankingsRoutes } from "./routes/rankings.routes.js";
 
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
 
+import { isSpaClientRoute } from "./utils/spa-client-routes.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const { version: APP_VERSION } = JSON.parse(
@@ -69,6 +71,10 @@ export async function buildApp(
   const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 
   app.addHook("onRequest", async (request, reply) => {
+    if (isSpaClientRoute(request.method, request.raw.url)) {
+      return reply.sendFile("index.html");
+    }
+
     const isProtected = PROTECTED_PREFIXES.some((prefix) =>
       request.raw.url?.startsWith(prefix),
     );
