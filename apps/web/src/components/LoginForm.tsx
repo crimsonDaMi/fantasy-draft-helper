@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface LoginFormProps {
   error?: string;
@@ -11,6 +11,11 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    usernameInputRef.current?.focus();
+  }, [mode]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +57,7 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
+          ref={usernameInputRef}
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           placeholder="Username"
