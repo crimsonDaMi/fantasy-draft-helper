@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes } from "react-router";
 
 import { DraftDashboard } from "./components/DraftDashboard";
 import { RankingEditorPage } from "./components/RankingEditorPage";
