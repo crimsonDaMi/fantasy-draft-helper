@@ -683,7 +683,11 @@ export function RankingEditorPage() {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
-        autoScroll={false}
+        autoScroll={{
+          canScroll: (element) =>
+            element === document.scrollingElement ||
+            element === document.documentElement,
+        }}
       >
         <div className="ranking-editor__layout">
           <div className="ranking-editor__tiers">
