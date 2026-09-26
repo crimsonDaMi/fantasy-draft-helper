@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["dist"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "typescript/unbound-method": "off"
+      }
+    }
+  ]
+}

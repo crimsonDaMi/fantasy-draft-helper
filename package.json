@@ -6,7 +6,7 @@
     "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev",
     "build": "pnpm --recursive build",
     "test": "pnpm --recursive test",
-    "lint": "pnpm --filter @fantasy-draft-helper/web lint",
+    "lint": "pnpm --filter @fantasy-draft-helper/web lint && pnpm --filter @fantasy-draft-helper/api lint",
     "dead-code": "knip",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json,md}\"",

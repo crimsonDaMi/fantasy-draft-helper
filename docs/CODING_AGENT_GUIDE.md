@@ -978,7 +978,8 @@ After the first substantive edit:
 Before reporting completion:
 
 1. Run `pnpm test` and `pnpm build` for backend or cross-workspace changes.
-2. Run `pnpm --filter @fantasy-draft-helper/web lint` for frontend changes.
+2. Run `pnpm --filter @fantasy-draft-helper/web lint` for frontend changes,
+   and `pnpm --filter @fantasy-draft-helper/api lint` for backend changes.
 3. Report commands run, results, and any unchecked completion-plan items.
 
 Agents must not commit, create branches, reset the worktree, or revert user changes unless explicitly asked. Keep unrelated changes untouched.

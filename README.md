@@ -328,7 +328,7 @@ chmod +x scripts/*.sh
 ```bash
 pnpm test          # all workspace tests
 pnpm build         # all workspace builds
-pnpm lint          # web app lint
+pnpm lint          # web + api lint
 pnpm format        # apply Prettier formatting
 pnpm format:check  # verify formatting without writing (useful in CI)
 pnpm verify        # test + build + lint, in that order
