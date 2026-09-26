@@ -1,20 +1,17 @@
 import { parse } from "csv-parse/sync";
 
-import { Ranking, FantasyPosition } from "../domain/ranking.js";
+import {
+  Ranking,
+  FantasyPosition,
+  FANTASY_POSITIONS,
+} from "../domain/ranking.js";
 
 import {
   RankingImportError,
   RankingImportResult,
 } from "../domain/ranking-import.js";
 
-const VALID_POSITIONS = new Set<FantasyPosition>([
-  "QB",
-  "RB",
-  "WR",
-  "TE",
-  "K",
-  "DEF",
-]);
+const VALID_POSITIONS = new Set<FantasyPosition>(FANTASY_POSITIONS);
 
 type CsvRow = Record<string, string | undefined>;
 

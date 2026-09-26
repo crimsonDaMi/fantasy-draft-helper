@@ -105,3 +105,59 @@ describe("PlayerService refresh cooldown", () => {
     }
   });
 });
+
+describe("PlayerService refreshPlayers position filter", () => {
+  it("drops players without a relevant fantasy position and keeps inactive ones", async () => {
+    const client = {
+      getNFLPlayers: vi.fn(async () => ({
+        "1": {
+          player_id: "1",
+          full_name: "Active Quarterback",
+          position: "QB",
+          team: "BUF",
+          active: true,
+          fantasy_positions: ["QB"],
+        },
+        "2": {
+          player_id: "2",
+          full_name: "Inactive Quarterback",
+          position: "QB",
+          active: false,
+          fantasy_positions: ["QB"],
+        },
+        "3": {
+          player_id: "3",
+          full_name: "Test Linebacker",
+          position: "LB",
+          team: "BUF",
+          active: true,
+          fantasy_positions: ["LB"],
+        },
+        "4": {
+          player_id: "4",
+          full_name: "Test Two Way",
+          position: "WR",
+          team: "BUF",
+          active: true,
+          fantasy_positions: ["WR", "CB"],
+        },
+      })),
+    };
+    const service = new PlayerService(client as never, new PlayerCache());
+
+    await service.refreshPlayers();
+
+    expect(
+      service
+        .getAllPlayers()
+        .map((player) => player.sleeperId)
+        .sort(),
+    ).toEqual(["1", "2", "4"]);
+
+    expect(service.getPlayerById("3")).toBeUndefined();
+
+    expect(service.findPlayersByName("Test Linebacker")).toEqual([]);
+
+    expect(service.getPlayerById("2")?.active).toBe(false);
+  });
+});

@@ -4,6 +4,8 @@ import { PlayerCache } from "../cache/player.cache.js";
 
 import { Player } from "../domain/player.js";
 
+import { hasRelevantFantasyPosition } from "../utils/is-fantasy-relevant-player.js";
+
 import { mapSleeperPlayer } from "./player.mapper.js";
 
 // Per Sleeper's own API docs: "You do not need to call this endpoint more
@@ -32,7 +34,12 @@ export class PlayerService {
   async refreshPlayers(): Promise<void> {
     const response = await this.sleeperClient.getNFLPlayers();
 
-    const players = Object.values(response).map(mapSleeperPlayer);
+    // Drop players this league can never roster (IDP etc.). Inactive
+    // players are deliberately kept so imported rankings can still match
+    // them by ID/name.
+    const players = Object.values(response)
+      .map(mapSleeperPlayer)
+      .filter(hasRelevantFantasyPosition);
 
     this.playerCache.replace(players);
   }

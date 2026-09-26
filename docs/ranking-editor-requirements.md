@@ -50,10 +50,16 @@ now, so a dedicated route is simpler and sufficient.)_
 5. **Autosave.** Rankings update automatically after each drag-and-drop
    action — no separate save step.
 
-6. **Unranked players.** Players who are active in the current NFL season
-   (per the existing `isFantasyRelevantPlayer` check — confirmed
-   sufficient, no separate definition needed) but not part of the
-   ranking are shown in a side area, separate from the ranked list.
+6. **Unranked players.** Players who are fantasy-relevant (per
+   `isFantasyRelevantPlayer`) but not part of the ranking are shown in a
+   side area, separate from the ranked list. Fantasy-relevant means
+   active in the current NFL season **and** at least one of their Sleeper
+   `fantasy_positions` is QB, RB, WR, TE, K, or DEF (e.g. `["WR", "CB"]`
+   counts; `["LB"]` or `["DB", "S"]` doesn't). The position list is the
+   shared `FANTASY_POSITIONS` constant in `apps/api/src/domain/ranking.ts`.
+   Players with no relevant position (individual defensive players etc.)
+   are also dropped from the player cache at load time; inactive players
+   stay in the cache so imported rankings can still match them.
 
 7. **Adding a player from the unranked area.** Dragging a player from the
    unranked side area into the ranked list adds them to the tier they're

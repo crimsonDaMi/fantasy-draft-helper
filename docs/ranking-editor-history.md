@@ -169,6 +169,25 @@ one by dragging players out of the unranked pool, via an explicit
   touch the drag path (`withForcedActiveRow` assumes fixed heights) and
   risk the drag performance work above.
 
+## Player pool limited to league positions (resolved)
+
+- The unranked panel (and the player cache generally) included
+  individual defensive players (LB, DB, DL, ...) that this league can
+  never roster, because `isFantasyRelevantPlayer` only required a
+  non-empty `fantasy_positions` list.
+- Now a player is relevant only if their `fantasy_positions` contain at
+  least one of QB/RB/WR/TE/K/DEF (multi-position players like
+  `["WR", "CB"]` count). Single source of truth is `FANTASY_POSITIONS`
+  in `apps/api/src/domain/ranking.ts`, also used by the CSV importer's
+  position validation.
+- Filtered at load time in `PlayerService.refreshPlayers()` via
+  `hasRelevantFantasyPosition` (position only, **not** `active` — inactive
+  players must stay cached for ranking import matching), and again at
+  read time in `isFantasyRelevantPlayer` (position + `active`).
+- No schema change or DB reset: ranked players are `match_json`
+  snapshots, and the in-memory cache refills on restart or
+  `POST /players/refresh`.
+
 ## Current backlog
 
 Empty.

@@ -188,6 +188,13 @@ few-ms pickup delay was profiled and confirmed to be one-time JS engine
 JIT warmup plus normal browser paint cost, not an app-level bottleneck —
 no further action needed there.
 
+**Post-completion fix — player pool limited to league positions.**
+Players whose Sleeper `fantasy_positions` contain none of QB/RB/WR/TE/K/DEF
+(individual defensive players etc.) are now dropped from the player cache
+at load time and excluded by `isFantasyRelevantPlayer`, so they no longer
+appear in the unranked panel or available-player lists. Details in
+[`docs/ranking-editor-history.md`](docs/ranking-editor-history.md).
+
 Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model
 works fine at a 1-minute pick clock — Sleeper API latency was not an issue.

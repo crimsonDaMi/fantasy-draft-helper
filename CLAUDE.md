@@ -94,6 +94,7 @@ Full history of everything already resolved (the ranking editor's build,
 a major drag-and-drop performance investigation, several container-
 boundary bugs, the six-item polish backlog, the from-scratch-ranking
 feature, the oxlint migration, the format-on-save fix, the dev-mode CORS
-fix, and the unranked long-name wrap fix) is in
+fix, the unranked long-name wrap fix, and the player-pool position
+filter) is in
 `docs/ranking-editor-history.md` — read it before re-investigating
 anything that looks like a already-solved problem in that area.
