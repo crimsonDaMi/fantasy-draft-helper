@@ -69,6 +69,17 @@ The default SQLite database is created at `data/fantasy-draft-helper.db`. Set `R
 RANKINGS_DATABASE_PATH=/path/to/rankings.db pnpm --filter @fantasy-draft-helper/api dev
 ```
 
+There is no migration system for local development, matching the
+production policy in [`RELEASING.md`](RELEASING.md#telling-league-mates-about-an-update):
+a schema change (a new/altered column in any repository's `CREATE TABLE`)
+is a breaking change for an existing database file, since
+`CREATE TABLE IF NOT EXISTS` is a no-op against a table that already
+exists under the old schema. If `pnpm dev` fails at API startup with a
+SQLite error like `no such column: ...`, delete your local
+`data/fantasy-draft-helper.db` (or whatever `RANKINGS_DATABASE_PATH`
+points at) and restart — a fresh database will be created automatically,
+and you'll need to re-register and re-import your rankings.
+
 ## UI Modes (Debug vs. Draft)
 
 The web app renders in one of two modes, controlled by `VITE_UI_MODE`:
