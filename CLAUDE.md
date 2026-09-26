@@ -75,25 +75,18 @@ the CORS gotcha below.
 
 ## Current backlog (ranking editor)
 
-Three items, not yet started — don't pick one up without confirming
+Two items, not yet started — don't pick one up without confirming
 scope with the user first, same as every item resolved so far:
 
 1. **Dev-mode CORS** (see gotcha above) — no fix designed yet.
-2. **Editor save/format auto-modification**: saving
-   `RankingEditorPage.tsx` in the user's editor repeatedly strips two
-   spaces of indentation in the `collisionDetectionStrategy`'s
-   `droppableContainers: args.droppableContainers.filter(...)` block,
-   failing `pnpm format:check`. This is an editor/auto-format-on-save
-   config issue on the user's machine, not a code bug — don't try to fix
-   it in the repo.
-3. **Unranked list long-name line wrap**: a long player name in the
+2. **Unranked list long-name line wrap**: a long player name in the
    unranked panel wraps to a second line within its list item, pushing
    the separator/border down into the next row — visually looks like the
-   *next* row's name is struck through.
+   _next_ row's name is struck through.
 
 Full history of everything already resolved (the ranking editor's build,
 a major drag-and-drop performance investigation, several container-
 boundary bugs, the six-item polish backlog, the from-scratch-ranking
-feature, and the oxlint migration) is in
+feature, the oxlint migration, and the format-on-save fix) is in
 `docs/ranking-editor-history.md` — read it before re-investigating
 anything that looks like a already-solved problem in that area.

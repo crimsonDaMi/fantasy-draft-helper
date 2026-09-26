@@ -76,7 +76,7 @@ crossings:
    `useEffect(focus, [mode])`.
 
 Also shipped along the way: case-insensitive name/team search for the
-unranked panel, plus a *global* position filter (all tiers + unranked,
+unranked panel, plus a _global_ position filter (all tiers + unranked,
 not just unranked). Both filter helpers return the original array
 reference unchanged when no filter is active — a deliberate no-op
 optimization to avoid reintroducing per-dragover-frame cost.
@@ -104,7 +104,7 @@ one by dragging players out of the unranked pool, via an explicit
   ranking created in the editor (or from an earlier session) reaches the
   Draft tab too.
 - One drop-target case was never previously exercised: dropping into an
-  *empty* tier. The virtualized container's height is driven by
+  _empty_ tier. The virtualized container's height is driven by
   `virtualizer.getTotalSize()`, which is 0px for zero players, so the
   droppable area had no hit-testable area at all. Fixed with a
   `min-height` on the scroll wrapper plus a "Drop players here"
@@ -132,19 +132,28 @@ one by dragging players out of the unranked pool, via an explicit
   actual unbound-`this` bug.
 - Root `pnpm lint` now runs both workspaces.
 
+## Tooling: format-on-save fix (resolved)
+
+- Saving `RankingEditorPage.tsx` in VS Code kept stripping two spaces of
+  indentation from the wrapped `=== targetContainer || ...` line in the
+  `collisionDetectionStrategy` filter block, failing `pnpm format:check`.
+  Originally assumed to be local editor config; the actual cause was the
+  committed `.vscode/settings.json`, which set the TS/TSX
+  `editor.defaultFormatter` to VS Code's built-in TypeScript formatter
+  instead of Prettier — the two disagree on continuation-line indentation.
+- Fixed by making `esbenp.prettier-vscode` the default formatter (global
+  and for TS/TSX), recommending it in `.vscode/extensions.json`, and
+  dropping the stale `source.fixAll.eslint` save action left over from
+  the ESLint → oxlint switch.
+
 ## Current backlog (not started)
 
 1. **Dev-mode CORS** on ranking-editor mutation endpoints (see
    `CLAUDE.md`'s gotchas section) — no fix designed yet.
-2. **Editor save/format auto-modification**: the user's editor keeps
-   stripping two spaces of indentation in `RankingEditorPage.tsx`'s
-   `collisionDetectionStrategy` filter block on save, failing
-   `pnpm format:check`. This is the user's local editor/auto-format
-   config, not a repo bug — don't attempt a code fix.
-3. **Unranked list long-name line wrap**: a long player name wraps to a
+2. **Unranked list long-name line wrap**: a long player name wraps to a
    second line in the unranked panel, pushing the row separator down
    into the next item, which visually reads as a strikethrough on the
-   *next* row's name.
+   _next_ row's name.
 
 Do not start any of these without confirming scope with the user first —
 several past items in this history looked simple at first glance and
