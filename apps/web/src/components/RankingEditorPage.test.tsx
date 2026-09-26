@@ -103,5 +103,11 @@ describe("RankingEditorPage", () => {
     );
     expect(screen.getByText("Tier S")).toBeInTheDocument();
     expect(screen.getByText("Player Two")).toBeInTheDocument();
+    // Names are truncated with an ellipsis in fixed-height rows; the full
+    // name stays available as a tooltip.
+    expect(screen.getByText("Player Two")).toHaveAttribute(
+      "title",
+      "Player Two",
+    );
   });
 });

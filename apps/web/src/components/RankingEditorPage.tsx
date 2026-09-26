@@ -83,7 +83,9 @@ function SortablePlayer({ player, rank, offsetTop }: SortablePlayerProps) {
       {rank !== undefined && (
         <span className="ranking-editor__rank">#{rank}</span>
       )}
-      <span className="ranking-editor__name">{player.fullName}</span>
+      <span className="ranking-editor__name" title={player.fullName}>
+        {player.fullName}
+      </span>
       <span className="ranking-editor__meta">
         {player.position}
         {player.position && player.team && " · "}

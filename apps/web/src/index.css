@@ -645,8 +645,15 @@ button {
   flex-shrink: 0;
 }
 
+/* Rows are virtualized at a fixed PLAYER_ROW_HEIGHT, so a wrapped name
+   would overflow into the next row; truncate instead (full name in the
+   title tooltip). */
 .ranking-editor__name {
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ranking-editor__meta {

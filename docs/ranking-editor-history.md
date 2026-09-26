@@ -156,13 +156,23 @@ one by dragging players out of the unranked pool, via an explicit
   (same-origin dev, like prod) was considered and rejected as a larger
   change than needed.
 
-## Current backlog (not started)
+## Unranked long-name wrap fix (resolved)
 
-1. **Unranked list long-name line wrap**: a long player name wraps to a
-   second line in the unranked panel, pushing the row separator down
-   into the next item, which visually reads as a strikethrough on the
-   _next_ row's name.
+- A long player name in the 220px unranked panel wrapped to a second
+  line. Rows are absolutely positioned at a fixed `PLAYER_ROW_HEIGHT`
+  (36px), so the taller row overflowed into the next one and its bottom
+  border drew across the next row's name, looking like a strikethrough.
+- Fixed by truncating `.ranking-editor__name` to one line with an
+  ellipsis (`min-width: 0` so the flex item can shrink), with the full
+  name in a `title` tooltip. Applies to tier rows too. Measuring dynamic
+  row heights in the virtualizer was considered and rejected: it would
+  touch the drag path (`withForcedActiveRow` assumes fixed heights) and
+  risk the drag performance work above.
 
-Do not start any of these without confirming scope with the user first —
+## Current backlog
+
+Empty.
+
+Do not start any new item without confirming scope with the user first —
 several past items in this history looked simple at first glance and
 turned out to need real design discussion before the first diff.

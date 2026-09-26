@@ -77,18 +77,14 @@ setup.
 
 ## Current backlog (ranking editor)
 
-One item, not yet started — don't pick it up without confirming
-scope with the user first, same as every item resolved so far:
-
-1. **Unranked list long-name line wrap**: a long player name in the
-   unranked panel wraps to a second line within its list item, pushing
-   the separator/border down into the next row — visually looks like the
-   _next_ row's name is struck through.
+Empty — every known item has been resolved. New items still need their
+scope confirmed with the user before starting, same as every item
+resolved so far.
 
 Full history of everything already resolved (the ranking editor's build,
 a major drag-and-drop performance investigation, several container-
 boundary bugs, the six-item polish backlog, the from-scratch-ranking
-feature, the oxlint migration, the format-on-save fix, and the dev-mode
-CORS fix) is in `docs/ranking-editor-history.md` — read it before
-re-investigating anything that looks like a already-solved problem in
-that area.
+feature, the oxlint migration, the format-on-save fix, the dev-mode CORS
+fix, and the unranked long-name wrap fix) is in
+`docs/ranking-editor-history.md` — read it before re-investigating
+anything that looks like a already-solved problem in that area.
