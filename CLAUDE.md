@@ -52,6 +52,15 @@ Docker) or real-scale manual behavior (drag-and-drop, filtering), also run
 on different origins, so it doesn't exercise the same-origin production
 setup.
 
+## Dependency maintenance
+
+A scheduled GitHub Actions audit (`.github/workflows/audit.yml`, moderate+
+severity, opens a `dependency-audit` issue on failure) and weekly
+Dependabot PRs (`.github/dependabot.yml`) keep dependencies in check.
+`pnpm run audit` locally is the same check. Dependabot PRs get no CI
+verification gate — run the full gate locally before merging one. Details
+in `RELEASING.md`.
+
 ## Infrastructure gotchas worth knowing up front
 
 - **No migration system, on purpose.** A schema change (new/altered

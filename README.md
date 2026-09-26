@@ -332,6 +332,7 @@ pnpm lint          # web + api lint
 pnpm format        # apply Prettier formatting
 pnpm format:check  # verify formatting without writing (useful in CI)
 pnpm verify        # test + build + lint, in that order
+pnpm run audit     # dependency audit, fails on moderate+ (same check as CI)
 ```
 
 `pnpm verify` is the same check required before any change is considered

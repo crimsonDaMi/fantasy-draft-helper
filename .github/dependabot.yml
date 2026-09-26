@@ -1,0 +1,32 @@
+# Weekly dependency update PRs. Minor/patch updates are grouped into one
+# PR per ecosystem; npm major updates arrive as individual PRs since they
+# usually need code changes (e.g. the react-router v6 -> v7 upgrade).
+# There is no CI verification gate on PRs — run
+# `pnpm test && pnpm build && pnpm lint && pnpm format:check` locally on
+# the branch before merging. See RELEASING.md.
+version: 2
+updates:
+  - package-ecosystem: npm # covers the pnpm workspace via pnpm-lock.yaml
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: build(deps)
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      github-actions:
+        patterns:
+          - "*"

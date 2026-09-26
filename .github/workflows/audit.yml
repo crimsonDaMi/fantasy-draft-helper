@@ -1,0 +1,72 @@
+name: Dependency audit
+
+# Runs `pnpm run audit` (moderate+ severity, see the root package.json)
+# weekly, on demand, and on any PR that changes the lockfile — which
+# covers Dependabot's update PRs. Scheduled/manual failures open a GitHub
+# issue labelled `dependency-audit`, or comment on the existing open one,
+# so a failure isn't only a buried email. scripts/release.sh keeps its own
+# `--audit-level=high` gate, so a moderate finding never blocks a release;
+# see RELEASING.md.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - pnpm-lock.yaml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # pnpm audit reads only the lockfile — no install needed.
+      - name: Audit dependencies
+        run: |
+          set -o pipefail
+          pnpm run audit 2>&1 | tee audit.txt
+
+      - name: Open or update audit issue
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "Audit failed on $(date -u +%Y-%m-%d) — [workflow run]($RUN_URL)."
+            echo
+            echo '```'
+            # Issue bodies/comments cap out around 65k characters.
+            head -c 60000 audit.txt 2>/dev/null || echo "(no audit output captured)"
+            echo '```'
+          } > body.md
+
+          gh label create dependency-audit --force \
+            --color B60205 --description "Scheduled pnpm audit found vulnerabilities"
+
+          existing=$(gh issue list --label dependency-audit --state open \
+            --json number --jq '.[0].number')
+
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --label dependency-audit \
+              --title "Dependency audit: vulnerabilities found" \
+              --body-file body.md
+          fi

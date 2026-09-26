@@ -90,6 +90,32 @@ docker push ghcr.io/crimsondami/fantasy-draft-helper:latest
 Never reuse a version number for a different build — if you need to fix
 something, bump the patch version instead.
 
+## Dependency maintenance
+
+Two GitHub-side checks run between releases:
+
+- **`.github/workflows/audit.yml`** runs `pnpm run audit` (fails on
+  **moderate** and above) every Monday at 06:00 UTC, on demand from the
+  Actions tab ("Run workflow"), and on any PR that changes
+  `pnpm-lock.yaml`. When a scheduled or manual run fails, it opens a
+  GitHub issue labelled `dependency-audit`, or comments on the one that's
+  already open. Close the issue once the audit passes again.
+- **`.github/dependabot.yml`** opens weekly update PRs (Mondays) for npm
+  packages and GitHub Actions. Minor and patch updates are grouped into
+  one PR per ecosystem; npm major updates arrive as separate PRs, since
+  they usually need code changes.
+
+There is no CI workflow running tests/build/lint on PRs, so check out a
+Dependabot branch and run the full verification gate
+(`pnpm test && pnpm build && pnpm lint && pnpm format:check`) before
+merging it.
+
+The scheduled audit is deliberately stricter than the release gate: the
+release script (step 4 above) only blocks on **high**/critical, so a
+moderate advisory with no available fix never blocks an urgent release.
+Dependabot alerts and security-update PRs are repository settings
+(Settings → Code security), not configured from files in this repo.
+
 ## Telling league mates about an update
 
 Deployed instances — whether self-run per person or a shared hosted instance
