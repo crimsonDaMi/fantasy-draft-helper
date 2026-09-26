@@ -23,16 +23,24 @@ export interface EditorPlayer {
   fullName: string;
   position?: string;
   team?: string;
+  /** True 1..N position across the whole ranking (not tier-local), as
+   * persisted by the backend. Undefined for unranked players. Baked
+   * in once per settled server sync in buildContainers — never
+   * recomputed from array position, so neither filtering nor in-drag
+   * reordering can change it; it only updates when a fresh,
+   * server-confirmed ranking arrives after a drop settles. */
+  globalRank?: number;
 }
 
 export type Containers = Record<string, EditorPlayer[]>;
 
-function toEditorPlayer(player: ApiPlayer): EditorPlayer {
+function toEditorPlayer(player: ApiPlayer, globalRank?: number): EditorPlayer {
   return {
     sleeperId: player.sleeperId,
     fullName: player.fullName,
     position: player.position,
     team: player.team,
+    globalRank,
   };
 }
 
@@ -62,13 +70,13 @@ export function buildContainers(
     if (!containers[tier]) {
       containers[tier] = [];
     }
-    containers[tier].push(toEditorPlayer(entry.player));
+    containers[tier].push(toEditorPlayer(entry.player, entry.ranking.rank));
     rankedIds.add(entry.player.sleeperId);
   }
 
   containers[UNRANKED_CONTAINER] = unranked
     .filter((player) => !rankedIds.has(player.sleeperId))
-    .map(toEditorPlayer);
+    .map((player) => toEditorPlayer(player));
 
   return containers;
 }

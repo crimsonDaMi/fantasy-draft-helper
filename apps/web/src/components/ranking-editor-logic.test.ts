@@ -41,6 +41,14 @@ describe("buildContainers", () => {
     expect(result.S.map((p) => p.sleeperId)).toEqual(["1"]);
     expect(result.A.map((p) => p.sleeperId)).toEqual(["2"]);
     expect(result.unranked.map((p) => p.sleeperId)).toEqual(["3"]);
+    expect(result.S[0]?.globalRank).toBe(1);
+    expect(result.A[0]?.globalRank).toBe(2);
+  });
+
+  it("leaves unranked players without a globalRank", () => {
+    const unranked = [{ sleeperId: "3", fullName: "Player Three" }];
+    const result = buildContainers([], [], unranked);
+    expect(result.unranked[0]?.globalRank).toBeUndefined();
   });
 
   it("skips ranking rows with no matched player", () => {

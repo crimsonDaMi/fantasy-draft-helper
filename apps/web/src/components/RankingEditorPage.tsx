@@ -195,7 +195,7 @@ function DroppableContainer({
                 <SortablePlayer
                   key={player.sleeperId}
                   player={player}
-                  rank={showRank ? virtualRow.index + 1 : undefined}
+                  rank={showRank ? player.globalRank : undefined}
                   offsetTop={virtualRow.start}
                 />
               );
