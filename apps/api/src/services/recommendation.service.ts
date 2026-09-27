@@ -3,9 +3,27 @@ import {
   RecommendationResult,
 } from "../domain/recommendation.js";
 
+import { PlayerMatch } from "../domain/player-match.js";
+import { Player } from "../domain/player.js";
+
 import { AdpService } from "./adp.service.js";
 import { DraftStateService } from "./draft-state.service.js";
 import { RankingStoreService } from "./ranking-store.service.js";
+
+function hasPlayer(
+  match: PlayerMatch,
+): match is PlayerMatch & { player: Player } {
+  return match.player !== undefined;
+}
+
+/** No filter (undefined or empty) lets every player through. */
+function isInPositions(player: Player, positions: string[] | undefined) {
+  if (!positions || positions.length === 0) {
+    return true;
+  }
+
+  return player.position !== undefined && positions.includes(player.position);
+}
 
 export class RecommendationService {
   constructor(
@@ -30,21 +48,16 @@ export class RecommendationService {
     const adpBySleeperId = await this.adpService.getSnapshot();
 
     const recommendations = matches
-      .filter((match) => match.player !== undefined)
-      .filter((match) => !draftedPlayerIds.has(match.player!.sleeperId))
-      .filter((match) =>
-        !positions || positions.length === 0
-          ? true
-          : Boolean(match.player!.position) &&
-            positions.includes(match.player!.position!),
-      )
+      .filter(hasPlayer)
+      .filter((match) => !draftedPlayerIds.has(match.player.sleeperId))
+      .filter((match) => isInPositions(match.player, positions))
       .slice(0, limit)
       .map((match): Recommendation => {
-        const adpValue = adpBySleeperId.get(match.player!.sleeperId);
+        const adpValue = adpBySleeperId.get(match.player.sleeperId);
 
         return {
           ranking: match.ranking,
-          player: match.player!,
+          player: match.player,
           adp:
             adpValue === undefined
               ? undefined
