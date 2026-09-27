@@ -5,11 +5,21 @@ This project ships as a single Docker image on GitHub Container Registry:
 
 ## Versioning
 
-Semantic versioning (`vMAJOR.MINOR.PATCH`), kept loose since this is an MVP feedback round:
+Semantic versioning (`vMAJOR.MINOR.PATCH`). Since v1.0.0 the promise to
+anyone running an instance is: **updating within a major version never
+requires a manual step and never loses data.**
 
-- **patch** (`v0.1.1`) — bug fixes, no behavior change
-- **minor** (`v0.2.0`) — new feature or noticeable change
-- **major** (`v1.0.0`) — reserved for leaving MVP/feedback phase
+- **patch** (`v1.0.1`) — bug fixes, no behavior change
+- **minor** (`v1.1.0`) — new feature or noticeable change
+- **major** (`v2.0.0`) — anything that breaks that promise. In particular,
+  **any SQLite schema change** (a new/altered column, table, or foreign
+  key in a repository's `CREATE TABLE`) is a major bump, since without a
+  migration system it means wiping the database (see "Telling league
+  mates about an update" below). So is a manual deployment step such as
+  a changed volume path or environment variable.
+
+Every release's user-facing changes go in `CHANGELOG.md` under
+`## Unreleased`, in the same commit as the change itself.
 
 ## Releasing a new version
 
@@ -26,23 +36,30 @@ This runs `scripts/release.sh`, which:
 1. Refuses to run with uncommitted changes in the working tree.
 2. Validates the version matches `vMAJOR.MINOR.PATCH`.
 3. Refuses to reuse a version whose git tag already exists.
-4. Runs `pnpm audit --audit-level=high`, refusing to release if any
+4. Refuses to run if `CHANGELOG.md`'s `## Unreleased` section is empty.
+5. Runs `pnpm audit --audit-level=high`, refusing to release if any
    high/critical vulnerabilities are found (override with `SKIP_AUDIT=1`
    if you've reviewed an unfixable advisory and accept the risk).
-5. Bumps the root `package.json`'s `version` to match (without the leading
-   `v`), commits, and pushes that commit.
-6. Tags the resulting commit and pushes the tag.
+6. Bumps the root `package.json`'s `version` to match (without the leading
+   `v`), pins the new image tag in both `docker-compose.yml` and
+   `deploy/pi/docker-compose.yml`, renames `## Unreleased` in
+   `CHANGELOG.md` to `## vX.Y.Z — <date>` (with a fresh, empty
+   `## Unreleased` above it), commits all of that, and pushes the commit.
+7. Tags the resulting commit and pushes the tag.
 
 Pushing the tag is where the script's job ends. From there, the
 **`.github/workflows/release.yml`** GitHub Actions workflow takes over:
 
-7. Triggers automatically on the pushed `vX.Y.Z` tag.
-8. Builds the Docker image tagged both `vX.Y.Z` and `latest`.
-9. Pushes both tags to GHCR using the repo's built-in `GITHUB_TOKEN`
-   (no PAT or manually-managed secret needed).
+8. Triggers automatically on the pushed `vX.Y.Z` tag.
+9. Builds the Docker image tagged both `vX.Y.Z` and `latest`.
+10. Pushes both tags to GHCR using the repo's built-in `GITHUB_TOKEN`
+    (no PAT or manually-managed secret needed).
+11. Creates a GitHub Release for the tag, using that version's
+    `CHANGELOG.md` section as its notes (the step fails if the section is
+    missing).
 
 You do not need Docker installed or authenticated locally to cut a release —
-only steps 1–5 run on your machine. Check the **Actions** tab on GitHub to
+only steps 1–7 run on your machine. Check the **Actions** tab on GitHub to
 confirm the build succeeded before telling the league an update is out (see
 "Telling league mates about an update" below).
 
@@ -65,7 +82,9 @@ builds to take longer than a single-arch build would.
 ### What the script does, spelled out manually
 
 Useful if you need to release by hand (script unavailable, or a step needs
-manual intervention). Steps 1–2 replace what `scripts/release.sh` does;
+manual intervention). Before tagging, do step 6 above by hand (version,
+compose pins, changelog heading) and commit it. Steps 1–2 replace the
+tagging part of `scripts/release.sh`;
 after pushing the tag, the GitHub Actions workflow still handles the build
 and push automatically — you shouldn't need step 3 unless Actions itself is
 unavailable.
@@ -111,17 +130,19 @@ Two GitHub-side checks run between releases:
   whether a newer Node LTS line exists than the Dockerfile's
   `node:<major>-slim` image, and opens a GitHub issue labelled `node-lts`
   once per new LTS major. Upgrade in a single commit: the Dockerfile base
-  image, `node-version` in `audit.yml`, and `@types/node` in both
-  workspaces. Then run the full verification gate plus `pnpm smoke`, and
-  close the issue.
+  image, `node-version` in `audit.yml` and `verify.yml`, and `@types/node`
+  in both workspaces. Then run the full verification gate plus
+  `pnpm smoke`, and close the issue.
 
-There is no CI workflow running tests/build/lint on PRs, so check out a
-Dependabot branch and run the full verification gate
-(`pnpm test && pnpm build && pnpm lint && pnpm format:check`) before
-merging it.
+**`.github/workflows/verify.yml`** runs the full verification gate
+(`pnpm verify`: test, build, lint, format check) on every PR and on every
+push to `main`, so a Dependabot PR shows whether it passes. Wait for it
+before merging. It doesn't replace running the gate locally before
+committing your own changes, and it doesn't run `pnpm smoke` — do that
+yourself for anything touching Docker or the production build.
 
 The scheduled audit is deliberately stricter than the release gate: the
-release script (step 4 above) only blocks on **high**/critical, so a
+release script (step 5 above) only blocks on **high**/critical, so a
 moderate advisory with no available fix never blocks an urgent release.
 Dependabot alerts and security-update PRs are repository settings
 (Settings → Code security), not configured from files in this repo.
@@ -130,7 +151,9 @@ Dependabot alerts and security-update PRs are repository settings
 
 Deployed instances — whether self-run per person or a shared hosted instance
 (see [`deploy/pi/README.md`](deploy/pi/README.md)) — pin an explicit version tag in `docker-compose.yml` (not `latest`),
-so updates are deliberate rather than automatic:
+so updates are deliberate rather than automatic. The release script keeps
+the repository's two compose files pinned to the latest release, so a
+deployment running from a repository checkout updates with `git pull`:
 
 ```yaml
 services:
@@ -154,8 +177,11 @@ When a new version is ready:
 
 1. Confirm the release workflow finished successfully (Actions tab) so the
    image tag actually exists in GHCR before telling anyone to pull it.
-2. Post in the league chat what changed (e.g. "v0.2.0 is up — fixes the CSV import bug").
-3. Each person updates the version in their `docker-compose.yml` and runs:
+2. Post in the league chat what changed (the GitHub Release notes), e.g.
+   "v1.1.0 is up — fixes the CSV import bug".
+3. Each person updates the version in their `docker-compose.yml` (or runs
+   `git pull` in their checkout), follows any "Upgrading" steps from the
+   release notes, and runs:
    ```bash
    docker compose pull
    docker compose up -d

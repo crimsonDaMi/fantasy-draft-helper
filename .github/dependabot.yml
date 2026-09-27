@@ -1,9 +1,8 @@
 # Weekly dependency update PRs. Minor/patch updates are grouped into one
 # PR per ecosystem; npm major updates arrive as individual PRs since they
 # usually need code changes (e.g. the react-router v6 -> v7 upgrade).
-# There is no CI verification gate on PRs — run
-# `pnpm test && pnpm build && pnpm lint && pnpm format:check` locally on
-# the branch before merging. See RELEASING.md.
+# .github/workflows/verify.yml runs the full verification gate on each
+# PR — wait for it to pass before merging. See RELEASING.md.
 version: 2
 updates:
   - package-ecosystem: npm # covers the pnpm workspace via pnpm-lock.yaml

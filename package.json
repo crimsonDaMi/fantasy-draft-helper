@@ -11,7 +11,7 @@
     "dead-code": "knip",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json,md}\"",
-    "verify": "pnpm test && pnpm build && pnpm lint",
+    "verify": "pnpm test && pnpm build && pnpm lint && pnpm format:check",
     "docker:build": "docker build -t fantasy-draft-helper:test .",
     "docker:build:debug": "docker build --build-arg VITE_UI_MODE=debug -t fantasy-draft-helper:debug .",
     "audit": "pnpm audit --audit-level=moderate",

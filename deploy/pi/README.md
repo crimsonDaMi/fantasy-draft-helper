@@ -108,9 +108,14 @@ ALLOWED_USERNAMES=<comma-separated real usernames>
 
 ## Updating to a new released version
 
+`pnpm release` pins each new version in this directory's
+`docker-compose.yml`, so updating the repository checkout is enough to
+select it. Read the release's notes in `CHANGELOG.md` (or on the GitHub
+Release) first — an "Upgrading" section lists any manual step.
+
 ```bash
+git pull
 cd deploy/pi
-# edit docker-compose.yml's image tag to the new vX.Y.Z
 docker compose pull
 docker compose up -d
 ```

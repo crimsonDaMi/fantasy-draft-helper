@@ -30,7 +30,9 @@ file:
 - Conventional commit messages, split by concern when it makes sense
   (e.g. keep a tooling-setup commit separate from mass reformatting)
 - Documentation updated in the same commit as the code change that
-  necessitates it, not as a follow-up
+  necessitates it, not as a follow-up — including a `CHANGELOG.md` entry
+  under `## Unreleased` for anything user-facing (`pnpm release` refuses
+  to run with that section empty)
 - Generic placeholders in test fixtures (e.g. `"testuser"`), never real
   names
 - Minimal, targeted changes over large refactors
@@ -45,8 +47,11 @@ file:
 ## Verification gate
 
 ```bash
-pnpm test && pnpm build && pnpm lint && pnpm format:check
+pnpm verify   # = pnpm test && pnpm build && pnpm lint && pnpm format:check
 ```
+
+`.github/workflows/verify.yml` runs the same gate on every PR and push to
+`main`; it's a backstop, not a substitute for running it locally.
 
 `pnpm lint` runs both workspaces: `apps/web` via oxlint, `apps/api` via
 oxlint with type-aware rules (`oxlint --type-aware`), then knip for
@@ -71,8 +76,8 @@ Dependabot PRs (`.github/dependabot.yml`) keep dependencies in check.
 `pnpm run audit` locally is the same check. `@types/node` majors are
 ignored by Dependabot — they must track the Dockerfile's Node major, and
 `.github/workflows/node-lts.yml` opens a `node-lts` issue when a newer
-LTS exists. Dependabot PRs get no CI
-verification gate — run the full gate locally before merging one. Details
+LTS exists. Dependabot PRs get the CI
+verification gate (`verify.yml`) — wait for it before merging one. Details
 in `RELEASING.md`.
 
 ## Infrastructure gotchas worth knowing up front

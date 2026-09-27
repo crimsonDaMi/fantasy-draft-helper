@@ -59,7 +59,7 @@ jobs:
           Upgrade in one commit:
 
           - \`Dockerfile\`: \`FROM node:$latest-slim\`
-          - \`.github/workflows/audit.yml\`: \`node-version: $latest\`
+          - \`.github/workflows/audit.yml\` and \`verify.yml\`: \`node-version: $latest\`
           - \`@types/node\` in \`apps/api/package.json\` and \`apps/web/package.json\`: \`^$latest\`
 
           Then run the full verification gate and \`pnpm smoke\`. Dependabot

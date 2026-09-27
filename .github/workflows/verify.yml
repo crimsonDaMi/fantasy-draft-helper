@@ -1,0 +1,38 @@
+name: Verify
+
+# Runs the full verification gate (`pnpm verify`: test, build, lint,
+# format check) on every PR and push to main. The same gate runs locally
+# before any change is considered done; this catches the cases where it
+# didn't — notably Dependabot PRs, which nobody runs locally by default.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify
+        run: pnpm verify
