@@ -27,9 +27,8 @@ export class SleeperClient {
     if (!response.ok) {
       throw new HttpError(
         response.status,
-        `Sleeper API request failed: ` +
-          `${response.status} ` +
-          `${response.statusText}`,
+        `Sleeper API request failed: ${response.status} ${response.statusText}`,
+        "SLEEPER_API_ERROR",
       );
     }
 

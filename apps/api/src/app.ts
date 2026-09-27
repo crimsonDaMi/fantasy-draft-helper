@@ -1,7 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
-import { ZodError } from "zod";
 import fastifyStatic from "@fastify/static";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -15,7 +14,7 @@ import { createDraftsRoutes } from "./routes/drafts.routes.js";
 
 import { createPlayersRoutes } from "./routes/players.routes.js";
 
-import { HttpError } from "./utils/http-error.js";
+import { errorHandler } from "./utils/error-handler.js";
 
 import multipart from "@fastify/multipart";
 
@@ -39,6 +38,12 @@ export async function buildApp(
   const app = Fastify({
     logger: true,
   });
+
+  // Must be set before any route plugin is registered: each `await
+  // app.register(...)` loads immediately and captures the error handler
+  // in effect at that moment, so a handler set afterwards never reaches
+  // the routes.
+  app.setErrorHandler(errorHandler);
 
   await app.register(cors, {
     origin: true,
@@ -143,34 +148,6 @@ export async function buildApp(
       });
     }
     return reply.sendFile("index.html");
-  });
-
-  app.setErrorHandler((error, request, reply) => {
-    request.log.error(error);
-
-    if (error instanceof ZodError) {
-      return reply.status(400).send({
-        error: "VALIDATION_ERROR",
-
-        message: "Invalid request parameters",
-
-        details: error.issues,
-      });
-    }
-
-    if (error instanceof HttpError) {
-      return reply.status(error.statusCode).send({
-        error: "SLEEPER_API_ERROR",
-
-        message: error.message,
-      });
-    }
-
-    return reply.status(500).send({
-      error: "INTERNAL_SERVER_ERROR",
-
-      message: "An unexpected error occurred",
-    });
   });
 
   return app;

@@ -2,11 +2,11 @@ import Fastify from "fastify";
 
 import cookie from "@fastify/cookie";
 
-import { ZodError } from "zod";
-
 import { describe, expect, it } from "vitest";
 
 import { createAuthRoutes } from "./auth.routes.js";
+
+import { errorHandler } from "../utils/error-handler.js";
 
 import {
   AllowlistError,
@@ -26,17 +26,7 @@ function createTestApp(authService: {
 
   app.register(createAuthRoutes(authService as never));
 
-  app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof ZodError) {
-      return reply.status(400).send({
-        error: "VALIDATION_ERROR",
-      });
-    }
-
-    return reply.status(500).send({
-      error: "INTERNAL_SERVER_ERROR",
-    });
-  });
+  app.setErrorHandler(errorHandler);
 
   return app;
 }

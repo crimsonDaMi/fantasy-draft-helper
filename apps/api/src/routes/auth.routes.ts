@@ -111,6 +111,7 @@ export function createAuthRoutes(authService: AuthService) {
         if (!user) {
           return reply.status(401).send({
             error: "UNAUTHENTICATED",
+            message: "Login required",
           });
         }
 

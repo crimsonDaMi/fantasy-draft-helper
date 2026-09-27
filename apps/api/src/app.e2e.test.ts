@@ -16,7 +16,11 @@ import { DraftStateService } from "./services/draft-state.service.js";
 
 import { PlayerService } from "./services/player.service.js";
 
+import { RankingEditorService } from "./services/ranking-editor.service.js";
+
 import { RankingStoreService } from "./services/ranking-store.service.js";
+
+import { RankingRepository } from "./repositories/ranking.repository.js";
 
 import { RecommendationService } from "./services/recommendation.service.js";
 
@@ -69,7 +73,12 @@ function createTestDependencies(): AppDependencies {
   const draftStateService = new DraftStateService(draftService, playerService);
 
   const authService = new AuthService(":memory:", ["alice", "bob"]);
-  const rankingStoreService = new RankingStoreService(":memory:");
+  const rankingRepository = new RankingRepository(":memory:");
+  const rankingStoreService = new RankingStoreService(rankingRepository);
+  const rankingEditorService = new RankingEditorService(
+    rankingRepository,
+    playerService,
+  );
 
   const noopAdpService = {
     getSnapshot: async () => new Map<string, number>(),
@@ -90,6 +99,7 @@ function createTestDependencies(): AppDependencies {
     playerService,
     draftStateService,
     rankingImportService: {} as never, // not exercised by this test
+    rankingEditorService,
     rankingStoreService,
     recommendationService,
   };
@@ -226,7 +236,8 @@ describe("multi-user isolation (end to end)", () => {
 
     expect(bobReadingAlice.statusCode).toBe(404);
     expect(bobReadingAlice.json()).toEqual({
-      error: "Ranking was not found",
+      error: "RANKING_NOT_FOUND",
+      message: "Ranking was not found",
     });
 
     // Symmetric check: Alice cannot read Bob's either.
@@ -251,6 +262,84 @@ describe("multi-user isolation (end to end)", () => {
     });
 
     expect(response.statusCode).toBe(401);
+
+    dependencies.rankingStoreService.close();
+  });
+});
+
+describe("error responses (end to end)", () => {
+  // Guards the handler registration order in buildApp: a handler set
+  // after the route plugins load never reaches them, and a ZodError
+  // then falls through to Fastify's default 500.
+  it("maps request validation errors to 400 through the real app", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/auth/register",
+      payload: { username: "alice", password: "short" },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      error: "VALIDATION_ERROR",
+      message: "Invalid request parameters",
+    });
+
+    dependencies.rankingStoreService.close();
+  });
+
+  it("returns 4xx with a { error, message } body for invalid tier edits", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+
+    const alice = await registerUser(app, "alice");
+    const bob = await registerUser(app, "bob");
+
+    const rankingId = (
+      await app.inject({
+        method: "POST",
+        url: "/rankings/new",
+        headers: { cookie: alice.cookie },
+      })
+    ).json().rankingId as string;
+
+    const missingTier = await app.inject({
+      method: "DELETE",
+      url: `/rankings/${rankingId}/tiers/5`,
+      headers: { cookie: alice.cookie },
+    });
+
+    expect(missingTier.statusCode).toBe(404);
+    expect(missingTier.json()).toEqual({
+      error: "TIER_NOT_FOUND",
+      message: "Tier at position 5 does not exist",
+    });
+
+    const lastTier = await app.inject({
+      method: "DELETE",
+      url: `/rankings/${rankingId}/tiers/1`,
+      headers: { cookie: alice.cookie },
+    });
+
+    expect(lastTier.statusCode).toBe(409);
+    expect(lastTier.json()).toEqual({
+      error: "LAST_TIER",
+      message: "Cannot remove the only remaining tier",
+    });
+
+    const othersRanking = await app.inject({
+      method: "GET",
+      url: `/rankings/${rankingId}`,
+      headers: { cookie: bob.cookie },
+    });
+
+    expect(othersRanking.statusCode).toBe(404);
+    expect(othersRanking.json()).toEqual({
+      error: "RANKING_NOT_FOUND",
+      message: "Ranking was not found",
+    });
 
     dependencies.rankingStoreService.close();
   });

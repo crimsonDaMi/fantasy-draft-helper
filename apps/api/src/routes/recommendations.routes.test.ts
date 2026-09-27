@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createRecommendationsRoutes } from "./recommendations.routes.js";
 
+import { errorHandler } from "../utils/error-handler.js";
+
 import { HttpError } from "../utils/http-error.js";
 
 const TEST_USER = { id: "test-user", username: "testuser" };
@@ -39,18 +41,7 @@ function createTestApp(
     ),
   );
 
-  app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof HttpError) {
-      return reply.status(error.statusCode).send({
-        error: "SLEEPER_API_ERROR",
-        message: error.message,
-      });
-    }
-
-    return reply.status(500).send({
-      error: "INTERNAL_SERVER_ERROR",
-    });
-  });
+  app.setErrorHandler(errorHandler);
 
   return app;
 }
@@ -137,7 +128,8 @@ describe("recommendations routes", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toEqual({
-      error: "Ranking was not found",
+      error: "RANKING_NOT_FOUND",
+      message: "Ranking was not found",
     });
 
     await app.close();
@@ -155,7 +147,8 @@ describe("recommendations routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
-      error: "No rankings have been imported",
+      error: "NO_RANKINGS",
+      message: "No rankings have been imported",
     });
 
     await app.close();
@@ -171,7 +164,7 @@ describe("recommendations routes", () => {
 
     const recommendationService = {
       getRecommendations: async () => {
-        throw new HttpError(404, "Draft was not found");
+        throw new HttpError(404, "Draft was not found", "SLEEPER_API_ERROR");
       },
     };
 
@@ -185,18 +178,7 @@ describe("recommendations routes", () => {
       ),
     );
 
-    app.setErrorHandler((error, _request, reply) => {
-      if (error instanceof HttpError) {
-        return reply.status(error.statusCode).send({
-          error: "SLEEPER_API_ERROR",
-          message: error.message,
-        });
-      }
-
-      return reply.status(500).send({
-        error: "INTERNAL_SERVER_ERROR",
-      });
-    });
+    app.setErrorHandler(errorHandler);
 
     const response = await app.inject({
       method: "GET",

@@ -41,7 +41,7 @@ export class RankingEditorService {
       const player = this.playerService.getPlayerById(sleeperId);
 
       if (!player) {
-        throw new HttpError(404, "Player was not found");
+        throw new HttpError(404, "Player was not found", "PLAYER_NOT_FOUND");
       }
 
       newMatch = {
@@ -146,7 +146,7 @@ export class RankingEditorService {
 
   private assertOwnership(rankingId: string, userId: string): void {
     if (!this.repository.hasRanking(rankingId, userId)) {
-      throw new HttpError(404, "Ranking was not found");
+      throw new HttpError(404, "Ranking was not found", "RANKING_NOT_FOUND");
     }
   }
 }

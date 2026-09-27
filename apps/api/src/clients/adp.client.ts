@@ -11,6 +11,7 @@ export class AdpClient {
       throw new HttpError(
         response.status,
         `ADP source request failed: ${response.status} ${response.statusText}`,
+        "ADP_SOURCE_ERROR",
       );
     }
 

@@ -20,7 +20,8 @@ export function createRankingsRoutes(
 
         if (!file) {
           return reply.status(400).send({
-            error: "CSV file is required",
+            error: "CSV_FILE_REQUIRED",
+            message: "CSV file is required",
           });
         }
 
@@ -34,7 +35,8 @@ export function createRankingsRoutes(
 
         if (!allowedMimeTypes.has(file.mimetype)) {
           return reply.status(400).send({
-            error: "File must be a CSV",
+            error: "INVALID_FILE_TYPE",
+            message: "File must be a CSV",
           });
         }
 

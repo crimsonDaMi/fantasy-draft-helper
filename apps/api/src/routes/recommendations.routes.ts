@@ -42,7 +42,8 @@ export function createRecommendationsRoutes(
 
         if (!rankingStoreService.hasRankings(userId)) {
           return reply.status(400).send({
-            error: "No rankings have been imported",
+            error: "NO_RANKINGS",
+            message: "No rankings have been imported",
           });
         }
 
@@ -53,7 +54,8 @@ export function createRecommendationsRoutes(
 
         if (!rankingStoreService.hasRanking(rankingId, userId)) {
           return reply.status(404).send({
-            error: "Ranking was not found",
+            error: "RANKING_NOT_FOUND",
+            message: "Ranking was not found",
           });
         }
 

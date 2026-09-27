@@ -140,7 +140,8 @@ describe("rankings routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
-      error: "CSV file is required",
+      error: "CSV_FILE_REQUIRED",
+      message: "CSV file is required",
     });
 
     await app.close();

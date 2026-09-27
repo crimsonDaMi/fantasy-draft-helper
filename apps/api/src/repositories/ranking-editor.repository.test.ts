@@ -148,6 +148,36 @@ describe("RankingRepository editor mutations", () => {
 
     const rankingId = repository.create([match(1, "S", "1")], USER_ID);
 
-    expect(() => repository.removeTier(rankingId, 1)).toThrow();
+    expect(() => repository.removeTier(rankingId, 1)).toThrow(
+      expect.objectContaining({ statusCode: 409, code: "LAST_TIER" }),
+    );
+  });
+
+  it("rejects removing a tier that does not exist with a 404", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const rankingId = repository.create(
+      [match(1, "S", "1"), match(2, "A", "2")],
+      USER_ID,
+    );
+
+    expect(() => repository.removeTier(rankingId, 5)).toThrow(
+      expect.objectContaining({ statusCode: 404, code: "TIER_NOT_FOUND" }),
+    );
+  });
+
+  it("rejects inserting a tier past the 26-tier limit with a 409", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const rankingId = repository.create([match(1, "S", "1")], USER_ID);
+
+    for (let tierCount = 1; tierCount < 26; tierCount++) {
+      repository.insertTier(rankingId, tierCount + 1);
+    }
+
+    expect(repository.getTiers(rankingId)).toHaveLength(26);
+    expect(() => repository.insertTier(rankingId, 1)).toThrow(
+      expect.objectContaining({ statusCode: 409, code: "TIER_LIMIT_REACHED" }),
+    );
   });
 });

@@ -83,6 +83,13 @@ in `RELEASING.md`.
   HTTP method the web app starts using (currently PATCH and DELETE, for
   the ranking editor). Production is same-origin via `@fastify/static`
   and never hits this.
+- **Error handler registration order.** `app.setErrorHandler(errorHandler)`
+  (`apps/api/src/utils/error-handler.ts`) must stay above every
+  `await app.register(...)` in `buildApp` — an awaited plugin captures the
+  handler in effect when it loads, so one set later silently never applies
+  (ZodErrors then become 500s). Every error body is `{ error: CODE,
+message }`; throw `HttpError(status, message, CODE)` for expected
+  failures. Guarded by `app.e2e.test.ts`.
 - `apps/api/package.json`'s `dev` script echoes the current
   `ALLOWED_USERNAMES` value on startup — there's no `.env` file for the
   API, it's an env var only, exported manually or passed inline.

@@ -8,6 +8,8 @@ import { PlayerMatch } from "../domain/player-match.js";
 
 import { RankingTier } from "../domain/ranking-tier.js";
 
+import { HttpError } from "../utils/http-error.js";
+
 import { labelTierToNumeric, numericTierToLabel } from "../utils/tier.js";
 
 interface RankingPlayerRow {
@@ -252,7 +254,11 @@ export class RankingRepository {
       const clamped = Math.max(1, Math.min(position, maxPosition + 1));
 
       if (maxPosition + 1 > 26) {
-        throw new Error("Cannot add more than 26 tiers");
+        throw new HttpError(
+          409,
+          "Cannot add more than 26 tiers",
+          "TIER_LIMIT_REACHED",
+        );
       }
 
       this.shiftTiersFrom(rankingId, clamped, 1);
@@ -281,11 +287,19 @@ export class RankingRepository {
       const positions = this.readTierPositions(rankingId);
 
       if (!positions.includes(position)) {
-        throw new Error(`Tier at position ${position} does not exist`);
+        throw new HttpError(
+          404,
+          `Tier at position ${position} does not exist`,
+          "TIER_NOT_FOUND",
+        );
       }
 
       if (positions.length <= 1) {
-        throw new Error("Cannot remove the only remaining tier");
+        throw new HttpError(
+          409,
+          "Cannot remove the only remaining tier",
+          "LAST_TIER",
+        );
       }
 
       const below = positions
