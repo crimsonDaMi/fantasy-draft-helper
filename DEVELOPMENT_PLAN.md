@@ -14,6 +14,9 @@ tags (`vX.Y.Z`) — see `RELEASING.md`.
 allowlist (#8), online hosting (#4), clean user data separation (#6), and
 multi-user support (#5) — the entire roadmap in this document is complete
 as of this version.
+**v0.8.x** ships Phase 4, the ranking editor, and its follow-up fixes.
+**v1.0.0** (next) ships the readiness work listed under "v1.0.0
+readiness" below. Per-release details are in `CHANGELOG.md`.
 
 This document tracks the next round of feature ideas: their complexity,
 benefit, dependencies, and the agreed implementation order. Intended for
@@ -194,6 +197,29 @@ Players whose Sleeper `fantasy_positions` contain none of QB/RB/WR/TE/K/DEF
 at load time and excluded by `isFantasyRelevantPlayer`, so they no longer
 appear in the unranked panel or available-player lists. Details in
 [`docs/ranking-editor-history.md`](docs/ranking-editor-history.md).
+
+## v1.0.0 readiness (complete, pending release)
+
+Not a feature phase — hardening before declaring the app stable, so that
+"1.0" can promise that updates within a major version need no manual
+step and never lose data (see `RELEASING.md`'s Versioning section):
+
+- **Schema guardrail:** `applySchema` refuses to start against a database
+  created with a different schema. Schema changes are major bumps.
+- **Ranking CSV export** (`GET /rankings/export`, "Export CSV" in the
+  editor): a user-side backup that re-imports exactly, for the case where
+  a major release does require a database wipe.
+- **Auth hardening:** per-username lockout after 5 failed logins (15
+  minutes, in memory), async password hashing, expired-session purge,
+  session cookie expiry aligned with the server-side session.
+- **Docker image:** production-only runtime stage, non-root `node` user,
+  `HEALTHCHECK`. Upgrading an existing volume needs a one-time `chown`
+  (documented in `CHANGELOG.md` and `deploy/pi/README.md`).
+- **Release process:** `CHANGELOG.md` feeding GitHub Releases, compose
+  files pinned by `pnpm release`, verification gate in CI.
+
+The paragraph below is the historical go/no-go framing from before Phase
+2 started, kept for context.
 
 Phases 2 and 3 together amount to roughly a rewrite of the data and auth
 layer. The live draft test already showed the local, run-it-yourself model
