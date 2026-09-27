@@ -8,6 +8,7 @@ import {
   AllowlistError,
   DuplicateUsernameError,
   InvalidCredentialsError,
+  TooManyLoginAttemptsError,
 } from "../services/auth.service.js";
 
 function createTestApp(authService: {
@@ -33,6 +34,7 @@ describe("auth routes", () => {
       register: () => ({
         user: { id: "1", username: "testuser" },
         token: "test-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       login: () => {
         throw new Error("not used");
@@ -137,6 +139,7 @@ describe("auth routes", () => {
       login: () => ({
         user: { id: "1", username: "testuser" },
         token: "test-token",
+        expiresAt: "2030-01-01T00:00:00.000Z",
       }),
       logout: () => {},
       getUserForSession: () => undefined,
@@ -158,6 +161,41 @@ describe("auth routes", () => {
     const sessionCookie = response.cookies.find((c) => c.name === "session");
 
     expect(sessionCookie?.value).toBe("test-token");
+    expect(sessionCookie?.expires).toEqual(
+      new Date("2030-01-01T00:00:00.000Z"),
+    );
+
+    await app.close();
+  });
+
+  it("returns 429 once a username is locked out", async () => {
+    const authService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: () => {
+        throw new TooManyLoginAttemptsError("locked out");
+      },
+      logout: () => {},
+      getUserForSession: () => undefined,
+    };
+
+    const app = createTestApp(authService);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/auth/login",
+      payload: {
+        username: "testuser",
+        password: "wrongpassword",
+      },
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.json()).toEqual({
+      error: "TOO_MANY_LOGIN_ATTEMPTS",
+      message: "locked out",
+    });
 
     await app.close();
   });

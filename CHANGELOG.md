@@ -21,6 +21,14 @@ See `RELEASING.md`.
   `no such column` crash loop.
 - "Support me" (Ko-fi) link in the header.
 
+### Security
+
+- Logins for a username are locked for 15 minutes after 5 failed attempts.
+- Password hashing no longer blocks the server while it runs.
+- Expired sessions are purged at startup and on login; the session cookie
+  now expires together with the session (30 days) instead of on browser
+  close.
+
 ## v0.8.5 — 2026-09-27
 
 - The tier-removal prompt names the correct merge target.

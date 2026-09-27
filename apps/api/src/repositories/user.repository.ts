@@ -1,15 +1,21 @@
-import {
-  randomBytes,
-  randomUUID,
-  scryptSync,
-  timingSafeEqual,
-} from "node:crypto";
+import { randomBytes, randomUUID, scrypt, timingSafeEqual } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { promisify } from "node:util";
 
 import { applySchema, openDatabase } from "./database.js";
 
 const SCRYPT_KEY_LENGTH = 64;
-const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+const scryptAsync = promisify(scrypt) as (
+  password: string,
+  salt: string,
+  keyLength: number,
+) => Promise<Buffer>;
+
+// Hashed against when the username doesn't exist, so a login attempt takes
+// the same time either way and doesn't reveal which usernames are taken.
+const DUMMY_SALT = randomBytes(16).toString("hex");
 
 export interface User {
   id: string;
@@ -47,12 +53,14 @@ export class UserRepository {
     this.database = openDatabase(databasePath);
 
     applySchema(this.database, USER_SCHEMA);
+
+    this.deleteExpiredSessions();
   }
 
-  createUser(username: string, password: string): User {
+  async createUser(username: string, password: string): Promise<User> {
     const id = randomUUID();
     const salt = randomBytes(16).toString("hex");
-    const hash = this.hashPassword(password, salt);
+    const hash = await this.hashPassword(password, salt);
     const createdAt = new Date().toISOString();
 
     this.database
@@ -78,7 +86,10 @@ export class UserRepository {
     return row !== undefined;
   }
 
-  verifyPassword(username: string, password: string): User | undefined {
+  async verifyPassword(
+    username: string,
+    password: string,
+  ): Promise<User | undefined> {
     const row = this.database
       .prepare(
         `SELECT id, username, password_salt, password_hash
@@ -95,10 +106,11 @@ export class UserRepository {
       | undefined;
 
     if (!row) {
+      await this.hashPassword(password, DUMMY_SALT);
       return undefined;
     }
 
-    const candidateHash = this.hashPassword(password, row.password_salt);
+    const candidateHash = await this.hashPassword(password, row.password_salt);
 
     const stored = Buffer.from(row.password_hash, "hex");
     const candidate = Buffer.from(candidateHash, "hex");
@@ -114,6 +126,10 @@ export class UserRepository {
   }
 
   createSession(userId: string): { token: string; expiresAt: string } {
+    // Sessions are otherwise only deleted on logout or when an expired one
+    // is presented, so abandoned ones would accumulate forever.
+    this.deleteExpiredSessions();
+
     const token = randomBytes(32).toString("hex");
     const createdAt = new Date();
     const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_MS);
@@ -158,11 +174,21 @@ export class UserRepository {
     this.database.prepare(`DELETE FROM sessions WHERE token = ?`).run(token);
   }
 
+  deleteExpiredSessions(): void {
+    this.database
+      .prepare(`DELETE FROM sessions WHERE expires_at < ?`)
+      .run(new Date().toISOString());
+  }
+
   close(): void {
     this.database.close();
   }
 
-  private hashPassword(password: string, salt: string): string {
-    return scryptSync(password, salt, SCRYPT_KEY_LENGTH).toString("hex");
+  /** Async so a login doesn't block the event loop (and every other
+   * user's draft polling) for the duration of the hash. */
+  private async hashPassword(password: string, salt: string): Promise<string> {
+    const hash = await scryptAsync(password, salt, SCRYPT_KEY_LENGTH);
+
+    return hash.toString("hex");
   }
 }

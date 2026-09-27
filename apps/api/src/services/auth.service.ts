@@ -3,6 +3,16 @@ import { User, UserRepository } from "../repositories/user.repository.js";
 export class AllowlistError extends Error {}
 export class DuplicateUsernameError extends Error {}
 export class InvalidCredentialsError extends Error {}
+export class TooManyLoginAttemptsError extends Error {}
+
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+
+interface Session {
+  user: User;
+  token: string;
+  expiresAt: string;
+}
 
 /** Usernames are case-insensitive and whitespace-trimmed everywhere. */
 function normalizeUsername(username: string): string {
@@ -12,6 +22,14 @@ function normalizeUsername(username: string): string {
 export class AuthService {
   private readonly allowedUsernames: Set<string>;
 
+  // Failed logins per username, kept in memory (a restart resets them).
+  // Keyed by username rather than IP: behind Tailscale Funnel every
+  // request can arrive from the same proxy address.
+  private readonly failedLogins = new Map<
+    string,
+    { count: number; windowStartedAt: number }
+  >();
+
   constructor(
     private readonly repository: UserRepository,
     allowedUsernames: string[] = [],
@@ -19,7 +37,7 @@ export class AuthService {
     this.allowedUsernames = new Set(allowedUsernames.map(normalizeUsername));
   }
 
-  register(username: string, password: string): { user: User; token: string } {
+  async register(username: string, password: string): Promise<Session> {
     const normalizedUsername = normalizeUsername(username);
 
     if (!this.allowedUsernames.has(normalizedUsername)) {
@@ -32,25 +50,33 @@ export class AuthService {
       );
     }
 
-    const user = this.repository.createUser(normalizedUsername, password);
+    const user = await this.repository.createUser(normalizedUsername, password);
 
-    const session = this.repository.createSession(user.id);
-
-    return { user, token: session.token };
+    return { user, ...this.repository.createSession(user.id) };
   }
 
-  login(username: string, password: string): { user: User; token: string } {
+  async login(username: string, password: string): Promise<Session> {
     const normalizedUsername = normalizeUsername(username);
 
-    const user = this.repository.verifyPassword(normalizedUsername, password);
+    if (this.isLockedOut(normalizedUsername)) {
+      throw new TooManyLoginAttemptsError(
+        "Too many failed login attempts. Try again in 15 minutes.",
+      );
+    }
+
+    const user = await this.repository.verifyPassword(
+      normalizedUsername,
+      password,
+    );
 
     if (!user) {
+      this.recordFailedLogin(normalizedUsername);
       throw new InvalidCredentialsError("Incorrect username or password.");
     }
 
-    const session = this.repository.createSession(user.id);
+    this.failedLogins.delete(normalizedUsername);
 
-    return { user, token: session.token };
+    return { user, ...this.repository.createSession(user.id) };
   }
 
   logout(token: string): void {
@@ -63,5 +89,33 @@ export class AuthService {
 
   close(): void {
     this.repository.close();
+  }
+
+  private isLockedOut(username: string): boolean {
+    const entry = this.failedLogins.get(username);
+
+    if (!entry) {
+      return false;
+    }
+
+    if (Date.now() - entry.windowStartedAt >= LOCKOUT_WINDOW_MS) {
+      this.failedLogins.delete(username);
+      return false;
+    }
+
+    return entry.count >= MAX_FAILED_LOGINS;
+  }
+
+  private recordFailedLogin(username: string): void {
+    const entry = this.failedLogins.get(username);
+
+    if (entry) {
+      entry.count += 1;
+    } else {
+      this.failedLogins.set(username, {
+        count: 1,
+        windowStartedAt: Date.now(),
+      });
+    }
   }
 }

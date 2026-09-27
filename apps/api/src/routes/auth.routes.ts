@@ -6,6 +6,7 @@ import {
   AuthService,
   DuplicateUsernameError,
   InvalidCredentialsError,
+  TooManyLoginAttemptsError,
 } from "../services/auth.service.js";
 
 const credentialsSchema = z.object({
@@ -15,12 +16,19 @@ const credentialsSchema = z.object({
 
 const isProduction = process.env.NODE_ENV === "production";
 
-function setSessionCookie(reply: FastifyReply, token: string): void {
+function setSessionCookie(
+  reply: FastifyReply,
+  token: string,
+  expiresAt: string,
+): void {
   reply.setCookie("session", token, {
     httpOnly: true,
     sameSite: "lax",
     secure: isProduction,
     path: "/",
+    // Matches the server-side session expiry, so the cookie survives a
+    // browser restart for as long as the session itself is valid.
+    expires: new Date(expiresAt),
   });
 }
 
@@ -30,9 +38,12 @@ export function createAuthRoutes(authService: AuthService) {
       const { username, password } = credentialsSchema.parse(request.body);
 
       try {
-        const { user, token } = authService.register(username, password);
+        const { user, token, expiresAt } = await authService.register(
+          username,
+          password,
+        );
 
-        setSessionCookie(reply, token);
+        setSessionCookie(reply, token, expiresAt);
 
         return { user };
       } catch (error) {
@@ -58,15 +69,25 @@ export function createAuthRoutes(authService: AuthService) {
       const { username, password } = credentialsSchema.parse(request.body);
 
       try {
-        const { user, token } = authService.login(username, password);
+        const { user, token, expiresAt } = await authService.login(
+          username,
+          password,
+        );
 
-        setSessionCookie(reply, token);
+        setSessionCookie(reply, token, expiresAt);
 
         return { user };
       } catch (error) {
         if (error instanceof InvalidCredentialsError) {
           return reply.status(401).send({
             error: "INVALID_CREDENTIALS",
+            message: error.message,
+          });
+        }
+
+        if (error instanceof TooManyLoginAttemptsError) {
+          return reply.status(429).send({
+            error: "TOO_MANY_LOGIN_ATTEMPTS",
             message: error.message,
           });
         }
