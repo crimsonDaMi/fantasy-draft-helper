@@ -7,6 +7,7 @@ import {
   filterPlayersByPosition,
   filterPlayersByQuery,
   formatTierHeading,
+  movePlayerToContainer,
   withForcedActiveRow,
   type Containers,
 } from "./ranking-editor-logic";
@@ -84,6 +85,50 @@ describe("findContainer", () => {
 
   it("returns undefined for an id in no container", () => {
     expect(findContainer(containers, "missing")).toBeUndefined();
+  });
+});
+
+describe("movePlayerToContainer", () => {
+  const containers: Containers = {
+    S: [
+      { sleeperId: "1", fullName: "Player One" },
+      { sleeperId: "2", fullName: "Player Two" },
+    ],
+    A: [{ sleeperId: "3", fullName: "Player Three" }],
+    unranked: [],
+  };
+
+  it("inserts the player just before the player it's over", () => {
+    const result = movePlayerToContainer(containers, "2", "S", "3", "A");
+
+    expect(result.S.map((p) => p.sleeperId)).toEqual(["1"]);
+    expect(result.A.map((p) => p.sleeperId)).toEqual(["2", "3"]);
+  });
+
+  it("appends when dropped on the container itself", () => {
+    const result = movePlayerToContainer(
+      containers,
+      "1",
+      "S",
+      "unranked",
+      "unranked",
+    );
+
+    expect(result.unranked.map((p) => p.sleeperId)).toEqual(["1"]);
+    expect(result.S.map((p) => p.sleeperId)).toEqual(["2"]);
+  });
+
+  it("returns the same object when the player isn't in the source", () => {
+    expect(movePlayerToContainer(containers, "3", "S", "A", "A")).toBe(
+      containers,
+    );
+  });
+
+  it("does not mutate the input", () => {
+    movePlayerToContainer(containers, "2", "S", "3", "A");
+
+    expect(containers.S).toHaveLength(2);
+    expect(containers.A).toHaveLength(1);
   });
 });
 

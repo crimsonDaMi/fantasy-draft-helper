@@ -1,43 +1,31 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCenter,
-  getFirstCollision,
-  pointerWithin,
-  rectIntersection,
-  useDroppable,
   useSensor,
   useSensors,
-  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { arrayMove } from "@dnd-kit/sortable";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   getRanking,
   getRankingsStatus,
   getUnrankedPlayers,
-  insertTier,
-  moveRankingPlayer,
-  removeRankingPlayer,
-  removeTier,
-  createEmptyRanking,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
+import { useContainerCollisionDetection } from "../hooks/useContainerCollisionDetection";
+import { useEdgeAutoscroll } from "../hooks/useEdgeAutoscroll";
+import { useRankingEditorMutations } from "../hooks/useRankingEditorMutations";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
+import { DroppableContainer } from "./ranking-editor/DroppableContainer";
+import { PlayerLabel } from "./ranking-editor/PlayerLabel";
+import { TierModeToggle } from "./ranking-editor/TierModeToggle";
 import {
   UNRANKED_CONTAINER,
   buildContainers,
@@ -45,178 +33,13 @@ import {
   filterPlayersByPosition,
   filterPlayersByQuery,
   formatTierHeading,
-  withForcedActiveRow,
-  PLAYER_ROW_HEIGHT,
+  movePlayerToContainer,
   type Containers,
   type EditorPlayer,
   type TierDisplayMode,
 } from "./ranking-editor-logic";
 
-interface SortablePlayerProps {
-  player: EditorPlayer;
-  rank?: number;
-  offsetTop: number;
-}
-
-function SortablePlayer({ player, rank, offsetTop }: SortablePlayerProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: player.sleeperId });
-
-  const style: React.CSSProperties = {
-    position: "absolute",
-    top: offsetTop,
-    left: 0,
-    right: 0,
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0 : 1,
-    touchAction: "none",
-  };
-
-  return (
-    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {rank !== undefined && (
-        <span className="ranking-editor__rank">#{rank}</span>
-      )}
-      <span className="ranking-editor__name" title={player.fullName}>
-        {player.fullName}
-      </span>
-      <span className="ranking-editor__meta">
-        {player.position}
-        {player.position && player.team && " · "}
-        {player.team}
-      </span>
-    </li>
-  );
-}
-
-interface TierRemoveControl {
-  canRemove: boolean;
-  isConfirming: boolean;
-  isPending: boolean;
-  onRequestRemove: () => void;
-  onConfirmRemove: () => void;
-  onCancelRemove: () => void;
-}
-
-interface DroppableContainerProps {
-  id: string;
-  title: string;
-  players: EditorPlayer[];
-  showRank: boolean;
-  className: string;
-  removeControl?: TierRemoveControl;
-  activeId?: string;
-  registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
-}
-
-function DroppableContainer({
-  id,
-  title,
-  players,
-  showRank,
-  className,
-  removeControl,
-  activeId,
-  registerScrollElement,
-}: DroppableContainerProps) {
-  const { setNodeRef } = useDroppable({ id });
-  const scrollElementRef = useRef<HTMLDivElement>(null);
-
-  const setScrollRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      scrollElementRef.current = node;
-      setNodeRef(node);
-      registerScrollElement?.(id, node);
-    },
-    [setNodeRef, registerScrollElement, id],
-  );
-
-  // eslint-disable-next-line react-hooks/incompatible-library -- @tanstack/react-virtual's API is inherently incompatible with React Compiler memoization; harmless since Compiler isn't enabled in this project.
-  const virtualizer = useVirtualizer({
-    count: players.length,
-    getScrollElement: () => scrollElementRef.current,
-    estimateSize: () => PLAYER_ROW_HEIGHT,
-    overscan: 8,
-  });
-
-  const virtualRows = withForcedActiveRow(
-    virtualizer.getVirtualItems(),
-    players,
-    activeId,
-  );
-
-  return (
-    <div className={className}>
-      <div className="ranking-editor__tier-header">
-        <h3>{title}</h3>
-        {removeControl?.canRemove &&
-          (removeControl.isConfirming ? (
-            <span className="ranking-editor__tier-confirm">
-              <span>Merge {players.length} player(s) into the next tier?</span>
-              <button
-                type="button"
-                onClick={removeControl.onConfirmRemove}
-                disabled={removeControl.isPending}
-              >
-                Confirm
-              </button>
-              <button type="button" onClick={removeControl.onCancelRemove}>
-                Cancel
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="ranking-editor__tier-remove"
-              onClick={removeControl.onRequestRemove}
-            >
-              Remove tier
-            </button>
-          ))}
-      </div>
-      <SortableContext
-        items={players.map((player) => player.sleeperId)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div ref={setScrollRef} className="ranking-editor__player-list">
-          {players.length === 0 && (
-            <p className="ranking-editor__empty-hint">Drop players here</p>
-          )}
-          <ol
-            className="ranking-editor__player-list-inner"
-            style={{ height: virtualizer.getTotalSize() }}
-          >
-            {virtualRows.map((virtualRow) => {
-              const player = players[virtualRow.index];
-              if (!player) {
-                return null;
-              }
-              return (
-                <SortablePlayer
-                  key={player.sleeperId}
-                  player={player}
-                  rank={showRank ? player.globalRank : undefined}
-                  offsetTop={virtualRow.start}
-                />
-              );
-            })}
-          </ol>
-        </div>
-      </SortableContext>
-    </div>
-  );
-}
-
 export function RankingEditorPage() {
-  const queryClient = useQueryClient();
-
   const statusQuery = useQuery({
     queryKey: queryKeys.rankingStatus(),
     queryFn: getRankingsStatus,
@@ -238,7 +61,6 @@ export function RankingEditorPage() {
 
   const [containers, setContainers] = useState<Containers>({});
   const [isDragging, setIsDragging] = useState(false);
-  const lastOverId = useRef<string | null>(null);
   const [draggingPlayerId, setDraggingPlayerId] = useState<string>();
   const [draggingPlayer, setDraggingPlayer] = useState<EditorPlayer>();
   const scrollElements = useRef(new Map<string, HTMLDivElement>());
@@ -267,12 +89,9 @@ export function RankingEditorPage() {
     return map;
   }, [containers]);
 
-  // O(1) replacement for the ranking-editor-logic.ts findContainer()
-  // helper, which does a full Object.keys(containers).find(...).some(...)
-  // scan across every player in every container. That's cheap enough for
-  // one-off calls (still used in tests / handleDragEnd's first lookup
-  // pattern elsewhere) but far too slow to call from handleDragOver,
-  // which fires continuously during a drag.
+  // O(1) container lookup via playerContainerMap — called from
+  // handleDragOver, which fires continuously during a drag, so a scan
+  // across every player in every container is far too slow here.
   const resolveContainer = useCallback(
     (id: string): string | undefined => {
       if (id in containers) {
@@ -283,60 +102,10 @@ export function RankingEditorPage() {
     [containers, playerContainerMap],
   );
 
-  // Manual autoscroll replacing dnd-kit's built-in autoScroll (disabled
-  // above): dnd-kit's own autoscroll tracks the dragged node's ancestor
-  // chain, established early in the drag, and doesn't retarget when the
-  // pointer crosses into a different container's independently-scrolled
-  // (virtualized) viewport — it keeps scrolling the original container.
-  // This tracks the pointer directly and always scrolls whichever
-  // container is currently under it.
-  useEffect(() => {
-    if (!isDragging) {
-      return;
-    }
+  const { collisionDetection, lastOverId, resetLastOverId } =
+    useContainerCollisionDetection(containers, playerContainerMap);
 
-    const EDGE_SIZE = 60;
-    const MAX_SPEED = 18;
-    let frame: number;
-    let pointerY = 0;
-
-    const onPointerMove = (event: PointerEvent) => {
-      pointerY = event.clientY;
-    };
-
-    const tick = () => {
-      const overContainer = lastOverId.current
-        ? (resolveContainer(lastOverId.current) ?? lastOverId.current)
-        : undefined;
-      const el = overContainer
-        ? scrollElements.current.get(overContainer)
-        : undefined;
-
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        const distanceFromTop = pointerY - rect.top;
-        const distanceFromBottom = rect.bottom - pointerY;
-
-        if (distanceFromTop >= 0 && distanceFromTop < EDGE_SIZE) {
-          const speed = MAX_SPEED * (1 - distanceFromTop / EDGE_SIZE);
-          el.scrollTop -= speed;
-        } else if (distanceFromBottom >= 0 && distanceFromBottom < EDGE_SIZE) {
-          const speed = MAX_SPEED * (1 - distanceFromBottom / EDGE_SIZE);
-          el.scrollTop += speed;
-        }
-      }
-
-      frame = requestAnimationFrame(tick);
-    };
-
-    window.addEventListener("pointermove", onPointerMove);
-    frame = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      cancelAnimationFrame(frame);
-    };
-  }, [isDragging, resolveContainer]);
+  useEdgeAutoscroll(isDragging, lastOverId, resolveContainer, scrollElements);
 
   const [tierDisplayMode, setTierDisplayMode] =
     useState<TierDisplayMode>("alpha");
@@ -387,104 +156,14 @@ export function RankingEditorPage() {
     }),
   );
 
-  // ~360 sortable player rows makes the default collision detection
-  // (comparing every row on every pointer-move) expensive enough to
-  // visibly stall drags. Use the cheap pointerWithin check to find
-  // which tier/unranked container the pointer is over first, then run
-  // the more expensive closestCenter only against that container's
-  // rows — the standard dnd-kit pattern for large multi-container
-  // sortable lists.
-  const collisionDetectionStrategy: CollisionDetection = useCallback(
-    (args) => {
-      const pointerIntersections = pointerWithin(args);
-      const intersections =
-        pointerIntersections.length > 0
-          ? pointerIntersections
-          : rectIntersection(args);
-      let overId = getFirstCollision(intersections, "id");
-
-      if (overId != null) {
-        const overIdStr = String(overId);
-        const targetContainer = playerContainerMap.get(overIdStr) ?? overIdStr;
-
-        if (containers[targetContainer]?.length) {
-          const closest = closestCenter({
-            ...args,
-            droppableContainers: args.droppableContainers.filter(
-              (container) =>
-                playerContainerMap.get(String(container.id)) ===
-                  targetContainer || container.id === targetContainer,
-            ),
-          });
-          overId = closest[0]?.id ?? overId;
-        }
-
-        lastOverId.current = String(overId);
-        return [{ id: overId }];
-      }
-
-      return lastOverId.current ? [{ id: lastOverId.current }] : [];
-    },
-    [containers, playerContainerMap],
-  );
-
-  function settleQueries() {
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.rankingDetail(rankingId),
-    });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.rankingUnranked(rankingId),
-    });
-  }
-
-  function settleTierQueries() {
-    // Tier boundary changes only shift tier labels/assignments within
-    // the existing ranking — the unranked pool is untouched, so only
-    // ranking-detail needs to reconcile.
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.rankingDetail(rankingId),
-    });
-  }
-
-  const moveMutation = useMutation({
-    mutationFn: ({
-      sleeperId,
-      rank,
-      tier,
-    }: {
-      sleeperId: string;
-      rank: number;
-      tier: string;
-    }) => moveRankingPlayer(rankingId!, sleeperId, rank, tier),
-    onSettled: settleQueries,
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: ({ sleeperId }: { sleeperId: string }) =>
-      removeRankingPlayer(rankingId!, sleeperId),
-    onSettled: settleQueries,
-  });
-
-  const insertTierMutation = useMutation({
-    mutationFn: ({ position }: { position: number }) =>
-      insertTier(rankingId!, position),
-    onSettled: settleTierQueries,
-  });
-
-  const removeTierMutation = useMutation({
-    mutationFn: ({ position }: { position: number }) =>
-      removeTier(rankingId!, position),
-    onSuccess: () => setConfirmingRemoveTierPosition(undefined),
-    onSettled: settleTierQueries,
-  });
-
-  const createEmptyRankingMutation = useMutation({
-    mutationFn: createEmptyRanking,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.rankingStatus(),
-      });
-    },
+  const {
+    moveMutation,
+    removeMutation,
+    insertTierMutation,
+    removeTierMutation,
+    createEmptyRankingMutation,
+  } = useRankingEditorMutations(rankingId, {
+    onTierRemoved: () => setConfirmingRemoveTierPosition(undefined),
   });
 
   function handleRemoveTierClick(tier: RankingTierDto) {
@@ -508,7 +187,7 @@ export function RankingEditorPage() {
         ? containers[container]?.find((p) => p.sleeperId === activeId)
         : undefined,
     );
-    lastOverId.current = null;
+    resetLastOverId();
   }
 
   // Cross-container moves only — same-container reordering is handled
@@ -534,35 +213,15 @@ export function RankingEditorPage() {
       return;
     }
 
-    setContainers((current) => {
-      const sourceItems = current[activeContainer];
-      const destinationItems = current[overContainer];
-
-      const activeIndex = sourceItems.findIndex(
-        (player) => player.sleeperId === activeId,
-      );
-      if (activeIndex === -1) {
-        return current;
-      }
-
-      const overIndex = destinationItems.findIndex(
-        (player) => player.sleeperId === overId,
-      );
-
-      const moving = sourceItems[activeIndex];
-      const newSource = [...sourceItems];
-      newSource.splice(activeIndex, 1);
-
-      const insertAt = overIndex === -1 ? destinationItems.length : overIndex;
-      const newDestination = [...destinationItems];
-      newDestination.splice(insertAt, 0, moving);
-
-      return {
-        ...current,
-        [activeContainer]: newSource,
-        [overContainer]: newDestination,
-      };
-    });
+    setContainers((current) =>
+      movePlayerToContainer(
+        current,
+        activeId,
+        activeContainer,
+        overId,
+        overContainer,
+      ),
+    );
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -675,34 +334,7 @@ export function RankingEditorPage() {
     <section className="ranking-editor">
       <div className="ranking-editor__toolbar">
         <h2>Edit rankings</h2>
-        <div
-          className="ranking-editor__tier-mode-toggle"
-          role="group"
-          aria-label="Tier label format"
-        >
-          <button
-            type="button"
-            className={
-              tierDisplayMode === "alpha"
-                ? "ranking-editor__mode-button ranking-editor__mode-button--active"
-                : "ranking-editor__mode-button"
-            }
-            onClick={() => setTierDisplayMode("alpha")}
-          >
-            Letters
-          </button>
-          <button
-            type="button"
-            className={
-              tierDisplayMode === "numeric"
-                ? "ranking-editor__mode-button ranking-editor__mode-button--active"
-                : "ranking-editor__mode-button"
-            }
-            onClick={() => setTierDisplayMode("numeric")}
-          >
-            Numbers
-          </button>
-        </div>
+        <TierModeToggle value={tierDisplayMode} onChange={setTierDisplayMode} />
       </div>
 
       <div className="ranking-editor__global-filters">
@@ -733,10 +365,12 @@ export function RankingEditorPage() {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={collisionDetectionStrategy}
+        collisionDetection={collisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        // Built-in autoscroll only for the page itself; the containers
+        // are scrolled by useEdgeAutoscroll (see there for why).
         autoScroll={{
           canScroll: (element) =>
             element === document.scrollingElement ||
@@ -828,14 +462,7 @@ export function RankingEditorPage() {
         <DragOverlay>
           {draggingPlayer ? (
             <div className="ranking-editor__drag-overlay">
-              <span className="ranking-editor__name">
-                {draggingPlayer.fullName}
-              </span>
-              <span className="ranking-editor__meta">
-                {draggingPlayer.position}
-                {draggingPlayer.position && draggingPlayer.team && " · "}
-                {draggingPlayer.team}
-              </span>
+              <PlayerLabel player={draggingPlayer} />
             </div>
           ) : null}
         </DragOverlay>

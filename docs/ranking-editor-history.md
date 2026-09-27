@@ -37,9 +37,10 @@ crossings:
 
 - Source container auto-scrolling wrong during a cross-container drag —
   `@dnd-kit`'s built-in `autoScroll` doesn't retarget across
-  independently-virtualized containers. Fixed with `autoScroll={false}`
-  plus a custom pointer-driven autoscroll targeting whichever container
-  is under the pointer.
+  independently-virtualized containers. Fixed by restricting the
+  built-in `autoScroll` to the page itself (`canScroll`) plus a custom
+  pointer-driven autoscroll (now `hooks/useEdgeAutoscroll.ts`) targeting
+  whichever container is under the pointer.
 - A player becoming permanently ungrabbable after an unranked→tier
   move — caused by a race between two independently-refetching queries
   letting the same player appear in both containers momentarily,
@@ -187,6 +188,25 @@ one by dragging players out of the unranked pool, via an explicit
 - No schema change or DB reset: ranked players are `match_json`
   snapshots, and the in-memory cache refills on restart or
   `POST /players/refresh`.
+
+## Page split (clean-code refactor)
+
+`RankingEditorPage.tsx` (842 lines) was split by moving code only — no
+behavior change, same hook order and dependency arrays, so the
+virtualization and drag-performance fixes above are untouched:
+
+- `components/ranking-editor/`: `DroppableContainer` (virtualized list,
+  moved verbatim), `SortablePlayer`, `PlayerLabel` (shared by rows and the
+  drag overlay), `TierModeToggle`.
+- `hooks/useEdgeAutoscroll.ts`, `hooks/useContainerCollisionDetection.ts`
+  (owns `lastOverId`; exposes `resetLastOverId()` because the React
+  Compiler lint rules forbid mutating a hook's return value or argument),
+  `hooks/useRankingEditorMutations.ts`.
+- `handleDragOver`'s state transition is now the pure, unit-tested
+  `movePlayerToContainer` in `ranking-editor-logic.ts`.
+
+The page keeps the queries, the render-time server sync, and the drag
+handlers.
 
 ## Current backlog
 

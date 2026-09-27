@@ -19,7 +19,10 @@ file:
 - `docs/ranking-editor-history.md` — condensed history of the ranking
   editor feature (Phase 4) and its current backlog; read this before
   touching anything under `apps/web/src/components/RankingEditorPage.tsx`,
-  `ranking-editor-logic.ts`, or the `/rankings/edit` route
+  `ranking-editor-logic.ts`, `components/ranking-editor/`, the editor
+  hooks in `apps/web/src/hooks/` (`useEdgeAutoscroll`,
+  `useContainerCollisionDetection`, `useRankingEditorMutations`), or the
+  `/rankings/edit` route
 
 ## Working conventions
 

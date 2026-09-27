@@ -97,6 +97,47 @@ export function findContainer(
   );
 }
 
+/** Moves `activeId` from `activeContainer` into `overContainer`, just
+ * before `overId` if that's a player there, else at the end (dropped on
+ * the container itself). Returns `containers` unchanged if the player
+ * isn't in `activeContainer` — the drag-over state can lag a render
+ * behind. Cross-container only; same-container reorders use arrayMove. */
+export function movePlayerToContainer(
+  containers: Containers,
+  activeId: string,
+  activeContainer: string,
+  overId: string,
+  overContainer: string,
+): Containers {
+  const sourceItems = containers[activeContainer];
+  const destinationItems = containers[overContainer];
+
+  const activeIndex = sourceItems.findIndex(
+    (player) => player.sleeperId === activeId,
+  );
+  if (activeIndex === -1) {
+    return containers;
+  }
+
+  const overIndex = destinationItems.findIndex(
+    (player) => player.sleeperId === overId,
+  );
+
+  const moving = sourceItems[activeIndex];
+  const newSource = [...sourceItems];
+  newSource.splice(activeIndex, 1);
+
+  const insertAt = overIndex === -1 ? destinationItems.length : overIndex;
+  const newDestination = [...destinationItems];
+  newDestination.splice(insertAt, 0, moving);
+
+  return {
+    ...containers,
+    [activeContainer]: newSource,
+    [overContainer]: newDestination,
+  };
+}
+
 /** Translates a "this player is now at position `indexInTier` within
  * `targetTier`" drop into the global (whole-ranking) rank the PATCH
  * endpoint expects, by summing the player counts of every tier that
