@@ -1,6 +1,7 @@
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
 
+import { ConflictError, NotFoundError } from "./domain-errors.js";
 import { HttpError } from "./http-error.js";
 
 /**
@@ -24,6 +25,20 @@ export function errorHandler(
 
   if (error instanceof HttpError) {
     return reply.status(error.statusCode).send({
+      error: error.code,
+      message: error.message,
+    });
+  }
+
+  if (error instanceof NotFoundError) {
+    return reply.status(404).send({
+      error: error.code,
+      message: error.message,
+    });
+  }
+
+  if (error instanceof ConflictError) {
+    return reply.status(409).send({
       error: error.code,
       message: error.message,
     });

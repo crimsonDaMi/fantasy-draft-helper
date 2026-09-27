@@ -95,8 +95,11 @@ in `RELEASING.md`.
   `await app.register(...)` in `buildApp` — an awaited plugin captures the
   handler in effect when it loads, so one set later silently never applies
   (ZodErrors then become 500s). Every error body is `{ error: CODE,
-message }`; throw `HttpError(status, message, CODE)` for expected
-  failures. Guarded by `app.e2e.test.ts`.
+message }`. For expected failures, services and repositories throw
+  `NotFoundError`/`ConflictError(message, CODE)` (`utils/domain-errors.ts`,
+  mapped to 404/409 by the handler); `HttpError(status, message, CODE)` is
+  for the HTTP-facing layers (routes, `require-user`, and clients passing
+  through an upstream status). Guarded by `app.e2e.test.ts`.
 - `apps/api/package.json`'s `dev` script echoes the current
   `ALLOWED_USERNAMES` value on startup — there's no `.env` file for the
   API, it's an env var only, exported manually or passed inline.

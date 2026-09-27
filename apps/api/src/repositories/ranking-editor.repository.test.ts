@@ -149,11 +149,11 @@ describe("RankingRepository editor mutations", () => {
     const rankingId = repository.create([match(1, "S", "1")], USER_ID);
 
     expect(() => repository.removeTier(rankingId, 1)).toThrow(
-      expect.objectContaining({ statusCode: 409, code: "LAST_TIER" }),
+      expect.objectContaining({ name: "ConflictError", code: "LAST_TIER" }),
     );
   });
 
-  it("rejects removing a tier that does not exist with a 404", () => {
+  it("rejects removing a tier that does not exist as not found", () => {
     const repository = new RankingRepository(":memory:");
 
     const rankingId = repository.create(
@@ -162,11 +162,14 @@ describe("RankingRepository editor mutations", () => {
     );
 
     expect(() => repository.removeTier(rankingId, 5)).toThrow(
-      expect.objectContaining({ statusCode: 404, code: "TIER_NOT_FOUND" }),
+      expect.objectContaining({
+        name: "NotFoundError",
+        code: "TIER_NOT_FOUND",
+      }),
     );
   });
 
-  it("rejects inserting a tier past the 26-tier limit with a 409", () => {
+  it("rejects inserting a tier past the 26-tier limit as a conflict", () => {
     const repository = new RankingRepository(":memory:");
 
     const rankingId = repository.create([match(1, "S", "1")], USER_ID);
@@ -177,7 +180,10 @@ describe("RankingRepository editor mutations", () => {
 
     expect(repository.getTiers(rankingId)).toHaveLength(26);
     expect(() => repository.insertTier(rankingId, 1)).toThrow(
-      expect.objectContaining({ statusCode: 409, code: "TIER_LIMIT_REACHED" }),
+      expect.objectContaining({
+        name: "ConflictError",
+        code: "TIER_LIMIT_REACHED",
+      }),
     );
   });
 });

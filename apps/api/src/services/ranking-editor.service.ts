@@ -8,7 +8,7 @@ import { RankingTier } from "../domain/ranking-tier.js";
 
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
-import { HttpError } from "../utils/http-error.js";
+import { NotFoundError } from "../utils/domain-errors.js";
 
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 
@@ -41,7 +41,7 @@ export class RankingEditorService {
       const player = this.playerService.getPlayerById(sleeperId);
 
       if (!player) {
-        throw new HttpError(404, "Player was not found", "PLAYER_NOT_FOUND");
+        throw new NotFoundError("Player was not found", "PLAYER_NOT_FOUND");
       }
 
       newMatch = {
@@ -146,7 +146,7 @@ export class RankingEditorService {
 
   private assertOwnership(rankingId: string, userId: string): void {
     if (!this.repository.hasRanking(rankingId, userId)) {
-      throw new HttpError(404, "Ranking was not found", "RANKING_NOT_FOUND");
+      throw new NotFoundError("Ranking was not found", "RANKING_NOT_FOUND");
     }
   }
 }
