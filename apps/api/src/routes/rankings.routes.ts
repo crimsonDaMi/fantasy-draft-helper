@@ -4,6 +4,8 @@ import { RankingImportService } from "../services/ranking-import.service.js";
 
 import { RankingStoreService } from "../services/ranking-store.service.js";
 
+import { mapRankingImportResponse } from "../services/ranking-import.mapper.js";
+
 import { requireUser } from "../utils/require-user.js";
 
 export function createRankingsRoutes(
@@ -53,39 +55,7 @@ export function createRankingsRoutes(
           userId,
         );
 
-        return {
-          rankingId,
-
-          summary: result.summary,
-
-          validationErrors: result.importResult.errors,
-
-          unmatchedPlayers: result.matches
-            .filter((match) => match.method === "NONE")
-            .map((match) => ({
-              rank: match.ranking.rank,
-
-              name: match.ranking.playerName,
-
-              team: match.ranking.team,
-
-              position: match.ranking.position,
-            })),
-
-          ambiguousPlayers: result.matches
-            .filter((match) => match.method === "AMBIGUOUS")
-            .map((match) => ({
-              rank: match.ranking.rank,
-
-              name: match.ranking.playerName,
-
-              candidates: match.candidates?.map((player) => ({
-                sleeperId: player.sleeperId,
-
-                fullName: player.fullName,
-              })),
-            })),
-        };
+        return mapRankingImportResponse(rankingId, result);
       },
     );
 

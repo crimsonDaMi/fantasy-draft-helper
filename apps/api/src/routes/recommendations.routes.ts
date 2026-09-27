@@ -6,6 +6,8 @@ import { RecommendationService } from "../services/recommendation.service.js";
 
 import { RankingStoreService } from "../services/ranking-store.service.js";
 
+import { mapRecommendationsResponse } from "../services/recommendation.mapper.js";
+
 import { requireUser } from "../utils/require-user.js";
 
 const draftParamsSchema = z.object({
@@ -69,41 +71,7 @@ export function createRecommendationsRoutes(
           positions,
         );
 
-        return {
-          draftId,
-
-          draftStatus: result.draftStatus,
-
-          totalPicks: result.totalPicks,
-
-          draftedPlayerCount: result.draftedPlayerCount,
-
-          lastPick: result.lastPick,
-
-          lastUpdatedAt: result.lastUpdatedAt,
-
-          generatedAt: result.generatedAt,
-
-          recommendationCount: result.recommendations.length,
-
-          recommendations: result.recommendations.map((recommendation) => ({
-            rank: recommendation.ranking.rank,
-
-            tier: recommendation.ranking.tier,
-
-            player: {
-              sleeperId: recommendation.player.sleeperId,
-
-              fullName: recommendation.player.fullName,
-
-              team: recommendation.player.team,
-
-              position: recommendation.player.position,
-            },
-
-            adp: recommendation.adp,
-          })),
-        };
+        return mapRecommendationsResponse(draftId, result);
       },
     );
   };
