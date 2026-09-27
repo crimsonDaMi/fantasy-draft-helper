@@ -16,7 +16,7 @@ export function DraftDashboard() {
   const [rankingId, setRankingId] = useState<string>();
   const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
   const [positions, setPositions] = useState<string[]>([]);
-  const [setupOpen, setSetupOpen] = useState(() => !draftId || !rankingId);
+  const [setupOpen, setSetupOpen] = useState(true);
 
   const statusQuery = useQuery({
     queryKey: ["ranking-status"],
@@ -98,7 +98,9 @@ export function DraftDashboard() {
           <DraftForm
             onSubmit={(id) => {
               setDraftId(id);
-              if (rankingId) {
+              // Monitoring can start as soon as any ranking is available —
+              // imported just now or saved from an earlier session.
+              if (effectiveRankingId) {
                 setSetupOpen(false);
               }
             }}
