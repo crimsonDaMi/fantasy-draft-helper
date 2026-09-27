@@ -3,6 +3,8 @@ import { FastifyInstance } from "fastify";
 import { RankingImportService } from "../services/ranking-import.service.js";
 import { RankingStoreService } from "../services/ranking-store.service.js";
 import { mapRankingImportResponse } from "../services/ranking-import.mapper.js";
+import { toRankingCsv } from "../services/ranking-csv-export.js";
+import { NotFoundError } from "../utils/domain-errors.js";
 import { requireUser } from "../utils/require-user.js";
 
 export function createRankingsRoutes(
@@ -59,6 +61,21 @@ export function createRankingsRoutes(
       );
 
       return { rankingId };
+    });
+
+    app.get("/rankings/export", async (request, reply) => {
+      const userId = requireUser(request).id;
+
+      if (!rankingStoreService.hasRankings(userId)) {
+        throw new NotFoundError("No ranking to export", "RANKING_NOT_FOUND");
+      }
+
+      const csv = toRankingCsv(rankingStoreService.getMatches(userId));
+
+      return reply
+        .header("content-type", "text/csv; charset=utf-8")
+        .header("content-disposition", 'attachment; filename="rankings.csv"')
+        .send(csv);
     });
 
     app.get("/rankings/status", async (request) => {

@@ -6,7 +6,7 @@ import {
 } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { openDatabase } from "./database.js";
+import { applySchema, openDatabase } from "./database.js";
 
 const SCRYPT_KEY_LENGTH = 64;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -16,35 +16,37 @@ export interface User {
   username: string;
 }
 
+const USER_SCHEMA = `
+  PRAGMA foreign_keys = ON;
+
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_salt TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+      ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS sessions_user_id
+    ON sessions (user_id);
+`;
+
 export class UserRepository {
   private readonly database: DatabaseSync;
 
   constructor(databasePath?: string) {
     this.database = openDatabase(databasePath);
 
-    this.database.exec(`
-      PRAGMA foreign_keys = ON;
-
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT NOT NULL UNIQUE,
-        password_salt TEXT NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS sessions (
-        token TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-          ON DELETE CASCADE
-      );
-
-      CREATE INDEX IF NOT EXISTS sessions_user_id
-        ON sessions (user_id);
-    `);
+    applySchema(this.database, USER_SCHEMA);
   }
 
   createUser(username: string, password: string): User {

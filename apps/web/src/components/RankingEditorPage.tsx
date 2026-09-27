@@ -16,6 +16,7 @@ import {
   getRanking,
   getRankingsStatus,
   getUnrankedPlayers,
+  RANKINGS_EXPORT_URL,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import { useContainerCollisionDetection } from "../hooks/useContainerCollisionDetection";
@@ -334,7 +335,19 @@ export function RankingEditorPage() {
     <section className="ranking-editor">
       <div className="ranking-editor__toolbar">
         <h2>Edit rankings</h2>
-        <TierModeToggle value={tierDisplayMode} onChange={setTierDisplayMode} />
+        <div className="ranking-editor__toolbar-actions">
+          <a
+            className="ranking-editor__mode-button ranking-editor__export-link"
+            href={RANKINGS_EXPORT_URL}
+            download
+          >
+            Export CSV
+          </a>
+          <TierModeToggle
+            value={tierDisplayMode}
+            onChange={setTierDisplayMode}
+          />
+        </div>
       </div>
 
       <div className="ranking-editor__global-filters">

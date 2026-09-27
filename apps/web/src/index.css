@@ -684,6 +684,16 @@ button {
   gap: 12px;
 }
 
+.ranking-editor__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ranking-editor__export-link {
+  text-decoration: none;
+}
+
 .ranking-editor__tier-mode-toggle {
   display: flex;
   gap: 4px;

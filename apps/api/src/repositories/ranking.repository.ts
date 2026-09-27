@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { openDatabase } from "./database.js";
+import { applySchema, openDatabase } from "./database.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
@@ -41,54 +41,56 @@ function parseMatchRows(rows: RankingPlayerRow[]): PlayerMatch[] {
   });
 }
 
+const RANKING_SCHEMA = `
+  PRAGMA foreign_keys = ON;
+
+  CREATE TABLE IF NOT EXISTS rankings (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS ranking_players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ranking_id TEXT NOT NULL,
+    rank INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    position TEXT,
+    team TEXT,
+    tier TEXT,
+    sleeper_id TEXT,
+    match_status TEXT NOT NULL,
+    match_json TEXT NOT NULL,
+    FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+      ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
+    ON ranking_players (ranking_id, rank, id);
+
+  CREATE INDEX IF NOT EXISTS rankings_user_id_created_at
+    ON rankings (user_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS ranking_tiers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ranking_id TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+      ON DELETE CASCADE
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS ranking_tiers_ranking_id_position
+    ON ranking_tiers (ranking_id, position);
+`;
+
 export class RankingRepository {
   private readonly database: DatabaseSync;
 
   constructor(databasePath?: string) {
     this.database = openDatabase(databasePath);
 
-    this.database.exec(`
-      PRAGMA foreign_keys = ON;
-
-      CREATE TABLE IF NOT EXISTS rankings (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS ranking_players (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ranking_id TEXT NOT NULL,
-        rank INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        position TEXT,
-        team TEXT,
-        tier TEXT,
-        sleeper_id TEXT,
-        match_status TEXT NOT NULL,
-        match_json TEXT NOT NULL,
-        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-          ON DELETE CASCADE
-      );
-
-      CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
-        ON ranking_players (ranking_id, rank, id);
-
-      CREATE INDEX IF NOT EXISTS rankings_user_id_created_at
-        ON rankings (user_id, created_at);
-
-      CREATE TABLE IF NOT EXISTS ranking_tiers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ranking_id TEXT NOT NULL,
-        position INTEGER NOT NULL,
-        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-          ON DELETE CASCADE
-      );
-
-      CREATE UNIQUE INDEX IF NOT EXISTS ranking_tiers_ranking_id_position
-        ON ranking_tiers (ranking_id, position);
-    `);
+    applySchema(this.database, RANKING_SCHEMA);
   }
 
   create(

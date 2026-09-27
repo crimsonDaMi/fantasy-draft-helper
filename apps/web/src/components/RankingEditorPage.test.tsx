@@ -30,6 +30,7 @@ vi.mock("../api/fantasy-api", () => ({
   insertTier: mocks.insertTier,
   removeTier: mocks.removeTier,
   createEmptyRanking: mocks.createEmptyRanking,
+  RANKINGS_EXPORT_URL: "http://api.test/rankings/export",
 }));
 
 function renderWithClient() {
@@ -159,6 +160,16 @@ describe("RankingEditorPage", () => {
       "title",
       "Player Two",
     );
+  });
+
+  it("links to the CSV export of the current ranking", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+
+    const link = await screen.findByRole("link", { name: "Export CSV" });
+
+    expect(link).toHaveAttribute("href", "http://api.test/rankings/export");
+    expect(link).toHaveAttribute("download");
   });
 
   it("asks to merge a tier's players into the next tier", async () => {

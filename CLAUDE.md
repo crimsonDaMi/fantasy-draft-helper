@@ -91,7 +91,12 @@ in `RELEASING.md`.
   dev: delete `apps/api/data/fantasy-draft-helper.db`, which is
   `process.cwd()`-relative, i.e. inside `apps/api/`, not the repo root).
   Do not build a migration system without an explicit request — this is
-  a deliberate decision, not an oversight.
+  a deliberate decision, not an oversight. Repositories run their schema
+  through `applySchema` (`apps/api/src/repositories/database.ts`), which
+  refuses to start against a database whose existing tables differ from
+  the expected schema, so the failure is a clear startup error rather
+  than a later `no such column`. Since v1.0.0 any schema change is a
+  **major** version bump (see `RELEASING.md`).
 - **`pnpm dev` is cross-origin.** The web dev server (5173) calls the
   API (3000) directly, so every non-simple request goes through CORS
   preflight. `@fastify/cors` only allows GET/HEAD/POST by default; the

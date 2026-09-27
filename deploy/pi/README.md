@@ -128,24 +128,25 @@ docker compose up -d
   across a `tailscaled` restart — verify this periodically
   (`tailscale funnel status` after a reboot), since it hasn't been
   stress-tested against a real power-loss event yet.
-- **Backups**: not yet set up. The SQLite database lives in the
-  `draft-helper-data` named Docker volume — a periodic `docker cp` or a
-  cron job copying the volume's contents somewhere else would be a
-  reasonable addition if the league's data becomes something worth
-  protecting against Pi failure or SD card corruption.
+- **Backups**: no automated volume backup. The SQLite database lives in
+  the `draft-helper-data` named Docker volume — a periodic `docker cp` or
+  a cron job copying the volume's contents somewhere else would protect
+  against Pi failure or SD card corruption. Each user can also download
+  their own ranking via "Export CSV" in the ranking editor and re-import
+  it later.
 - **The real Tailscale Funnel URL is intentionally not written down in
   this repository** — share it directly with league mates instead.
   Documenting the exact public hostname in a searchable public repo would
   make the home server easier to find than necessary.
 - **Schema changes require a volume drop.** No migration system exists (a
-  deliberate choice — see DEVELOPMENT_PLAN.md's #6 entry). Deploying any
-  version that changes the SQLite schema (e.g. v0.7.0's addition of
-  `user_id` to `rankings`) against the existing `draft-helper-data` volume
-  will crash on startup with a `no such column` error, since
-  `CREATE TABLE IF NOT EXISTS` is a no-op against a table that already
-  exists under the old schema. Fix: `docker compose down -v` (not just
-  `down`) before `docker compose up -d` — this discards all existing
-  rankings/users/sessions, so re-registration and re-upload is required
-  afterward. There's no way to detect this in advance short of knowing a
-  given release touched the schema; when in doubt, check the release's
-  commit history for repository/migration changes before deploying.
+  deliberate choice — see DEVELOPMENT_PLAN.md's #6 entry). A schema change
+  is a major version bump (see RELEASING.md), and its release notes say
+  so. If a schema-changing version starts against an existing
+  `draft-helper-data` volume anyway, it refuses to start and logs
+  `Database schema does not match this version of the app` with the
+  changed tables (a crash loop under `restart: unless-stopped`). Fix: ask
+  league mates to export their rankings first ("Export CSV" works on the
+  old version), then `docker compose down -v` (not just `down`) and
+  `docker compose up -d` — this discards all existing
+  rankings/users/sessions, so everyone re-registers and re-imports their
+  exported CSV afterward.

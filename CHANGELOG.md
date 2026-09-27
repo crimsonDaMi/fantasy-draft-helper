@@ -7,8 +7,18 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Upgrading
+
+- No database schema change — existing accounts and rankings are kept.
+
 ### Added
 
+- Export your ranking as a CSV ("Export CSV" in the ranking editor,
+  `GET /rankings/export`). The file re-imports as-is, with players matched
+  by Sleeper ID, so it doubles as a backup.
+- Startup check that refuses to run against a database created with a
+  different schema, with a message explaining the fix, instead of a
+  `no such column` crash loop.
 - "Support me" (Ko-fi) link in the header.
 
 ## v0.8.5 — 2026-09-27

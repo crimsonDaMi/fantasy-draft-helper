@@ -189,6 +189,9 @@ export async function getCurrentUser(): Promise<AuthUser | undefined> {
   }
 }
 
+/** Plain link target (not fetched): the browser downloads the CSV itself. */
+export const RANKINGS_EXPORT_URL = `${API_BASE_URL}/rankings/export`;
+
 export function getRankingsStatus(): Promise<RankingStatusResponse> {
   return request("/rankings/status");
 }

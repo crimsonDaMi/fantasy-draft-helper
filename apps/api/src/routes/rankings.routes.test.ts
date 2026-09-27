@@ -3,6 +3,7 @@ import multipart from "@fastify/multipart";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRankingsRoutes } from "./rankings.routes.js";
+import { errorHandler } from "../utils/error-handler.js";
 
 const TEST_USER = { id: "test-user", username: "testuser" };
 
@@ -160,6 +161,51 @@ describe("rankings routes", () => {
       rankingId: "ranking-1",
       rankingCount: 2,
       matchedCount: 1,
+    });
+
+    await app.close();
+  });
+
+  it("exports the current ranking as a CSV download", async () => {
+    const app = createTestApp({}, [
+      {
+        method: "SLEEPER_ID",
+        ranking: { rank: 1, playerName: "Player One", tier: "S" },
+        player: { sleeperId: "1" },
+      },
+    ]);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rankings/export",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toBe("text/csv; charset=utf-8");
+    expect(response.headers["content-disposition"]).toBe(
+      'attachment; filename="rankings.csv"',
+    );
+    expect(response.body).toBe(
+      "rank,player,position,team,tier,player_id\n1,Player One,,,S,1\n",
+    );
+
+    await app.close();
+  });
+
+  it("returns 404 when exporting without a ranking", async () => {
+    const app = createTestApp({});
+
+    app.setErrorHandler(errorHandler);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rankings/export",
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      error: "RANKING_NOT_FOUND",
+      message: "No ranking to export",
     });
 
     await app.close();
