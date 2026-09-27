@@ -9,6 +9,8 @@ import {
 } from "vitest";
 
 import {
+  getCurrentUser,
+  getRanking,
   getRecommendations,
   importRankings,
   login,
@@ -137,5 +139,54 @@ describe("onUnauthorized notifications", () => {
     await expect(createEmptyRanking()).rejects.toThrow();
 
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("request handling", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("resolves getCurrentUser to undefined on 401 without notifying listeners", async () => {
+    const listener = vi.fn<() => void>();
+    const unsubscribe = onUnauthorized(listener);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(mockFetchResponse(401, {})),
+    );
+
+    await expect(getCurrentUser()).resolves.toBeUndefined();
+    expect(listener).not.toHaveBeenCalled();
+
+    unsubscribe();
+  });
+
+  it("surfaces the API's error message on failure", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        mockFetchResponse(404, {
+          error: "RANKING_NOT_FOUND",
+          message: "Ranking was not found",
+        }),
+      ),
+    );
+
+    await expect(getRanking("ranking-1")).rejects.toMatchObject({
+      message: "Ranking was not found",
+      status: 404,
+    });
+  });
+
+  it("URL-encodes path parameters", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(200, {}));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getRanking("a/b?c");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/rankings\/a%2Fb%3Fc$/),
+      expect.objectContaining({ credentials: "include" }),
+    );
   });
 });

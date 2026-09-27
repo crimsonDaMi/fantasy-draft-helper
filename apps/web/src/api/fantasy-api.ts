@@ -14,11 +14,7 @@ const API_BASE_URL =
 export class ApiRequestError extends Error {
   readonly status?: number;
 
-  constructor(
-    message: string,
-
-    status?: number,
-  ) {
+  constructor(message: string, status?: number) {
     super(message);
 
     this.status = status;
@@ -50,46 +46,67 @@ async function getErrorMessage(response: Response): Promise<string> {
   }
 }
 
-export async function importRankings(
-  file: File,
-): Promise<RankingImportResponse> {
+interface RequestOptions {
+  /** Whether a 401 means "the session expired" and should notify
+   * `onUnauthorized` listeners. Off for the auth endpoints themselves,
+   * where a 401 just means wrong credentials / not logged in yet. */
+  notifyOnUnauthorized?: boolean;
+}
+
+/** Sends a same-site, cookie-authenticated request and parses the JSON
+ * body, throwing `ApiRequestError` for any non-2xx response. */
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  { notifyOnUnauthorized = true }: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    if (notifyOnUnauthorized && response.status === 401) {
+      notifyUnauthorized();
+    }
+    throw new ApiRequestError(await getErrorMessage(response), response.status);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+function jsonBody(body: unknown): RequestInit {
+  return {
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
+}
+
+/** Builds a path from template segments, URL-encoding every
+ * interpolated value (ids come from user input or the URL). */
+function path(
+  strings: TemplateStringsArray,
+  ...values: (string | number)[]
+): string {
+  return strings.reduce(
+    (result, segment, index) =>
+      result +
+      segment +
+      (index < values.length ? encodeURIComponent(values[index]) : ""),
+    "",
+  );
+}
+
+export function importRankings(file: File): Promise<RankingImportResponse> {
   const formData = new FormData();
 
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/rankings`, {
-    method: "POST",
-
-    body: formData,
-
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+  return request("/rankings", { method: "POST", body: formData });
 }
 
-export async function createEmptyRanking(): Promise<{ rankingId: string }> {
-  const response = await fetch(`${API_BASE_URL}/rankings/new`, {
-    method: "POST",
-
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+export function createEmptyRanking(): Promise<{ rankingId: string }> {
+  return request("/rankings/new", { method: "POST" });
 }
 
 export interface GetRecommendationsOptions {
@@ -97,7 +114,7 @@ export interface GetRecommendationsOptions {
   positions?: string[];
 }
 
-export async function getRecommendations(
+export function getRecommendations(
   draftId: string,
   rankingId: string,
   options: GetRecommendationsOptions = {},
@@ -113,19 +130,9 @@ export async function getRecommendations(
     params.set("positions", positions.join(","));
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/drafts/${draftId}/recommendations?${params.toString()}`,
-    { credentials: "include" },
-  );
+  const recommendationsPath = path`/drafts/${draftId}/recommendations`;
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+  return request(`${recommendationsPath}?${params.toString()}`);
 }
 
 export interface AuthUser {
@@ -134,22 +141,16 @@ export interface AuthUser {
 }
 
 async function postCredentials(
-  path: string,
+  credentialsPath: string,
   username: string,
   password: string,
 ): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
+  const body = await request<{ user: AuthUser }>(
+    credentialsPath,
+    { method: "POST", ...jsonBody({ username, password }) },
+    { notifyOnUnauthorized: false },
+  );
 
-  if (!response.ok) {
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  const body = (await response.json()) as { user: AuthUser };
   return body.user;
 }
 
@@ -172,159 +173,72 @@ export async function logout(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<AuthUser | undefined> {
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    credentials: "include",
-  });
+  try {
+    const body = await request<{ user: AuthUser }>(
+      "/auth/me",
+      {},
+      { notifyOnUnauthorized: false },
+    );
 
-  if (response.status === 401) {
-    return undefined;
-  }
-
-  if (!response.ok) {
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  const body = (await response.json()) as { user: AuthUser };
-  return body.user;
-}
-
-export async function getRankingsStatus(): Promise<RankingStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/rankings/status`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
+    return body.user;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 401) {
+      return undefined;
     }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
+    throw error;
   }
-
-  return response.json();
 }
 
-export async function getRanking(
-  rankingId: string,
-): Promise<RankingDetailResponse> {
-  const response = await fetch(`${API_BASE_URL}/rankings/${rankingId}`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+export function getRankingsStatus(): Promise<RankingStatusResponse> {
+  return request("/rankings/status");
 }
 
-export async function getUnrankedPlayers(
+export function getRanking(rankingId: string): Promise<RankingDetailResponse> {
+  return request(path`/rankings/${rankingId}`);
+}
+
+export function getUnrankedPlayers(
   rankingId: string,
 ): Promise<{ players: ApiPlayer[] }> {
-  const response = await fetch(
-    `${API_BASE_URL}/rankings/${rankingId}/unranked-players`,
-    { credentials: "include" },
-  );
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+  return request(path`/rankings/${rankingId}/unranked-players`);
 }
 
-export async function moveRankingPlayer(
+export function moveRankingPlayer(
   rankingId: string,
   sleeperId: string,
   rank: number,
   tier: string,
 ): Promise<{ players: RankingPlayerDto[] }> {
-  const response = await fetch(
-    `${API_BASE_URL}/rankings/${rankingId}/players/${sleeperId}`,
-    {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rank, tier }),
-    },
-  );
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+  return request(path`/rankings/${rankingId}/players/${sleeperId}`, {
+    method: "PATCH",
+    ...jsonBody({ rank, tier }),
+  });
 }
 
-export async function removeRankingPlayer(
+export function removeRankingPlayer(
   rankingId: string,
   sleeperId: string,
 ): Promise<{ players: RankingPlayerDto[] }> {
-  const response = await fetch(
-    `${API_BASE_URL}/rankings/${rankingId}/players/${sleeperId}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    },
-  );
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
-}
-
-export async function insertTier(
-  rankingId: string,
-  position: number,
-): Promise<{ tiers: RankingTierDto[] }> {
-  const response = await fetch(`${API_BASE_URL}/rankings/${rankingId}/tiers`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ position }),
+  return request(path`/rankings/${rankingId}/players/${sleeperId}`, {
+    method: "DELETE",
   });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
 }
 
-export async function removeTier(
+export function insertTier(
   rankingId: string,
   position: number,
 ): Promise<{ tiers: RankingTierDto[] }> {
-  const response = await fetch(
-    `${API_BASE_URL}/rankings/${rankingId}/tiers/${position}`,
-    {
-      method: "DELETE",
-      credentials: "include",
-    },
-  );
+  return request(path`/rankings/${rankingId}/tiers`, {
+    method: "POST",
+    ...jsonBody({ position }),
+  });
+}
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
-  }
-
-  return response.json();
+export function removeTier(
+  rankingId: string,
+  position: number,
+): Promise<{ tiers: RankingTierDto[] }> {
+  return request(path`/rankings/${rankingId}/tiers/${position}`, {
+    method: "DELETE",
+  });
 }
