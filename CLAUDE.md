@@ -45,6 +45,8 @@ pnpm test && pnpm build && pnpm lint && pnpm format:check
 oxlint with type-aware rules (`oxlint --type-aware`). Formatting is
 Prettier for both workspaces (`pnpm format` / `pnpm format:check`) — oxfmt
 is deliberately not used yet (still alpha, not fully Prettier-compatible).
+`pnpm build` type-checks test files in both workspaces (vitest itself
+doesn't), so a stale test fixture fails the gate rather than drifting.
 
 For anything touching the served production build (SPA routing, auth,
 Docker) or real-scale manual behavior (drag-and-drop, filtering), also run

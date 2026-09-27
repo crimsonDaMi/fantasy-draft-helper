@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "echo \"ALLOWED_USERNAMES=$ALLOWED_USERNAMES\" && tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc --noEmit && tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "test": "vitest run",
     "lint": "oxlint --type-aware src"
