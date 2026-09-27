@@ -35,6 +35,7 @@ import {
   removeTier,
   createEmptyRanking,
 } from "../api/fantasy-api";
+import { queryKeys } from "../api/query-keys";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import {
@@ -217,20 +218,20 @@ export function RankingEditorPage() {
   const queryClient = useQueryClient();
 
   const statusQuery = useQuery({
-    queryKey: ["ranking-status"],
+    queryKey: queryKeys.rankingStatus(),
     queryFn: getRankingsStatus,
   });
 
   const rankingId = statusQuery.data?.rankingId;
 
   const detailQuery = useQuery({
-    queryKey: ["ranking-detail", rankingId],
+    queryKey: queryKeys.rankingDetail(rankingId),
     queryFn: () => getRanking(rankingId!),
     enabled: Boolean(rankingId),
   });
 
   const unrankedQuery = useQuery({
-    queryKey: ["ranking-unranked", rankingId],
+    queryKey: queryKeys.rankingUnranked(rankingId),
     queryFn: () => getUnrankedPlayers(rankingId!),
     enabled: Boolean(rankingId),
   });
@@ -429,10 +430,10 @@ export function RankingEditorPage() {
 
   function settleQueries() {
     void queryClient.invalidateQueries({
-      queryKey: ["ranking-detail", rankingId],
+      queryKey: queryKeys.rankingDetail(rankingId),
     });
     void queryClient.invalidateQueries({
-      queryKey: ["ranking-unranked", rankingId],
+      queryKey: queryKeys.rankingUnranked(rankingId),
     });
   }
 
@@ -441,7 +442,7 @@ export function RankingEditorPage() {
     // the existing ranking — the unranked pool is untouched, so only
     // ranking-detail needs to reconcile.
     void queryClient.invalidateQueries({
-      queryKey: ["ranking-detail", rankingId],
+      queryKey: queryKeys.rankingDetail(rankingId),
     });
   }
 
@@ -480,7 +481,9 @@ export function RankingEditorPage() {
   const createEmptyRankingMutation = useMutation({
     mutationFn: createEmptyRanking,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["ranking-status"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.rankingStatus(),
+      });
     },
   });
 

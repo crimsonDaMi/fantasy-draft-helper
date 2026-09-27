@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { importRankings } from "../api/fantasy-api";
+import { queryKeys } from "../api/query-keys";
 
 import type { RankingImportError, RankingImportSummary } from "../types/api";
 
@@ -41,7 +42,9 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
       // Invalidate the cached status so the editor route (mutually
       // exclusive with this one) never renders a stale cached
       // rankingId on its next mount.
-      void queryClient.invalidateQueries({ queryKey: ["ranking-status"] });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.rankingStatus(),
+      });
 
       if (result.validationErrors.length > 0) {
         setValidationErrors(result.validationErrors);

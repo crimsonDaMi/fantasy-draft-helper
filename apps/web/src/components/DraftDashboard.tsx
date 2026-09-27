@@ -7,6 +7,7 @@ import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
 import { getRankingsStatus } from "../api/fantasy-api";
+import { queryKeys } from "../api/query-keys";
 import type { RankingImportSummary } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
@@ -19,7 +20,7 @@ export function DraftDashboard() {
   const [setupOpen, setSetupOpen] = useState(true);
 
   const statusQuery = useQuery({
-    queryKey: ["ranking-status"],
+    queryKey: queryKeys.rankingStatus(),
     queryFn: getRankingsStatus,
   });
 

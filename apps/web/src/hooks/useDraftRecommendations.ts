@@ -2,6 +2,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { ApiRequestError, getRecommendations } from "../api/fantasy-api";
 
+import { queryKeys } from "../api/query-keys";
+
 import type { DraftStatus, RecommendationsResponse } from "../types/api";
 
 import {
@@ -49,7 +51,7 @@ export function useDraftRecommendations(
   const isEnabled = Boolean(draftId && rankingId);
 
   const query = useQuery({
-    queryKey: ["recommendations", draftId, rankingId, positions],
+    queryKey: queryKeys.recommendations(draftId, rankingId, positions),
 
     queryFn: () => getRecommendations(draftId!, rankingId!, { positions }),
 
