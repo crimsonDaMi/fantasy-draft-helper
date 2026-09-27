@@ -86,6 +86,10 @@ export class PlayerService {
     return this.playerCache.getAll();
   }
 
+  getPlayerCount(): number {
+    return this.playerCache.size;
+  }
+
   getCacheUpdatedAt(): Date | undefined {
     return this.playerCache.updatedAt;
   }

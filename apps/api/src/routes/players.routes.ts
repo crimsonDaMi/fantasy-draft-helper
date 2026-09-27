@@ -46,7 +46,7 @@ export function createPlayersRoutes(playerService: PlayerService) {
         return {
           status: "ok",
 
-          count: playerService.getAllPlayers().length,
+          count: playerService.getPlayerCount(),
 
           updatedAt: playerService.getCacheUpdatedAt(),
         };
@@ -57,7 +57,7 @@ export function createPlayersRoutes(playerService: PlayerService) {
       "/players/cache-status",
 
       async () => {
-        const count = playerService.getAllPlayers().length;
+        const count = playerService.getPlayerCount();
 
         return {
           loaded: count > 0,

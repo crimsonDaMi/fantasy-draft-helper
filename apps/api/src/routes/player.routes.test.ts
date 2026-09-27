@@ -14,7 +14,7 @@ describe("players routes", () => {
       refreshPlayersWithCooldown: async () => {
         throw new RefreshCooldownError(90_000);
       },
-      getAllPlayers: () => [],
+      getPlayerCount: () => 0,
       getCacheUpdatedAt: () => new Date(),
     };
 
@@ -39,7 +39,7 @@ describe("players routes", () => {
 
     const playerService = {
       refreshPlayersWithCooldown: async () => {},
-      getAllPlayers: () => [{ sleeperId: "1" }],
+      getPlayerCount: () => 1,
       getCacheUpdatedAt: () => new Date(),
     };
 
@@ -52,6 +52,27 @@ describe("players routes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ status: "ok", count: 1 });
+
+    await app.close();
+  });
+
+  it("reports the cached player count in cache-status", async () => {
+    const app = Fastify();
+
+    const playerService = {
+      getPlayerCount: () => 2,
+      getCacheUpdatedAt: () => undefined,
+    };
+
+    app.register(createPlayersRoutes(playerService as never));
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/players/cache-status",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ loaded: true, count: 2 });
 
     await app.close();
   });

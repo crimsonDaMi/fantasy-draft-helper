@@ -74,24 +74,4 @@ describe("PlayerCache", () => {
 
     expect(results).toHaveLength(2);
   });
-
-  it("clears the cache", () => {
-    const cache = new PlayerCache();
-
-    cache.replace([
-      {
-        sleeperId: "1",
-
-        fullName: "Josh Allen",
-
-        active: true,
-
-        fantasyPositions: ["QB"],
-      },
-    ]);
-
-    cache.clear();
-
-    expect(cache.size).toBe(0);
-  });
 });

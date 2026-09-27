@@ -50,12 +50,4 @@ export class PlayerCache {
   get updatedAt(): Date | undefined {
     return this.lastUpdatedAt;
   }
-
-  clear(): void {
-    this.playersById.clear();
-
-    this.playersByNormalizedName.clear();
-
-    this.lastUpdatedAt = undefined;
-  }
 }

@@ -71,6 +71,7 @@ describe("PlayerService refresh cooldown", () => {
     await service.refreshPlayersWithCooldown();
 
     expect(service.getAllPlayers()).toHaveLength(1);
+    expect(service.getPlayerCount()).toBe(1);
   });
 
   it("rejects a second refresh within the cooldown window", async () => {
