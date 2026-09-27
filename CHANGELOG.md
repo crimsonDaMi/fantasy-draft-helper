@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.0.0 — 2026-09-28
+
 ### Upgrading
 
 - **One-time step for existing Docker deployments:** the container now runs

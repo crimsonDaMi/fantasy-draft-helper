@@ -1,6 +1,6 @@
 services:
   draft-helper:
-    image: ghcr.io/crimsondami/fantasy-draft-helper:v0.6.2
+    image: ghcr.io/crimsondami/fantasy-draft-helper:v1.0.0
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
