@@ -1,6 +1,6 @@
 # Known Issues and Evaluation Items
 
-This document tracks external limitations and unresolved behavior that affects the MVP. Product requirements and completion criteria belong in [`MVP_COMPLETION_PLAN.md`](MVP_COMPLETION_PLAN.md); this file records risks and the evidence still needed.
+This document tracks external limitations and unresolved behavior that affects the app. Resolved items stay here, marked as such, for reference. Product requirements and completion criteria belong in [`MVP_COMPLETION_PLAN.md`](MVP_COMPLETION_PLAN.md); this file records risks and the evidence still needed.
 
 ## Sleeper Draft Pick Propagation Delay
 
@@ -24,7 +24,9 @@ The application uses the state returned by Sleeper and does not infer picks or a
 - Determine whether propagation differs between human and automated picks.
 - Validate whether the current polling intervals are appropriate.
 
-Do not add WebSockets, prediction, or server-side workarounds for this issue within the MVP.
+Do not add WebSockets, prediction, or server-side workarounds for this issue without an explicit request.
+
+Status: open, as a documented upstream limitation. The live draft test (1-minute pick clock) did not show it as a practical problem.
 
 ## Draft State Consistency
 
@@ -37,26 +39,17 @@ Future evaluation may consider:
 - A refresh timestamp or draft-version display.
 - Alternative Sleeper endpoints, if they are documented and demonstrably fresher.
 
-## Initial Player Cache Availability
+## Initial Player Cache Availability — resolved
 
-### Observation
+An early end-to-end import returned all players as unmatched on the first
+attempt and matched them on an immediate retry: the lazy Sleeper player
+cache hadn't finished loading before matching began.
 
-An earlier end-to-end import reportedly returned all players as unmatched on the first attempt and matched them after an immediate retry.
-
-### Possible Cause
-
-The lazy Sleeper player cache may not have finished loading before matching began, or concurrent first requests may have triggered inconsistent initialization.
-
-### Required Behavior
-
-A user must be able to import a ranking immediately after starting the application without retrying.
-
-### Evaluation and Fix
-
-- Make lazy cache initialization concurrency-safe.
-- Ensure the import service awaits player loading before matching.
-- Add a test for concurrent first imports or cache initialization.
-- Confirm the behavior with an end-to-end import using representative data.
+Fixed before v0.1.0 (commit `ad666b3`): `PlayerService.ensurePlayersLoaded`
+shares one in-flight load between concurrent callers, and
+`RankingImportService.importCsv` awaits it before matching. Covered by
+`player.service.test.ts` ("shares concurrent first cache loads") and
+`ranking-import.service.test.ts`.
 
 ## Sleeper Defense Representation
 

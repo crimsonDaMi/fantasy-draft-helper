@@ -408,7 +408,7 @@ scope entirely.
 The league shared instance runs on a Raspberry Pi 4 and is exposed via
 Tailscale Funnel. Its Compose file binds the app to loopback only and keeps
 the SQLite data in a named Docker volume. Follow the reproducible setup,
-update, recovery, and access-control instructions in deploy/pi/deploy-pi-README.md.
+update, recovery, and access-control instructions in [`deploy/pi/README.md`](deploy/pi/README.md).
 Copy deploy/pi/.env.example to deploy/pi/.env and set the real
 ALLOWED_USERNAMES value before starting it; do not commit that file or the
 Funnel URL.
