@@ -1,3 +1,5 @@
+import type { FastifyBaseLogger } from "fastify";
+
 import { AdpClient } from "./clients/adp.client.js";
 
 import { AuthService } from "./services/auth.service.js";
@@ -54,7 +56,9 @@ export interface AppDependencies {
   recommendationService: RecommendationService;
 }
 
-export function createAppDependencies(): AppDependencies {
+export function createAppDependencies(
+  logger: FastifyBaseLogger,
+): AppDependencies {
   const sleeperClient = new SleeperClient();
 
   const allowedUsernames = (process.env.ALLOWED_USERNAMES ?? "")
@@ -69,7 +73,7 @@ export function createAppDependencies(): AppDependencies {
 
   const adpClient = new AdpClient();
 
-  const adpService = new AdpService(adpClient);
+  const adpService = new AdpService(adpClient, logger);
 
   const playerCache = new PlayerCache();
 

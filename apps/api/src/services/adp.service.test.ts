@@ -18,6 +18,10 @@ function createFakeAdpClient(csv: string | Error) {
   };
 }
 
+function createFakeLogger() {
+  return { error: vi.fn() };
+}
+
 describe("AdpService", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -30,7 +34,7 @@ describe("AdpService", () => {
 
   it("parses the Redraft SF ADP column keyed by Sleeper player id", async () => {
     const adpClient = createFakeAdpClient(SAMPLE_CSV);
-    const service = new AdpService(adpClient as never);
+    const service = new AdpService(adpClient as never, createFakeLogger());
 
     const snapshot = await service.getSnapshot();
 
@@ -41,7 +45,7 @@ describe("AdpService", () => {
 
   it("does not refetch within the refresh interval", async () => {
     const adpClient = createFakeAdpClient(SAMPLE_CSV);
-    const service = new AdpService(adpClient as never);
+    const service = new AdpService(adpClient as never, createFakeLogger());
 
     await service.getSnapshot();
     await service.getSnapshot();
@@ -51,7 +55,8 @@ describe("AdpService", () => {
 
   it("serves the last-known snapshot when a refresh fails", async () => {
     const adpClient = createFakeAdpClient(SAMPLE_CSV);
-    const service = new AdpService(adpClient as never);
+    const logger = createFakeLogger();
+    const service = new AdpService(adpClient as never, logger);
 
     await service.getSnapshot();
 
@@ -62,14 +67,20 @@ describe("AdpService", () => {
     const snapshot = await service.getSnapshot();
 
     expect(snapshot.get("9221")).toBe(1.5);
+    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
   it("returns an empty snapshot rather than throwing on first-ever failure", async () => {
     const adpClient = createFakeAdpClient(new Error("network error"));
-    const service = new AdpService(adpClient as never);
+    const logger = createFakeLogger();
+    const service = new AdpService(adpClient as never, logger);
 
     const snapshot = await service.getSnapshot();
 
     expect(snapshot.size).toBe(0);
+    expect(logger.error).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      expect.stringContaining("Failed to refresh ADP data"),
+    );
   });
 });

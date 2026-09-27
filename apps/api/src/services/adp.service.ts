@@ -1,4 +1,5 @@
 import { parse } from "csv-parse/sync";
+import type { FastifyBaseLogger } from "fastify";
 
 import { AdpClient } from "../clients/adp.client.js";
 
@@ -13,7 +14,10 @@ export class AdpService {
   private lastAttemptAt?: Date;
   private refreshing?: Promise<void>;
 
-  constructor(private readonly adpClient: AdpClient) {}
+  constructor(
+    private readonly adpClient: AdpClient,
+    private readonly logger: Pick<FastifyBaseLogger, "error">,
+  ) {}
 
   /**
    * Returns the current best-known ADP snapshot, refreshing it first if
@@ -81,9 +85,9 @@ export class AdpService {
         this.lastSuccessAt = new Date();
       }
     } catch (error) {
-      console.error(
+      this.logger.error(
+        { err: error },
         "Failed to refresh ADP data; serving last-known snapshot.",
-        error,
       );
     }
   }

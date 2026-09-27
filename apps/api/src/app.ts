@@ -39,12 +39,14 @@ const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 // else falls through to the SPA shell for client-side routing.
 const API_PREFIXES = ["/health", "/auth", ...PROTECTED_PREFIXES];
 
-export async function buildApp(
-  dependencies: AppDependencies = createAppDependencies(),
-) {
+export async function buildApp(injectedDependencies?: AppDependencies) {
   const app = Fastify({
     logger: true,
   });
+
+  // Created after the Fastify instance so services can log through its
+  // pino logger rather than the console.
+  const dependencies = injectedDependencies ?? createAppDependencies(app.log);
 
   // Must be set before any route plugin is registered: each `await
   // app.register(...)` loads immediately and captures the error handler
