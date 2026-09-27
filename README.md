@@ -412,3 +412,13 @@ update, recovery, and access-control instructions in deploy/pi/deploy-pi-README.
 Copy deploy/pi/.env.example to deploy/pi/.env and set the real
 ALLOWED_USERNAMES value before starting it; do not commit that file or the
 Funnel URL.
+
+## Disclaimer
+
+Fantasy Draft Helper is an independent project. It is not affiliated with,
+endorsed by, or sponsored by Sleeper. "Sleeper" is a trademark of its
+respective owner; the app only uses Sleeper's public API.
+
+## License
+
+[MIT](LICENSE) © 2026 Andrej Lohn

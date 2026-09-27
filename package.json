@@ -2,6 +2,7 @@
   "name": "fantasy-draft-helper",
   "version": "0.8.5",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev",
     "build": "pnpm --recursive build",

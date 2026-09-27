@@ -2,6 +2,7 @@
   "name": "@fantasy-draft-helper/api",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "echo \"ALLOWED_USERNAMES=$ALLOWED_USERNAMES\" && tsx watch src/server.ts",
