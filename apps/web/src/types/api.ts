@@ -21,10 +21,12 @@ export interface ApiRecommendation {
   };
 }
 
+export type DraftStatus = "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
+
 export interface RecommendationsResponse {
   draftId: string;
 
-  draftStatus: "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
+  draftStatus: DraftStatus;
 
   totalPicks: number;
 

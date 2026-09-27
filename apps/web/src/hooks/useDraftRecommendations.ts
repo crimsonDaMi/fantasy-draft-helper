@@ -1,10 +1,8 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { ApiRequestError } from "../api/fantasy-api";
+import { ApiRequestError, getRecommendations } from "../api/fantasy-api";
 
-import { getRecommendations } from "../api/fantasy-api";
-
-import type { RecommendationsResponse } from "../types/api";
+import type { DraftStatus, RecommendationsResponse } from "../types/api";
 
 import {
   ACTIVE_POLLING_INTERVAL_MS,
@@ -23,6 +21,24 @@ interface UseDraftRecommendationsResult {
   retry: () => void;
 }
 
+/** How often to poll for the given draft state: not at all after an
+ * error (the user retries manually) or once the draft is complete,
+ * slowly before it starts, and fast while it's live. */
+function resolvePollingInterval(
+  hasError: boolean,
+  draftStatus: DraftStatus | undefined,
+): number | false {
+  if (hasError || draftStatus === "COMPLETE") {
+    return false;
+  }
+
+  if (draftStatus === "PRE_DRAFT") {
+    return PRE_DRAFT_POLLING_INTERVAL_MS;
+  }
+
+  return ACTIVE_POLLING_INTERVAL_MS;
+}
+
 export function useDraftRecommendations(
   draftId?: string,
 
@@ -30,12 +46,14 @@ export function useDraftRecommendations(
 
   positions?: string[],
 ): UseDraftRecommendationsResult {
+  const isEnabled = Boolean(draftId && rankingId);
+
   const query = useQuery({
     queryKey: ["recommendations", draftId, rankingId, positions],
 
     queryFn: () => getRecommendations(draftId!, rankingId!, { positions }),
 
-    enabled: Boolean(draftId && rankingId),
+    enabled: isEnabled,
 
     placeholderData: keepPreviousData,
 
@@ -57,23 +75,11 @@ export function useDraftRecommendations(
 
     retryDelay: (attemptIndex) => Math.min(1_000 * 2 ** attemptIndex, 5_000),
 
-    refetchInterval: (currentQuery) => {
-      if (currentQuery.state.error) {
-        return false;
-      }
-
-      const status = currentQuery.state.data?.draftStatus;
-
-      if (status === "COMPLETE") {
-        return false;
-      }
-
-      if (status === "PRE_DRAFT") {
-        return PRE_DRAFT_POLLING_INTERVAL_MS;
-      }
-
-      return ACTIVE_POLLING_INTERVAL_MS;
-    },
+    refetchInterval: (currentQuery) =>
+      resolvePollingInterval(
+        Boolean(currentQuery.state.error),
+        currentQuery.state.data?.draftStatus,
+      ),
   });
 
   const error = query.error;
@@ -90,15 +96,9 @@ export function useDraftRecommendations(
 
     isLoading: query.isLoading,
 
-    pollingIntervalMs: query.error
-      ? false
-      : query.data?.draftStatus === "COMPLETE"
-        ? false
-        : query.data?.draftStatus === "PRE_DRAFT"
-          ? PRE_DRAFT_POLLING_INTERVAL_MS
-          : draftId && rankingId
-            ? ACTIVE_POLLING_INTERVAL_MS
-            : undefined,
+    pollingIntervalMs: isEnabled
+      ? resolvePollingInterval(Boolean(error), query.data?.draftStatus)
+      : undefined,
 
     retry: () => {
       void query.refetch();
