@@ -203,3 +203,29 @@ not a missing capability. Before starting Phase 2, confirm with the league
 whether "the host runs it locally on draft day" is an actual pain point —
 treat this as a deliberate go/no-go decision, not a default continuation of
 Phase 1.
+
+## Clean-code follow-ups (deferred)
+
+Left over from a clean-code review of the whole codebase. The review's
+in-scope fixes are already merged: consistent `{ error, message }` error
+bodies (plus a real bug fix: the error handler never reached any route),
+the API client `request()` helper, the `RankingEditorPage` split, the
+repository transaction helper, dead-code removal, and knip plus test-file
+type-checking in the gate. The items below were deliberately left out.
+None of them is a bug. Confirm the scope before starting any of them.
+
+| Item                                                                                                                                                                                                                                                            | Why deferred / constraints                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Blank-line formatting noise.** Most API files put a blank line between every argument, object property and interface member. This roughly doubles their length, and Prettier preserves it.                                                                    | Mass mechanical change across most API files. If done, it goes in its own `style:` commit with nothing else in it. It isn't enforced by any tool, so new code would need to follow the new style by convention. |
+| **`AdpService` logs with `console.error`.** The rest of the API uses Fastify's pino logger, so ADP refresh failures bypass structured logging.                                                                                                                  | Needs a logger injected through `app-dependencies.ts`, which the service doesn't currently get. Small change, but it touches the composition root.                                                              |
+| **Denormalized ranking storage.** `ranking_players` stores `rank`/`tier` both as columns and inside `match_json`, so every relabel or renumber in `RankingRepository` has to rewrite both.                                                                      | This is a schema change. Under the no-migrations policy (see `CLAUDE.md`), that means deleting the prod and dev databases and re-importing rankings.                                                            |
+| **HTTP errors thrown from domain code.** `RankingEditorService` and `RankingRepository` throw `HttpError` directly. Small domain errors (`NotFoundError`, `ConflictError`) mapped in `utils/error-handler.ts` would keep HTTP status codes out of those layers. | Architectural preference only. Today's behavior is correct and tested (`app.e2e.test.ts`).                                                                                                                      |
+| **`RankingsUpload` manages async state by hand.** It tracks `isUploading`/`error` itself, while the ranking editor uses TanStack `useMutation`.                                                                                                                 | Consistency only. The component works and has no tests to lean on, so it would need a component test first.                                                                                                     |
+| **Inline response mapping.** `POST /rankings` and the recommendations route build their response DTOs inline. The rest of the API uses small `*.mapper.ts` functions for this.                                                                                  | Optional tidy-up. It doesn't change behavior.                                                                                                                                                                   |
+| **Inaccurate tier-removal prompt.** The confirmation says "Merge N player(s) into the next tier?", but removing the last (worst) tier merges its players into the tier _above_.                                                                                 | This is UI copy, so it changes user-visible behavior. `DroppableContainer` would need to know whether the tier is the last one.                                                                                 |
+| **`PlayerCache.clear()` is test-only,** and `/players/cache-status` copies the whole player array just to count it.                                                                                                                                             | Negligible cost at ~3k players. It's a natural cleanup if `PlayerService` ever grows a `getPlayerCount()`.                                                                                                      |
+
+Considered and rejected, so not worth re-attempting: merging `useAuth`'s
+`login`/`register` into one shared helper. The helper needed four
+parameters and made the hook longer than the two short callbacks it
+replaced.

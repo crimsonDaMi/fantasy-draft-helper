@@ -101,6 +101,12 @@ message }`; throw `HttpError(status, message, CODE)` for expected
   `ALLOWED_USERNAMES` value on startup — there's no `.env` file for the
   API, it's an env var only, exported manually or passed inline.
 
+## Deferred clean-code follow-ups
+
+Items from a codebase-wide clean-code review that were deliberately left
+out of scope are tracked in `DEVELOPMENT_PLAN.md` ("Clean-code follow-ups
+(deferred)"), each with its constraints. Confirm scope before starting any.
+
 ## Current backlog (ranking editor)
 
 Empty — every known item has been resolved. New items still need their
