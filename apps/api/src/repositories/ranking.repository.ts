@@ -10,7 +10,11 @@ import { RankingTier } from "../domain/ranking-tier.js";
 
 import { HttpError } from "../utils/http-error.js";
 
-import { labelTierToNumeric, numericTierToLabel } from "../utils/tier.js";
+import {
+  labelTierToNumeric,
+  MAX_TIERS,
+  numericTierToLabel,
+} from "../utils/tier.js";
 
 interface RankingPlayerRow {
   match_json: string;
@@ -18,6 +22,10 @@ interface RankingPlayerRow {
 
 interface TierPositionRow {
   position: number;
+}
+
+function parseMatchRows(rows: RankingPlayerRow[]): PlayerMatch[] {
+  return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
 }
 
 export class RankingRepository {
@@ -78,9 +86,7 @@ export class RankingRepository {
     const rankingId = randomUUID();
     const createdAt = new Date().toISOString();
 
-    this.database.exec("BEGIN");
-
-    try {
+    this.transaction(() => {
       // Each user has exactly one active ranking at a time — importing a
       // new CSV or starting a fresh ranking from the editor fully
       // replaces whatever came before, on disk as well as in the UI.
@@ -93,18 +99,13 @@ export class RankingRepository {
       this.database
         .prepare(
           `INSERT INTO rankings (id, user_id, name, created_at)
-           VALUES (?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?)`,
         )
         .run(rankingId, userId, name, createdAt);
 
       this.insertPlayerRows(rankingId, matches);
       this.seedTiersFromMatches(rankingId, matches);
-
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
 
     return rankingId;
   }
@@ -120,7 +121,7 @@ export class RankingRepository {
       )
       .all(rankingId, userId) as unknown as RankingPlayerRow[];
 
-    return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
+    return parseMatchRows(rows);
   }
 
   hasRanking(rankingId: string, userId: string): boolean {
@@ -179,9 +180,7 @@ export class RankingRepository {
     targetTier: string,
     newMatch?: PlayerMatch,
   ): PlayerMatch[] {
-    this.database.exec("BEGIN");
-
-    try {
+    this.transaction(() => {
       const ordered = this.getOrderedMatches(rankingId);
 
       const currentIndex = ordered.findIndex(
@@ -210,31 +209,19 @@ export class RankingRepository {
       ordered.splice(insertAt, 0, entry);
 
       this.replaceAllPlayers(rankingId, ordered);
-
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
 
     return this.getOrderedMatches(rankingId);
   }
 
   removePlayer(rankingId: string, sleeperId: string): PlayerMatch[] {
-    this.database.exec("BEGIN");
-
-    try {
+    this.transaction(() => {
       const ordered = this.getOrderedMatches(rankingId).filter(
         (match) => match.player?.sleeperId !== sleeperId,
       );
 
       this.replaceAllPlayers(rankingId, ordered);
-
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
 
     return this.getOrderedMatches(rankingId);
   }
@@ -246,17 +233,15 @@ export class RankingRepository {
   /** Inserts a new, empty tier at 1-based `position`, shifting that tier
    * and every one after it (and their players) one step worse. */
   insertTier(rankingId: string, position: number): RankingTier[] {
-    this.database.exec("BEGIN");
-
-    try {
+    this.transaction(() => {
       const positions = this.readTierPositions(rankingId);
       const maxPosition = positions.length > 0 ? Math.max(...positions) : 0;
       const clamped = Math.max(1, Math.min(position, maxPosition + 1));
 
-      if (maxPosition + 1 > 26) {
+      if (maxPosition + 1 > MAX_TIERS) {
         throw new HttpError(
           409,
-          "Cannot add more than 26 tiers",
+          `Cannot add more than ${MAX_TIERS} tiers`,
           "TIER_LIMIT_REACHED",
         );
       }
@@ -268,12 +253,7 @@ export class RankingRepository {
           `INSERT INTO ranking_tiers (ranking_id, position) VALUES (?, ?)`,
         )
         .run(rankingId, clamped);
-
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
 
     return this.readTiers(rankingId);
   }
@@ -281,9 +261,7 @@ export class RankingRepository {
   /** Removes the tier at 1-based `position`, merging its players into the
    * next tier down — or, if it's the last (worst) tier, the tier above. */
   removeTier(rankingId: string, position: number): RankingTier[] {
-    this.database.exec("BEGIN");
-
-    try {
+    this.transaction(() => {
       const positions = this.readTierPositions(rankingId);
 
       if (!positions.includes(position)) {
@@ -319,12 +297,7 @@ export class RankingRepository {
         .run(rankingId, position);
 
       this.shiftTiersFrom(rankingId, position + 1, -1);
-
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
 
     return this.readTiers(rankingId);
   }
@@ -332,6 +305,19 @@ export class RankingRepository {
   // ---------------------------------------------------------------------
   // Internal helpers
   // ---------------------------------------------------------------------
+
+  /** Runs `fn` inside a transaction, rolling back if it throws. */
+  private transaction(fn: () => void): void {
+    this.database.exec("BEGIN");
+
+    try {
+      fn();
+      this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
 
   private getOrderedMatches(rankingId: string): PlayerMatch[] {
     const rows = this.database
@@ -343,7 +329,7 @@ export class RankingRepository {
       )
       .all(rankingId) as unknown as RankingPlayerRow[];
 
-    return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
+    return parseMatchRows(rows);
   }
 
   /** Deletes and re-inserts every ranking_players row for `rankingId` in

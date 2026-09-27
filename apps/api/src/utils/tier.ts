@@ -30,6 +30,8 @@ const TIER_SEQUENCE = [
   "Z",
 ];
 
+export const MAX_TIERS = TIER_SEQUENCE.length;
+
 export function numericTierToLabel(n: number): string | undefined {
   if (!Number.isInteger(n) || n < 1 || n > TIER_SEQUENCE.length) {
     return undefined;
