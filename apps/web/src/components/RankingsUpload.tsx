@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { importRankings } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 
-import type { RankingImportError, RankingImportSummary } from "../types/api";
+import type { RankingImportSummary } from "../types/api";
 
 interface RankingsUploadProps {
   onImported: (summary: RankingImportSummary, rankingId: string) => void;
@@ -13,27 +13,11 @@ interface RankingsUploadProps {
 export function RankingsUpload({ onImported }: RankingsUploadProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File>();
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string>();
-  const [validationErrors, setValidationErrors] = useState<
-    RankingImportError[]
-  >([]);
+  const [isFileMissing, setIsFileMissing] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!file) {
-      setError("Please select a CSV file.");
-      return;
-    }
-
-    try {
-      setError(undefined);
-      setValidationErrors([]);
-      setIsUploading(true);
-
-      const result = await importRankings(file);
-
+  const importMutation = useMutation({
+    mutationFn: (csvFile: File) => importRankings(csvFile),
+    onSuccess: (result) => {
       onImported(result.summary, result.rankingId);
 
       // A re-import fully replaces the ranking (requirement #9 — no
@@ -45,21 +29,21 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.rankingStatus(),
       });
+    },
+  });
 
-      if (result.validationErrors.length > 0) {
-        setValidationErrors(result.validationErrors);
-        setError(
-          "Import completed with CSV errors. Correct the listed rows and re-import the file.",
-        );
-      }
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? `${error.message} Check the CSV headers and row values, then choose the corrected file and try again.`
-          : "Failed to import rankings. Check the CSV headers and row values, then try again.",
-      );
-    } finally {
-      setIsUploading(false);
+  const validationErrors = importMutation.data?.validationErrors ?? [];
+  const error = isFileMissing
+    ? "Please select a CSV file."
+    : describeImportError(importMutation.error, validationErrors.length);
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    setIsFileMissing(!file);
+
+    if (file) {
+      importMutation.mutate(file);
     }
   }
 
@@ -86,9 +70,9 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
           <button
             type="submit"
             className="file-upload__submit"
-            disabled={isUploading}
+            disabled={importMutation.isPending}
           >
-            {isUploading ? "Importing…" : "Import"}
+            {importMutation.isPending ? "Importing…" : "Import"}
           </button>
         </div>
       </form>
@@ -106,4 +90,21 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
       )}
     </div>
   );
+}
+
+function describeImportError(
+  importError: Error | null,
+  validationErrorCount: number,
+): string | undefined {
+  if (importError) {
+    return importError instanceof Error
+      ? `${importError.message} Check the CSV headers and row values, then choose the corrected file and try again.`
+      : "Failed to import rankings. Check the CSV headers and row values, then try again.";
+  }
+
+  if (validationErrorCount > 0) {
+    return "Import completed with CSV errors. Correct the listed rows and re-import the file.";
+  }
+
+  return undefined;
 }

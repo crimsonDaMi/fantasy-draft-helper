@@ -89,7 +89,7 @@ export interface RankingImportResponse {
   }[];
 }
 
-export interface RankingImportError {
+interface RankingImportError {
   row: number;
 
   message: string;
