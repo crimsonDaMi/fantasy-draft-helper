@@ -413,6 +413,12 @@ Copy deploy/pi/.env.example to deploy/pi/.env and set the real
 ALLOWED_USERNAMES value before starting it; do not commit that file or the
 Funnel URL.
 
+## Support
+
+If the app helps your drafts, you can support its development via
+[GitHub Sponsors](https://github.com/sponsors/crimsonDaMi) or
+[Ko-fi](https://ko-fi.com/crimsonDaMi).
+
 ## Disclaimer
 
 Fantasy Draft Helper is an independent project. It is not affiliated with,
