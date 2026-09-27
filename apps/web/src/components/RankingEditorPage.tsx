@@ -387,7 +387,7 @@ export function RankingEditorPage() {
             >
               + Add tier here
             </button>
-            {tiers.map((tier) => (
+            {tiers.map((tier, index) => (
               <div key={tier.label}>
                 <DroppableContainer
                   id={tier.label}
@@ -406,6 +406,8 @@ export function RankingEditorPage() {
                   registerScrollElement={registerScrollElement}
                   removeControl={{
                     canRemove: tiers.length > 1,
+                    playerCount: containers[tier.label]?.length ?? 0,
+                    isLastTier: index === tiers.length - 1,
                     isConfirming:
                       confirmingRemoveTierPosition === tier.position,
                     isPending: removeTierMutation.isPending,

@@ -208,6 +208,16 @@ virtualization and drag-performance fixes above are untouched:
 The page keeps the queries, the render-time server sync, and the drag
 handlers.
 
+## Tier-removal prompt wording (resolved)
+
+The remove-tier confirmation always said "Merge N player(s) into the next
+tier?", but removing the last (worst) tier merges into the tier _above_
+(`RankingRepository.removeTier`). `TierRemoveControl` now carries
+`isLastTier` and the prompt says "…into the tier above?" for that tier.
+It also carries `playerCount`: N used to be the position-filtered row
+count, so an active filter undercounted the players being merged.
+Covered by `RankingEditorPage.test.tsx`.
+
 ## Current backlog
 
 Empty.

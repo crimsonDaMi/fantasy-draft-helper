@@ -15,6 +15,10 @@ import { SortablePlayer } from "./SortablePlayer";
 
 interface TierRemoveControl {
   canRemove: boolean;
+  /** Players in the tier, ignoring any position filter on `players`. */
+  playerCount: number;
+  /** The last (worst) tier merges into the tier above, not the next one. */
+  isLastTier: boolean;
   isConfirming: boolean;
   isPending: boolean;
   onRequestRemove: () => void;
@@ -76,7 +80,10 @@ export function DroppableContainer({
         {removeControl?.canRemove &&
           (removeControl.isConfirming ? (
             <span className="ranking-editor__tier-confirm">
-              <span>Merge {players.length} player(s) into the next tier?</span>
+              <span>
+                Merge {removeControl.playerCount} player(s) into the{" "}
+                {removeControl.isLastTier ? "tier above" : "next tier"}?
+              </span>
               <button
                 type="button"
                 onClick={removeControl.onConfirmRemove}

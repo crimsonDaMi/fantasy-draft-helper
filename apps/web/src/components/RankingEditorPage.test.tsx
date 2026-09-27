@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RankingEditorPage } from "./RankingEditorPage";
@@ -38,8 +44,52 @@ function renderWithClient() {
   );
 }
 
+function rankedPlayer(
+  rank: number,
+  tier: string,
+  sleeperId: string,
+  fullName: string,
+  position: string,
+) {
+  return {
+    ranking: { rank, playerName: fullName, tier },
+    player: { sleeperId, fullName, position, team: "BUF" },
+    method: "SLEEPER_ID",
+  };
+}
+
+function mockTwoTierRanking() {
+  mocks.getRankingsStatus.mockResolvedValue({
+    loaded: true,
+    rankingId: "ranking-1",
+    rankingCount: 3,
+    matchedCount: 3,
+  });
+
+  mocks.getRanking.mockResolvedValue({
+    players: [
+      rankedPlayer(1, "S", "1", "Player One", "QB"),
+      rankedPlayer(2, "S", "2", "Player Two", "RB"),
+      rankedPlayer(3, "A", "3", "Player Three", "WR"),
+    ],
+    tiers: [
+      { label: "S", position: 1, playerCount: 2 },
+      { label: "A", position: 2, playerCount: 1 },
+    ],
+  });
+
+  mocks.getUnrankedPlayers.mockResolvedValue({ players: [] });
+}
+
+function requestTierRemoval(tierIndex: number) {
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Remove tier" })[tierIndex],
+  );
+}
+
 describe("RankingEditorPage", () => {
   afterEach(() => {
+    cleanup();
     vi.clearAllMocks();
   });
 
@@ -109,5 +159,44 @@ describe("RankingEditorPage", () => {
       "title",
       "Player Two",
     );
+  });
+
+  it("asks to merge a tier's players into the next tier", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+    await screen.findByText("Player Three");
+
+    requestTierRemoval(0);
+
+    expect(
+      screen.getByText("Merge 2 player(s) into the next tier?"),
+    ).toBeInTheDocument();
+  });
+
+  it("asks to merge the last tier's players into the tier above", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+    await screen.findByText("Player Three");
+
+    requestTierRemoval(1);
+
+    expect(
+      screen.getByText("Merge 1 player(s) into the tier above?"),
+    ).toBeInTheDocument();
+  });
+
+  it("counts every player in the tier even when a position filter hides some", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+
+    await screen.findByText("Player Two");
+    fireEvent.click(screen.getByLabelText("QB"));
+    await waitFor(() => expect(screen.queryByText("Player Two")).toBeNull());
+
+    requestTierRemoval(0);
+
+    expect(
+      screen.getByText("Merge 2 player(s) into the next tier?"),
+    ).toBeInTheDocument();
   });
 });
