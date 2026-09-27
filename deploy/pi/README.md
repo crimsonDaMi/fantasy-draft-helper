@@ -120,6 +120,18 @@ docker compose pull
 docker compose up -d
 ```
 
+**Upgrading from v0.x to v1.0.0:** the container now runs as the
+unprivileged `node` user, and the existing volume was written by root.
+Hand it over once, after `git pull` but before starting the new version,
+or the app exits on startup:
+
+```bash
+cd deploy/pi
+docker compose down
+docker compose run --rm --user root draft-helper chown -R node:node /app/data
+docker compose up -d
+```
+
 ## Operational notes
 
 - **Reboot behavior**: Docker and `tailscaled` are both systemd services
@@ -128,6 +140,8 @@ docker compose up -d
   across a `tailscaled` restart — verify this periodically
   (`tailscale funnel status` after a reboot), since it hasn't been
   stress-tested against a real power-loss event yet.
+- **Health**: the image has a Docker `HEALTHCHECK` against `/health`;
+  `docker compose ps` shows `healthy` once the app is up.
 - **Backups**: no automated volume backup. The SQLite database lives in
   the `draft-helper-data` named Docker volume — a periodic `docker cp` or
   a cron job copying the volume's contents somewhere else would protect

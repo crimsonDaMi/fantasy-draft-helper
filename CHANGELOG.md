@@ -9,6 +9,13 @@ See `RELEASING.md`.
 
 ### Upgrading
 
+- **One-time step for existing Docker deployments:** the container now runs
+  as the unprivileged `node` user instead of root, so the existing data
+  volume (created by root) must be handed over once, or the app exits on
+  startup. With the app stopped, from the directory with your
+  `docker-compose.yml`:
+  `docker compose run --rm --user root draft-helper chown -R node:node /app/data`.
+  Not needed for a fresh volume.
 - No database schema change — existing accounts and rankings are kept.
 
 ### Added
@@ -19,6 +26,7 @@ See `RELEASING.md`.
 - Startup check that refuses to run against a database created with a
   different schema, with a message explaining the fix, instead of a
   `no such column` crash loop.
+- Docker `HEALTHCHECK` against `/health`.
 - "Support me" (Ko-fi) link in the header.
 
 ### Security
@@ -28,6 +36,12 @@ See `RELEASING.md`.
 - Expired sessions are purged at startup and on login; the session cookie
   now expires together with the session (30 days) instead of on browser
   close.
+- Container runs as a non-root user.
+
+### Changed
+
+- Smaller Docker image: the runtime contains only the API's production
+  dependencies and the built apps.
 
 ## v0.8.5 — 2026-09-27
 

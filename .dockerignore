@@ -4,4 +4,5 @@ node_modules
 **/data
 .git
 .vscode
-*.log
+*.log.env
+**/.env

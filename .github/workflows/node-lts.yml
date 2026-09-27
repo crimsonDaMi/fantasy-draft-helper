@@ -58,7 +58,7 @@ jobs:
 
           Upgrade in one commit:
 
-          - \`Dockerfile\`: \`FROM node:$latest-slim\`
+          - \`Dockerfile\`: both \`FROM node:$latest-slim\` lines
           - \`.github/workflows/audit.yml\` and \`verify.yml\`: \`node-version: $latest\`
           - \`@types/node\` in \`apps/api/package.json\` and \`apps/web/package.json\`: \`^$latest\`
 

@@ -129,10 +129,10 @@ Two GitHub-side checks run between releases:
 - **`.github/workflows/node-lts.yml`** checks every Monday (or on demand)
   whether a newer Node LTS line exists than the Dockerfile's
   `node:<major>-slim` image, and opens a GitHub issue labelled `node-lts`
-  once per new LTS major. Upgrade in a single commit: the Dockerfile base
-  image, `node-version` in `audit.yml` and `verify.yml`, and `@types/node`
-  in both workspaces. Then run the full verification gate plus
-  `pnpm smoke`, and close the issue.
+  once per new LTS major. Upgrade in a single commit: both of the
+  Dockerfile's `FROM node:` lines, `node-version` in `audit.yml` and
+  `verify.yml`, and `@types/node` in both workspaces. Then run the full
+  verification gate plus `pnpm smoke`, and close the issue.
 
 **`.github/workflows/verify.yml`** runs the full verification gate
 (`pnpm verify`: test, build, lint, format check) on every PR and on every
