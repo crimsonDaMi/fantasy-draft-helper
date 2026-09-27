@@ -1,5 +1,4 @@
 import { Ranking } from "../domain/ranking.js";
-
 import { nextTierLabel, normalizeTierValue } from "./tier.js";
 
 /**

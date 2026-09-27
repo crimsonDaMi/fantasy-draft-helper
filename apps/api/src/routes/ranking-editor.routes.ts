@@ -1,9 +1,7 @@
 import { FastifyInstance } from "fastify";
-
 import { z } from "zod";
 
 import { RankingEditorService } from "../services/ranking-editor.service.js";
-
 import { requireUser } from "../utils/require-user.js";
 
 const rankingParamsSchema = z.object({
@@ -32,123 +30,95 @@ export function createRankingEditorRoutes(
 ) {
   return async function rankingEditorRoutes(app: FastifyInstance) {
     // Full ranking detail — entry state for the ranking editor.
-    app.get(
-      "/rankings/:rankingId",
+    app.get("/rankings/:rankingId", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId } = rankingParamsSchema.parse(request.params);
 
-        const { rankingId } = rankingParamsSchema.parse(request.params);
-
-        return rankingEditorService.getRanking(rankingId, userId);
-      },
-    );
+      return rankingEditorService.getRanking(rankingId, userId);
+    });
 
     // Move an existing ranked player, or add a previously-unranked one,
     // to a new rank/tier position.
-    app.patch(
-      "/rankings/:rankingId/players/:sleeperId",
+    app.patch("/rankings/:rankingId/players/:sleeperId", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId, sleeperId } = playerParamsSchema.parse(request.params);
 
-        const { rankingId, sleeperId } = playerParamsSchema.parse(
-          request.params,
-        );
+      const { rank, tier } = movePlayerBodySchema.parse(request.body);
 
-        const { rank, tier } = movePlayerBodySchema.parse(request.body);
+      const players = await rankingEditorService.movePlayer(
+        rankingId,
+        userId,
+        sleeperId,
+        rank,
+        tier,
+      );
 
-        const players = await rankingEditorService.movePlayer(
-          rankingId,
-          userId,
-          sleeperId,
-          rank,
-          tier,
-        );
-
-        return { players };
-      },
-    );
+      return { players };
+    });
 
     // Remove a player from the ranking (returns them to the unranked pool).
-    app.delete(
-      "/rankings/:rankingId/players/:sleeperId",
+    app.delete("/rankings/:rankingId/players/:sleeperId", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId, sleeperId } = playerParamsSchema.parse(request.params);
 
-        const { rankingId, sleeperId } = playerParamsSchema.parse(
-          request.params,
-        );
+      const players = rankingEditorService.removePlayer(
+        rankingId,
+        userId,
+        sleeperId,
+      );
 
-        const players = rankingEditorService.removePlayer(
-          rankingId,
-          userId,
-          sleeperId,
-        );
-
-        return { players };
-      },
-    );
+      return { players };
+    });
 
     // Insert a new, empty tier boundary at the given 1-based position.
-    app.post(
-      "/rankings/:rankingId/tiers",
+    app.post("/rankings/:rankingId/tiers", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId } = rankingParamsSchema.parse(request.params);
 
-        const { rankingId } = rankingParamsSchema.parse(request.params);
+      const { position } = insertTierBodySchema.parse(request.body);
 
-        const { position } = insertTierBodySchema.parse(request.body);
+      const tiers = rankingEditorService.insertTier(
+        rankingId,
+        userId,
+        position,
+      );
 
-        const tiers = rankingEditorService.insertTier(
-          rankingId,
-          userId,
-          position,
-        );
-
-        return { tiers };
-      },
-    );
+      return { tiers };
+    });
 
     // Remove a tier, merging its players into the tier below (or, for the
     // last tier, the tier above).
-    app.delete(
-      "/rankings/:rankingId/tiers/:position",
+    app.delete("/rankings/:rankingId/tiers/:position", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId, position } = tierParamsSchema.parse(request.params);
 
-        const { rankingId, position } = tierParamsSchema.parse(request.params);
+      const tiers = rankingEditorService.removeTier(
+        rankingId,
+        userId,
+        position,
+      );
 
-        const tiers = rankingEditorService.removeTier(
-          rankingId,
-          userId,
-          position,
-        );
-
-        return { tiers };
-      },
-    );
+      return { tiers };
+    });
 
     // Active, fantasy-relevant players not currently part of this ranking —
     // the "unranked" pool for the editor's side panel.
-    app.get(
-      "/rankings/:rankingId/unranked-players",
+    app.get("/rankings/:rankingId/unranked-players", async (request) => {
+      const userId = requireUser(request).id;
 
-      async (request) => {
-        const userId = requireUser(request).id;
+      const { rankingId } = rankingParamsSchema.parse(request.params);
 
-        const { rankingId } = rankingParamsSchema.parse(request.params);
+      const players = await rankingEditorService.getUnrankedPlayers(
+        rankingId,
+        userId,
+      );
 
-        const players = await rankingEditorService.getUnrankedPlayers(
-          rankingId,
-          userId,
-        );
-
-        return { players };
-      },
-    );
+      return { players };
+    });
   };
 }

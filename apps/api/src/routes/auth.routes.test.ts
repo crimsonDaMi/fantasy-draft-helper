@@ -1,13 +1,9 @@
 import Fastify from "fastify";
-
 import cookie from "@fastify/cookie";
-
 import { describe, expect, it } from "vitest";
 
 import { createAuthRoutes } from "./auth.routes.js";
-
 import { errorHandler } from "../utils/error-handler.js";
-
 import {
   AllowlistError,
   DuplicateUsernameError,

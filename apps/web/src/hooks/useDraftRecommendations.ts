@@ -1,11 +1,8 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { ApiRequestError, getRecommendations } from "../api/fantasy-api";
-
 import { queryKeys } from "../api/query-keys";
-
 import type { DraftStatus, RecommendationsResponse } from "../types/api";
-
 import {
   ACTIVE_POLLING_INTERVAL_MS,
   PRE_DRAFT_POLLING_INTERVAL_MS,
@@ -13,13 +10,9 @@ import {
 
 interface UseDraftRecommendationsResult {
   data?: RecommendationsResponse;
-
   error?: string;
-
   isLoading: boolean;
-
   pollingIntervalMs?: number | false;
-
   retry: () => void;
 }
 
@@ -43,22 +36,16 @@ function resolvePollingInterval(
 
 export function useDraftRecommendations(
   draftId?: string,
-
   rankingId?: string,
-
   positions?: string[],
 ): UseDraftRecommendationsResult {
   const isEnabled = Boolean(draftId && rankingId);
 
   const query = useQuery({
     queryKey: queryKeys.recommendations(draftId, rankingId, positions),
-
     queryFn: () => getRecommendations(draftId!, rankingId!, { positions }),
-
     enabled: isEnabled,
-
     placeholderData: keepPreviousData,
-
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -74,9 +61,7 @@ export function useDraftRecommendations(
 
       return true;
     },
-
     retryDelay: (attemptIndex) => Math.min(1_000 * 2 ** attemptIndex, 5_000),
-
     refetchInterval: (currentQuery) =>
       resolvePollingInterval(
         Boolean(currentQuery.state.error),
@@ -88,20 +73,16 @@ export function useDraftRecommendations(
 
   return {
     data: query.data,
-
     error:
       error instanceof Error
         ? error.message
         : error
           ? "Failed to load recommendations."
           : undefined,
-
     isLoading: query.isLoading,
-
     pollingIntervalMs: isEnabled
       ? resolvePollingInterval(Boolean(error), query.data?.draftStatus)
       : undefined,
-
     retry: () => {
       void query.refetch();
     },

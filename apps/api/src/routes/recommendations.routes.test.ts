@@ -1,11 +1,8 @@
 import Fastify from "fastify";
-
 import { describe, expect, it, vi } from "vitest";
 
 import { createRecommendationsRoutes } from "./recommendations.routes.js";
-
 import { errorHandler } from "../utils/error-handler.js";
-
 import { HttpError } from "../utils/http-error.js";
 
 const TEST_USER = { id: "test-user", username: "testuser" };
@@ -30,7 +27,6 @@ function createTestApp(
 
   const rankingStoreService = {
     hasRankings: () => options.hasRankings ?? true,
-
     hasRanking: () => options.hasRanking ?? true,
   };
 

@@ -1,15 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-
 import { mkdtempSync, rmSync } from "node:fs";
-
 import { tmpdir } from "node:os";
-
 import { join } from "node:path";
-
 import { DatabaseSync } from "node:sqlite";
 
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { RankingRepository } from "./ranking.repository.js";
 
 function createMatches(): PlayerMatch[] {

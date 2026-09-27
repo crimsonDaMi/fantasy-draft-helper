@@ -1,5 +1,4 @@
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
 export class RankingStoreService {

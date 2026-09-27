@@ -1,5 +1,4 @@
 import Fastify from "fastify";
-
 import { describe, expect, it, vi } from "vitest";
 
 import { createRankingEditorRoutes } from "./ranking-editor.routes.js";

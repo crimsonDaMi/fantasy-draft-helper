@@ -1,7 +1,6 @@
 import { FastifyRequest } from "fastify";
 
 import { User } from "../repositories/user.repository.js";
-
 import { HttpError } from "./http-error.js";
 
 /**

@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
-
-import { RankingStoreService } from "./ranking-store.service.js";
-
 import { mkdtempSync, rmSync } from "node:fs";
-
 import { tmpdir } from "node:os";
-
 import { join } from "node:path";
 
+import { RankingStoreService } from "./ranking-store.service.js";
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
 const TEST_USER_ID = "test-user";
@@ -23,14 +19,10 @@ describe("RankingStoreService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Josh Allen",
-
             team: "BUF",
-
             position: "QB",
           },
-
           method: "NONE",
         },
       ],
@@ -56,14 +48,10 @@ describe("RankingStoreService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Josh Allen",
-
             team: "BUF",
-
             position: "QB",
           },
-
           method: "NONE",
         },
       ],

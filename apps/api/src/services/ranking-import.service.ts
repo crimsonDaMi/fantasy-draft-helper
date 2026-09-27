@@ -1,31 +1,21 @@
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { RankingImportResult } from "../domain/ranking-import.js";
-
 import { PlayerMatchingService } from "./player-matching.service.js";
-
 import { RankingCsvService } from "./ranking-csv.service.js";
-
 import { RankingImportSummary } from "../domain/ranking-import-summary.js";
-
 import { PlayerService } from "./player.service.js";
-
 import { normalizeRankingTiers } from "../utils/normalize-ranking-tiers.js";
 
 export interface ProcessedRankingImport {
   importResult: RankingImportResult;
-
   matches: PlayerMatch[];
-
   summary: RankingImportSummary;
 }
 
 export class RankingImportService {
   constructor(
     private readonly csvService: RankingCsvService,
-
     private readonly matchingService: PlayerMatchingService,
-
     private readonly playerService: PlayerService,
   ) {}
 
@@ -45,16 +35,13 @@ export class RankingImportService {
 
     return {
       importResult,
-
       matches,
-
       summary,
     };
   }
 
   private createSummary(
     importResult: RankingImportResult,
-
     matches: PlayerMatch[],
   ): RankingImportSummary {
     const matched = matches.filter(
@@ -69,13 +56,9 @@ export class RankingImportService {
 
     return {
       imported: importResult.rankings.length,
-
       matched,
-
       unmatched,
-
       ambiguous,
-
       errors: importResult.errors.length,
     };
   }

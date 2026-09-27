@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { RankingEditorService } from "./ranking-editor.service.js";
-
 import { RankingRepository } from "../repositories/ranking.repository.js";
-
 import { PlayerMatch } from "../domain/player-match.js";
 
 const USER_ID = "test-user";

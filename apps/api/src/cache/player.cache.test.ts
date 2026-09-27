@@ -9,11 +9,8 @@ describe("PlayerCache", () => {
     cache.replace([
       {
         sleeperId: "1",
-
         fullName: "Josh Allen",
-
         active: true,
-
         fantasyPositions: ["QB"],
       },
     ]);
@@ -29,11 +26,8 @@ describe("PlayerCache", () => {
     cache.replace([
       {
         sleeperId: "1",
-
         fullName: "D.J. Moore",
-
         active: true,
-
         fantasyPositions: ["WR"],
       },
     ]);
@@ -51,21 +45,14 @@ describe("PlayerCache", () => {
     cache.replace([
       {
         sleeperId: "1",
-
         fullName: "John Smith",
-
         active: true,
-
         fantasyPositions: ["WR"],
       },
-
       {
         sleeperId: "2",
-
         fullName: "John Smith",
-
         active: true,
-
         fantasyPositions: ["RB"],
       },
     ]);

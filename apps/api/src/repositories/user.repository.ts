@@ -4,7 +4,6 @@ import {
   scryptSync,
   timingSafeEqual,
 } from "node:crypto";
-
 import { DatabaseSync } from "node:sqlite";
 
 import { openDatabase } from "./database.js";

@@ -24,35 +24,23 @@ describe("mapSleeperDraftPick", () => {
   it("maps a player pick", () => {
     const result = mapSleeperDraftPick({
       player_id: "123",
-
       pick_no: 1,
-
       round: 1,
-
       draft_slot: 1,
-
       metadata: {
         position: "QB",
-
         team: "BUF",
       },
     });
 
     expect(result).toEqual({
       playerId: "123",
-
       pickNo: 1,
-
       round: 1,
-
       draftSlot: 1,
-
       rosterId: undefined,
-
       pickedBy: undefined,
-
       position: "QB",
-
       team: "BUF",
     });
   });

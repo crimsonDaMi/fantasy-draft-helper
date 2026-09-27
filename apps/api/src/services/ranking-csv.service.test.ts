@@ -19,15 +19,10 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 
     expect(result.rankings[0]).toEqual({
       rank: 1,
-
       playerName: "Jahmyr Gibbs",
-
       team: "DET",
-
       position: "RB",
-
       sleeperPlayerId: "9221",
-
       tier: "S",
     });
   });
@@ -81,28 +76,18 @@ rank,player,position,team,tier,notes
     expect(result.rankings).toEqual([
       {
         rank: 1,
-
         playerName: "Ja'Marr Chase",
-
         team: "CIN",
-
         position: "WR",
-
         tier: "1",
-
         sleeperPlayerId: undefined,
       },
       {
         rank: 2,
-
         playerName: "Name Only",
-
         team: undefined,
-
         position: undefined,
-
         tier: undefined,
-
         sleeperPlayerId: undefined,
       },
     ]);

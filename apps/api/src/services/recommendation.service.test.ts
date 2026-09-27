@@ -15,11 +15,8 @@ describe("RecommendationService", () => {
         draft: {
           status: "DRAFTING",
         },
-
         picks: [],
-
         draftedPlayerIds: new Set(["1"]),
-
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
       }),
     };
@@ -29,40 +26,27 @@ describe("RecommendationService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Player One",
-
             team: "AAA",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "1",
-
             fullName: "Player One",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 2,
-
             playerName: "Player Two",
-
             team: "BBB",
-
             position: "WR",
           },
-
           player: {
             sleeperId: "2",
-
             fullName: "Player Two",
           },
-
           method: "SLEEPER_ID",
         },
       ],
@@ -70,19 +54,14 @@ describe("RecommendationService", () => {
 
     const service = new RecommendationService(
       draftStateService as never,
-
       rankingStoreService as never,
-
       noopAdpService as never,
     );
 
     const result = await service.getRecommendations(
       "draft-1",
-
       "ranking-1",
-
       TEST_USER_ID,
-
       10,
     );
 
@@ -105,11 +84,8 @@ describe("RecommendationService", () => {
         draft: {
           status: "DRAFTING",
         },
-
         picks: [],
-
         draftedPlayerIds: new Set(),
-
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
       }),
     };
@@ -119,40 +95,27 @@ describe("RecommendationService", () => {
         {
           ranking: {
             rank: 20,
-
             playerName: "Player Twenty",
-
             team: "AAA",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "20",
-
             fullName: "Player Twenty",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 5,
-
             playerName: "Player Five",
-
             team: "BBB",
-
             position: "WR",
           },
-
           player: {
             sleeperId: "5",
-
             fullName: "Player Five",
           },
-
           method: "SLEEPER_ID",
         },
       ],
@@ -160,19 +123,14 @@ describe("RecommendationService", () => {
 
     const service = new RecommendationService(
       draftStateService as never,
-
       rankingStoreService as never,
-
       noopAdpService as never,
     );
 
     const result = await service.getRecommendations(
       "draft-1",
-
       "ranking-1",
-
       TEST_USER_ID,
-
       10,
     );
 
@@ -189,11 +147,8 @@ describe("RecommendationService", () => {
         draft: {
           status: "DRAFTING",
         },
-
         picks: [],
-
         draftedPlayerIds: new Set(),
-
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
       }),
     };
@@ -203,66 +158,43 @@ describe("RecommendationService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Player One",
-
             team: "AAA",
-
             position: "QB",
           },
-
           player: {
             sleeperId: "1",
-
             fullName: "Player One",
-
             position: "QB",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 2,
-
             playerName: "Player Two",
-
             team: "BBB",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "2",
-
             fullName: "Player Two",
-
             position: "RB",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 3,
-
             playerName: "Player Three",
-
             team: "CCC",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "3",
-
             fullName: "Player Three",
-
             position: "RB",
           },
-
           method: "SLEEPER_ID",
         },
       ],
@@ -270,21 +202,15 @@ describe("RecommendationService", () => {
 
     const service = new RecommendationService(
       draftStateService as never,
-
       rankingStoreService as never,
-
       noopAdpService as never,
     );
 
     const result = await service.getRecommendations(
       "draft-1",
-
       "ranking-1",
-
       TEST_USER_ID,
-
       10,
-
       ["RB"],
     );
 
@@ -301,11 +227,8 @@ describe("RecommendationService", () => {
         draft: {
           status: "DRAFTING",
         },
-
         picks: [],
-
         draftedPlayerIds: new Set(),
-
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
       }),
     };
@@ -315,44 +238,29 @@ describe("RecommendationService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Player One",
-
             team: "AAA",
-
             position: "QB",
           },
-
           player: {
             sleeperId: "1",
-
             fullName: "Player One",
-
             position: "QB",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 2,
-
             playerName: "Player Two",
-
             team: "BBB",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "2",
-
             fullName: "Player Two",
-
             position: "RB",
           },
-
           method: "SLEEPER_ID",
         },
       ],
@@ -360,21 +268,15 @@ describe("RecommendationService", () => {
 
     const service = new RecommendationService(
       draftStateService as never,
-
       rankingStoreService as never,
-
       noopAdpService as never,
     );
 
     const result = await service.getRecommendations(
       "draft-1",
-
       "ranking-1",
-
       TEST_USER_ID,
-
       10,
-
       [],
     );
 
@@ -391,11 +293,8 @@ describe("RecommendationService", () => {
         draft: {
           status: "DRAFTING",
         },
-
         picks: [],
-
         draftedPlayerIds: new Set(["2"]),
-
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
       }),
     };
@@ -405,44 +304,29 @@ describe("RecommendationService", () => {
         {
           ranking: {
             rank: 1,
-
             playerName: "Player One",
-
             team: "AAA",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "1",
-
             fullName: "Player One",
-
             position: "RB",
           },
-
           method: "SLEEPER_ID",
         },
-
         {
           ranking: {
             rank: 2,
-
             playerName: "Player Two",
-
             team: "BBB",
-
             position: "RB",
           },
-
           player: {
             sleeperId: "2",
-
             fullName: "Player Two",
-
             position: "RB",
           },
-
           method: "SLEEPER_ID",
         },
       ],
@@ -450,21 +334,15 @@ describe("RecommendationService", () => {
 
     const service = new RecommendationService(
       draftStateService as never,
-
       rankingStoreService as never,
-
       noopAdpService as never,
     );
 
     const result = await service.getRecommendations(
       "draft-1",
-
       "ranking-1",
-
       TEST_USER_ID,
-
       10,
-
       ["RB"],
     );
 

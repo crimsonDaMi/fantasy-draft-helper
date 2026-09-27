@@ -1,17 +1,12 @@
 import { DraftState } from "../domain/draft-state.js";
-
 import { Player } from "../domain/player.js";
-
 import { DraftService } from "./draft.service.js";
-
 import { PlayerService } from "./player.service.js";
-
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 
 export class DraftStateService {
   constructor(
     private readonly draftService: DraftService,
-
     private readonly playerService: PlayerService,
   ) {}
 
@@ -20,7 +15,6 @@ export class DraftStateService {
 
     const [draft, picks] = await Promise.all([
       this.draftService.getDraft(draftId),
-
       this.draftService.getDraftPicks(draftId),
     ]);
 
@@ -35,20 +29,15 @@ export class DraftStateService {
 
     return {
       draft,
-
       picks,
-
       draftedPlayerIds,
-
       availablePlayers,
-
       lastUpdatedAt: new Date(),
     };
   }
 
   private getAvailablePlayers(
     players: Player[],
-
     draftedPlayerIds: Set<string>,
   ): Player[] {
     return players.filter(

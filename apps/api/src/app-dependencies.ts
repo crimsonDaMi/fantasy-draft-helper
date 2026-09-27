@@ -1,58 +1,33 @@
 import type { FastifyBaseLogger } from "fastify";
 
 import { AdpClient } from "./clients/adp.client.js";
-
 import { AuthService } from "./services/auth.service.js";
-
 import { PlayerCache } from "./cache/player.cache.js";
-
 import { SleeperClient } from "./clients/sleeper.client.js";
-
 import { AdpService } from "./services/adp.service.js";
-
 import { DraftService } from "./services/draft.service.js";
-
 import { PlayerService } from "./services/player.service.js";
-
 import { DraftStateService } from "./services/draft-state.service.js";
-
 import { RankingCsvService } from "./services/ranking-csv.service.js";
-
 import { PlayerMatchingService } from "./services/player-matching.service.js";
-
 import { RankingRepository } from "./repositories/ranking.repository.js";
-
 import { UserRepository } from "./repositories/user.repository.js";
-
 import { RankingEditorService } from "./services/ranking-editor.service.js";
-
 import { RankingImportService } from "./services/ranking-import.service.js";
-
 import { RankingStoreService } from "./services/ranking-store.service.js";
-
 import { RecommendationService } from "./services/recommendation.service.js";
 
 export interface AppDependencies {
   sleeperClient: SleeperClient;
-
   authService: AuthService;
-
   adpService: AdpService;
-
   draftService: DraftService;
-
   playerCache: PlayerCache;
-
   playerService: PlayerService;
-
   draftStateService: DraftStateService;
-
   rankingImportService: RankingImportService;
-
   rankingEditorService: RankingEditorService;
-
   rankingStoreService: RankingStoreService;
-
   recommendationService: RecommendationService;
 }
 
@@ -89,9 +64,7 @@ export function createAppDependencies(
 
   const rankingImportService = new RankingImportService(
     rankingCsvService,
-
     playerMatchingService,
-
     playerService,
   );
 
@@ -108,33 +81,21 @@ export function createAppDependencies(
 
   const recommendationService = new RecommendationService(
     draftStateService,
-
     rankingStoreService,
-
     adpService,
   );
 
   return {
     sleeperClient,
-
     authService,
-
     adpService,
-
     draftService,
-
     playerCache,
-
     playerService,
-
     draftStateService,
-
     rankingImportService,
-
     rankingEditorService,
-
     rankingStoreService,
-
     recommendationService,
   };
 }

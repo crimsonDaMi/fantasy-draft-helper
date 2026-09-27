@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { Player } from "../domain/player.js";
-
 import {
   hasRelevantFantasyPosition,
   isFantasyRelevantPlayer,
@@ -10,11 +9,8 @@ import {
 function createPlayer(fantasyPositions: string[]): Player {
   return {
     sleeperId: "1",
-
     fullName: "Test Player",
-
     active: true,
-
     fantasyPositions,
   };
 }
@@ -24,11 +20,8 @@ describe("isFantasyRelevantPlayer", () => {
     expect(
       isFantasyRelevantPlayer({
         sleeperId: "1",
-
         fullName: "Josh Allen",
-
         active: true,
-
         fantasyPositions: ["QB"],
       }),
     ).toBe(true);
@@ -38,11 +31,8 @@ describe("isFantasyRelevantPlayer", () => {
     expect(
       isFantasyRelevantPlayer({
         sleeperId: "1",
-
         fullName: "Retired Player",
-
         active: false,
-
         fantasyPositions: ["QB"],
       }),
     ).toBe(false);
@@ -52,11 +42,8 @@ describe("isFantasyRelevantPlayer", () => {
     expect(
       isFantasyRelevantPlayer({
         sleeperId: "1",
-
         fullName: "Non Fantasy Player",
-
         active: true,
-
         fantasyPositions: [],
       }),
     ).toBe(false);

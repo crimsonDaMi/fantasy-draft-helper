@@ -1,12 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { RankingCsvService } from "./ranking-csv.service.js";
-
 import { RankingImportService } from "./ranking-import.service.js";
-
 import { PlayerService } from "./player.service.js";
-
-import { vi } from "vitest";
 
 describe("RankingImportService", () => {
   it("imports the example ranking CSV", async () => {
@@ -22,9 +18,7 @@ describe("RankingImportService", () => {
 
     const service = new RankingImportService(
       csvService,
-
       matchingService as never,
-
       playerService as never,
     );
 
@@ -44,9 +38,7 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 
     expect(result.importResult.rankings[5]).toMatchObject({
       rank: 37,
-
       playerName: "Josh Allen",
-
       position: "QB",
     });
   });
@@ -64,9 +56,7 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 
     const service = new RankingImportService(
       csvService,
-
       matchingService as never,
-
       playerService as never,
     );
 

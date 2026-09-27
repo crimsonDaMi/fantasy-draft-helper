@@ -7,18 +7,13 @@ describe("DraftStateService", () => {
     const draftService = {
       getDraft: async () => ({
         id: "draft-1",
-
         status: "DRAFTING",
-
         sport: "nfl",
-
         season: "2026",
       }),
-
       getDraftPicks: async () => [
         {
           playerId: "2",
-
           pickNo: 1,
         },
       ],
@@ -26,25 +21,17 @@ describe("DraftStateService", () => {
 
     const playerService = {
       ensurePlayersLoaded: async () => {},
-
       getAllPlayers: () => [
         {
           sleeperId: "1",
-
           fullName: "Player One",
-
           active: true,
-
           fantasyPositions: ["QB"],
         },
-
         {
           sleeperId: "2",
-
           fullName: "Player Two",
-
           active: true,
-
           fantasyPositions: ["RB"],
         },
       ],
@@ -52,7 +39,6 @@ describe("DraftStateService", () => {
 
     const service = new DraftStateService(
       draftService as never,
-
       playerService as never,
     );
 

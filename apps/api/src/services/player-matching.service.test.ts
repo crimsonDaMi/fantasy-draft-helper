@@ -6,15 +6,10 @@ describe("PlayerMatchingService", () => {
   const players = [
     {
       sleeperId: "9221",
-
       fullName: "Jahmyr Gibbs",
-
       team: "DET",
-
       position: "RB",
-
       active: true,
-
       fantasyPositions: ["RB"],
     },
   ];
@@ -22,7 +17,6 @@ describe("PlayerMatchingService", () => {
   const playerService = {
     getPlayerById: (id: string) =>
       players.find((player) => player.sleeperId === id),
-
     findPlayersByName: (name: string) =>
       name === "Jahmyr Gibbs" ? players : [],
   };
@@ -32,13 +26,9 @@ describe("PlayerMatchingService", () => {
   it("matches by Sleeper ID", () => {
     const result = service.matchRanking({
       rank: 1,
-
       playerName: "Jahmyr Gibbs",
-
       team: "DET",
-
       position: "RB",
-
       sleeperPlayerId: "9221",
     });
 
@@ -50,11 +40,8 @@ describe("PlayerMatchingService", () => {
   it("matches by name when ID is absent", () => {
     const result = service.matchRanking({
       rank: 1,
-
       playerName: "Jahmyr Gibbs",
-
       team: "DET",
-
       position: "RB",
     });
 
@@ -64,11 +51,8 @@ describe("PlayerMatchingService", () => {
   it("returns NONE when no player matches", () => {
     const result = service.matchRanking({
       rank: 1,
-
       playerName: "Unknown Player",
-
       team: "XXX",
-
       position: "QB",
     });
 
@@ -79,36 +63,24 @@ describe("PlayerMatchingService", () => {
     const teamPlayers = [
       {
         sleeperId: "1",
-
         fullName: "Shared Player",
-
         team: "BUF",
-
         position: "WR",
-
         active: true,
-
         fantasyPositions: ["WR"],
       },
-
       {
         sleeperId: "2",
-
         fullName: "Shared Player",
-
         team: "MIA",
-
         position: "WR",
-
         active: true,
-
         fantasyPositions: ["WR"],
       },
     ];
 
     const teamPlayerService = {
       getPlayerById: () => undefined,
-
       findPlayersByName: () => teamPlayers,
     };
 
@@ -116,9 +88,7 @@ describe("PlayerMatchingService", () => {
 
     const result = teamService.matchRanking({
       rank: 1,
-
       playerName: "Shared Player",
-
       team: "MIA",
     });
 

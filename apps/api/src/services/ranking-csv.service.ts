@@ -5,7 +5,6 @@ import {
   FantasyPosition,
   FANTASY_POSITIONS,
 } from "../domain/ranking.js";
-
 import {
   RankingImportError,
   RankingImportResult,
@@ -41,21 +40,16 @@ export class RankingCsvService {
     try {
       rows = parse(csvContent, {
         columns: true,
-
         skip_empty_lines: true,
-
         trim: true,
-
         skip_records_with_empty_values: false,
       }) as CsvRow[];
     } catch (error) {
       return {
         rankings: [],
-
         errors: [
           {
             row: 1,
-
             message:
               error instanceof Error
                 ? `Invalid CSV: ${error.message}`
@@ -72,11 +66,9 @@ export class RankingCsvService {
     if (rows.length === 0) {
       return {
         rankings,
-
         errors: [
           {
             row: 1,
-
             message: "CSV must contain a header and at least one ranking row",
           },
         ],
@@ -90,11 +82,9 @@ export class RankingCsvService {
     if (firstRow?.rank === undefined || firstRow.player === undefined) {
       return {
         rankings,
-
         errors: [
           {
             row: 1,
-
             message: "CSV must include required columns: rank and player",
           },
         ],
@@ -123,7 +113,6 @@ export class RankingCsvService {
 
   private parseRow(
     row: NormalizedCsvRow,
-
     rowNumber: number,
   ):
     | {
@@ -138,7 +127,6 @@ export class RankingCsvService {
       return {
         error: {
           row: rowNumber,
-
           message: "Rank must be a positive integer",
         },
       };
@@ -148,7 +136,6 @@ export class RankingCsvService {
       return {
         error: {
           row: rowNumber,
-
           message: "Name is required",
         },
       };
@@ -163,7 +150,6 @@ export class RankingCsvService {
       return {
         error: {
           row: rowNumber,
-
           message: `Invalid position: ${row.position}`,
         },
       };
@@ -172,15 +158,10 @@ export class RankingCsvService {
     return {
       ranking: {
         rank,
-
         playerName: row.player,
-
         team: row.team ? row.team.toUpperCase() : undefined,
-
         position: position as FantasyPosition | undefined,
-
         sleeperPlayerId: row.sleeperPlayerId || undefined,
-
         tier: row.tier || undefined,
       },
     };

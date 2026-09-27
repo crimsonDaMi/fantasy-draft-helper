@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { RankingRepository } from "./ranking.repository.js";
 
 function match(rank: number, tier: string, sleeperId: string): PlayerMatch {

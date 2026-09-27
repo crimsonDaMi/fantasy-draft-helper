@@ -3,7 +3,6 @@ import {
   SleeperDraftPick,
   SleeperPlayersResponse,
 } from "../types/sleeper.js";
-
 import { HttpError } from "../utils/http-error.js";
 
 const SLEEPER_API_BASE_URL = "https://api.sleeper.app/v1";

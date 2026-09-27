@@ -1,23 +1,15 @@
 import { FantasyPosition } from "../domain/ranking.js";
-
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { Player } from "../domain/player.js";
-
 import { RankingTier } from "../domain/ranking-tier.js";
-
 import { RankingRepository } from "../repositories/ranking.repository.js";
-
 import { NotFoundError } from "../utils/domain-errors.js";
-
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
-
 import { PlayerService } from "./player.service.js";
 
 export class RankingEditorService {
   constructor(
     private readonly repository: RankingRepository,
-
     private readonly playerService: PlayerService,
   ) {}
 

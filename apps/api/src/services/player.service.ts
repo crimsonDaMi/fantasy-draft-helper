@@ -1,11 +1,7 @@
 import { SleeperClient } from "../clients/sleeper.client.js";
-
 import { PlayerCache } from "../cache/player.cache.js";
-
 import { Player } from "../domain/player.js";
-
 import { hasRelevantFantasyPosition } from "../utils/is-fantasy-relevant-player.js";
-
 import { mapSleeperPlayer } from "./player.mapper.js";
 
 // Per Sleeper's own API docs: "You do not need to call this endpoint more
@@ -27,7 +23,6 @@ export class PlayerService {
 
   constructor(
     private readonly sleeperClient: SleeperClient,
-
     private readonly playerCache: PlayerCache,
   ) {}
 

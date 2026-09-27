@@ -1,15 +1,10 @@
 import { randomUUID } from "node:crypto";
-
 import { DatabaseSync } from "node:sqlite";
 
 import { openDatabase } from "./database.js";
-
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { RankingTier } from "../domain/ranking-tier.js";
-
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
-
 import {
   labelTierToNumeric,
   MAX_TIERS,

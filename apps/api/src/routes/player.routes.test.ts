@@ -1,9 +1,7 @@
 import Fastify from "fastify";
-
 import { describe, expect, it } from "vitest";
 
 import { createPlayersRoutes } from "./players.routes.js";
-
 import { RefreshCooldownError } from "../services/player.service.js";
 
 describe("players routes", () => {

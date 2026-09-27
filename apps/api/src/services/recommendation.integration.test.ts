@@ -1,25 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { PlayerCache } from "../cache/player.cache.js";
-
 import { SleeperClient } from "../clients/sleeper.client.js";
-
 import { DraftService } from "./draft.service.js";
-
 import { DraftStateService } from "./draft-state.service.js";
-
 import { PlayerService } from "./player.service.js";
-
 import { RecommendationService } from "./recommendation.service.js";
-
 import { RankingStoreService } from "./ranking-store.service.js";
-
 import type {
   SleeperDraft,
   SleeperDraftPick,
   SleeperPlayersResponse,
 } from "../types/sleeper.js";
-
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
 const TEST_USER_ID = "test-user";
@@ -32,9 +24,7 @@ interface DraftFixture {
 function createFixtureClient(fixture: DraftFixture) {
   return {
     getDraft: async () => fixture.draft,
-
     getDraftPicks: async () => fixture.picks,
-
     getNFLPlayers: async () =>
       ({
         "1": {

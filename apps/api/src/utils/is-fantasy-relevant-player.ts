@@ -1,5 +1,4 @@
 import { Player } from "../domain/player.js";
-
 import { FANTASY_POSITIONS } from "../domain/ranking.js";
 
 const RELEVANT_POSITIONS = new Set<string>(FANTASY_POSITIONS);

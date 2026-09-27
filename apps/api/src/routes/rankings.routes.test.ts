@@ -1,7 +1,5 @@
 import Fastify from "fastify";
-
 import multipart from "@fastify/multipart";
-
 import { describe, expect, it, vi } from "vitest";
 
 import { createRankingsRoutes } from "./rankings.routes.js";
@@ -53,11 +51,9 @@ describe("rankings routes", () => {
         ambiguous: 0,
         errors: 0,
       },
-
       importResult: {
         errors: [],
       },
-
       matches: [
         {
           method: "SLEEPER_ID",
@@ -182,7 +178,6 @@ describe("rankings routes", () => {
     app.register(
       createRankingsRoutes(
         { importCsv: async () => ({}) } as never,
-
         {
           createRanking,
           getMatches: () => [],

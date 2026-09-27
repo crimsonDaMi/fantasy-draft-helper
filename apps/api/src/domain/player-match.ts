@@ -1,5 +1,4 @@
 import { Player } from "./player.js";
-
 import { Ranking } from "./ranking.js";
 
 type PlayerMatchMethod =
@@ -15,12 +14,8 @@ type PlayerMatchWarning = "ID_METADATA_MISMATCH";
 
 export interface PlayerMatch {
   ranking: Ranking;
-
   player?: Player;
-
   method: PlayerMatchMethod;
-
   candidates?: Player[];
-
   warnings?: PlayerMatchWarning[];
 }

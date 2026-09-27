@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { PlayerCache } from "../cache/player.cache.js";
-
 import { PlayerService, RefreshCooldownError } from "./player.service.js";
 
 describe("PlayerService", () => {
@@ -24,11 +23,8 @@ describe("PlayerService", () => {
         cache.replace([
           {
             sleeperId: "1",
-
             fullName: "Test Player",
-
             active: true,
-
             fantasyPositions: ["WR"],
           },
         ]);

@@ -1,7 +1,5 @@
 import { SleeperClient } from "../clients/sleeper.client.js";
-
 import { Draft, DraftPick } from "../domain/draft.js";
-
 import { mapSleeperDraft, mapSleeperDraftPick } from "./draft.mapper.js";
 
 export class DraftService {

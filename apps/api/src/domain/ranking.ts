@@ -4,14 +4,9 @@ export type FantasyPosition = (typeof FANTASY_POSITIONS)[number];
 
 export interface Ranking {
   rank: number;
-
   playerName: string;
-
   team?: string;
-
   position?: FantasyPosition;
-
   sleeperPlayerId?: string;
-
   tier?: string;
 }

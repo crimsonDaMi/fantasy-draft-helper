@@ -1,35 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { buildApp } from "./app.js";
-
 import { AppDependencies } from "./app-dependencies.js";
-
 import { PlayerCache } from "./cache/player.cache.js";
-
 import { SleeperClient } from "./clients/sleeper.client.js";
-
 import { AuthService } from "./services/auth.service.js";
-
 import { DraftService } from "./services/draft.service.js";
-
 import { DraftStateService } from "./services/draft-state.service.js";
-
 import { PlayerService } from "./services/player.service.js";
-
 import { RankingEditorService } from "./services/ranking-editor.service.js";
-
 import { RankingStoreService } from "./services/ranking-store.service.js";
-
 import { RankingRepository } from "./repositories/ranking.repository.js";
-
 import { RecommendationService } from "./services/recommendation.service.js";
-
 import type {
   SleeperDraft,
   SleeperDraftPick,
   SleeperPlayersResponse,
 } from "./types/sleeper.js";
-
 import { UserRepository } from "./repositories/user.repository.js";
 
 function createFixtureClient() {
@@ -41,9 +28,7 @@ function createFixtureClient() {
         sport: "nfl",
         season: "2026",
       }) satisfies SleeperDraft,
-
     getDraftPicks: async () => [] as SleeperDraftPick[],
-
     getNFLPlayers: async () =>
       ({
         "1": {

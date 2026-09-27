@@ -1,11 +1,7 @@
 import { Player } from "../domain/player.js";
-
 import { PlayerMatch } from "../domain/player-match.js";
-
 import { Ranking } from "../domain/ranking.js";
-
 import { PlayerService } from "./player.service.js";
-
 import { normalizePlayerName } from "../utils/normalize-player-name.js";
 
 export class PlayerMatchingService {
@@ -34,11 +30,8 @@ export class PlayerMatchingService {
 
     return {
       ranking,
-
       player,
-
       method: "SLEEPER_ID",
-
       warnings: this.getIdMatchWarnings(ranking, player),
     };
   }
@@ -49,7 +42,6 @@ export class PlayerMatchingService {
     if (candidates.length === 0) {
       return {
         ranking,
-
         method: "NONE",
       };
     }
@@ -62,9 +54,7 @@ export class PlayerMatchingService {
     if (byTeamPosition.length === 1) {
       return {
         ranking,
-
         player: byTeamPosition[0],
-
         method: "NAME_POSITION_TEAM",
       };
     }
@@ -76,9 +66,7 @@ export class PlayerMatchingService {
     if (byPosition.length === 1) {
       return {
         ranking,
-
         player: byPosition[0],
-
         method: "NAME_POSITION",
       };
     }
@@ -90,9 +78,7 @@ export class PlayerMatchingService {
     if (byTeam.length === 1) {
       return {
         ranking,
-
         player: byTeam[0],
-
         method: "NAME_TEAM",
       };
     }
@@ -100,18 +86,14 @@ export class PlayerMatchingService {
     if (candidates.length === 1) {
       return {
         ranking,
-
         player: candidates[0],
-
         method: "NAME",
       };
     }
 
     return {
       ranking,
-
       method: "AMBIGUOUS",
-
       candidates,
     };
   }
@@ -120,11 +102,7 @@ export class PlayerMatchingService {
     return rankings.map((ranking) => this.matchRanking(ranking));
   }
 
-  private getIdMatchWarnings(
-    ranking: Ranking,
-
-    player: Player,
-  ) {
+  private getIdMatchWarnings(ranking: Ranking, player: Player) {
     const warnings: "ID_METADATA_MISMATCH"[] = [];
 
     const namesMatch =

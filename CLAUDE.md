@@ -34,6 +34,10 @@ file:
 - Generic placeholders in test fixtures (e.g. `"testuser"`), never real
   names
 - Minimal, targeted changes over large refactors
+- No blank lines between arguments, object properties, interface members,
+  or imports within a group (packages, then relative imports). Prettier
+  preserves such blank lines rather than removing them, so this is by
+  convention only
 - Guardrails belong in local scripts, not offloaded entirely to CI
 - A change isn't done until it passes the full verification gate below —
   not just the test suite
@@ -103,12 +107,6 @@ message }`. For expected failures, services and repositories throw
 - `apps/api/package.json`'s `dev` script echoes the current
   `ALLOWED_USERNAMES` value on startup — there's no `.env` file for the
   API, it's an env var only, exported manually or passed inline.
-
-## Deferred clean-code follow-ups
-
-Items from a codebase-wide clean-code review that were deliberately left
-out of scope are tracked in `DEVELOPMENT_PLAN.md` ("Clean-code follow-ups
-(deferred)"), each with its constraints. Confirm scope before starting any.
 
 ## Current backlog (ranking editor)
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { Ranking } from "../domain/ranking.js";
-
 import { normalizeRankingTiers } from "./normalize-ranking-tiers.js";
 
 function ranking(rank: number, tier?: string): Ranking {

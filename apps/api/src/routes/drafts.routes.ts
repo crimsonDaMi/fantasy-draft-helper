@@ -2,7 +2,6 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { DraftService } from "../services/draft.service.js";
-
 import { DraftStateService } from "../services/draft-state.service.js";
 
 const availablePlayersQuerySchema = z.object({
@@ -18,48 +17,32 @@ export function createDraftsRoutes(
   draftStateService: DraftStateService,
 ) {
   return async function draftsRoutes(app: FastifyInstance) {
-    app.get(
-      "/drafts/:draftId",
+    app.get("/drafts/:draftId", async (request) => {
+      const { draftId } = draftParamsSchema.parse(request.params);
 
-      async (request) => {
-        const { draftId } = draftParamsSchema.parse(request.params);
+      return draftService.getDraft(draftId);
+    });
 
-        return draftService.getDraft(draftId);
-      },
-    );
+    app.get("/drafts/:draftId/picks", async (request) => {
+      const { draftId } = draftParamsSchema.parse(request.params);
 
-    app.get(
-      "/drafts/:draftId/picks",
+      return draftService.getDraftPicks(draftId);
+    });
 
-      async (request) => {
-        const { draftId } = draftParamsSchema.parse(request.params);
+    app.get("/drafts/:draftId/available-players", async (request) => {
+      const { draftId } = draftParamsSchema.parse(request.params);
 
-        return draftService.getDraftPicks(draftId);
-      },
-    );
+      const { limit } = availablePlayersQuerySchema.parse(request.query);
 
-    app.get(
-      "/drafts/:draftId/available-players",
+      const draftState = await draftStateService.getDraftState(draftId);
 
-      async (request) => {
-        const { draftId } = draftParamsSchema.parse(request.params);
-
-        const { limit } = availablePlayersQuerySchema.parse(request.query);
-
-        const draftState = await draftStateService.getDraftState(draftId);
-
-        return {
-          draftId: draftState.draft.id,
-
-          draftedPlayerCount: draftState.draftedPlayerIds.size,
-
-          availablePlayerCount: draftState.availablePlayers.length,
-
-          lastUpdatedAt: draftState.lastUpdatedAt,
-
-          players: draftState.availablePlayers.slice(0, limit),
-        };
-      },
-    );
+      return {
+        draftId: draftState.draft.id,
+        draftedPlayerCount: draftState.draftedPlayerIds.size,
+        availablePlayerCount: draftState.availablePlayers.length,
+        lastUpdatedAt: draftState.lastUpdatedAt,
+        players: draftState.availablePlayers.slice(0, limit),
+      };
+    });
   };
 }

@@ -2,28 +2,19 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
+import multipart from "@fastify/multipart";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { AppDependencies, createAppDependencies } from "./app-dependencies.js";
-
 import { createAuthRoutes } from "./routes/auth.routes.js";
-
 import { createDraftsRoutes } from "./routes/drafts.routes.js";
-
 import { createPlayersRoutes } from "./routes/players.routes.js";
-
 import { errorHandler } from "./utils/error-handler.js";
-
-import multipart from "@fastify/multipart";
-
 import { createRankingEditorRoutes } from "./routes/ranking-editor.routes.js";
-
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
-
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
-
 import { isSpaClientRoute } from "./utils/spa-client-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -70,16 +61,12 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
     },
   });
 
-  app.get(
-    "/health",
-
-    async () => {
-      return {
-        status: "ok",
-        version: APP_VERSION,
-      };
-    },
-  );
+  app.get("/health", async () => {
+    return {
+      status: "ok",
+      version: APP_VERSION,
+    };
+  });
 
   await app.register(createAuthRoutes(dependencies.authService));
 
@@ -125,7 +112,6 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
   await app.register(
     createRankingsRoutes(
       dependencies.rankingImportService,
-
       dependencies.rankingStoreService,
     ),
   );
@@ -137,7 +123,6 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
   await app.register(
     createRecommendationsRoutes(
       dependencies.recommendationService,
-
       dependencies.rankingStoreService,
     ),
   );

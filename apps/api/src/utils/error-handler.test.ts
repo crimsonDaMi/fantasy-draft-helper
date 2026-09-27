@@ -1,9 +1,7 @@
 import Fastify from "fastify";
-
 import { describe, expect, it } from "vitest";
 
 import { ConflictError, NotFoundError } from "./domain-errors.js";
-
 import { errorHandler } from "./error-handler.js";
 
 async function respondWith(error: Error) {
