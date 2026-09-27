@@ -18,6 +18,15 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # @types/node must match the Node major the app runs on (the
+      # Dockerfile's node:<major>-slim image). Dependabot isn't LTS-aware
+      # and would propose each new major on release, months before it's
+      # LTS. .github/workflows/node-lts.yml opens an issue instead when a
+      # newer LTS exists; bump the image, audit.yml and @types/node together.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /

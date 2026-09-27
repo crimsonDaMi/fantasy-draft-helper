@@ -1,0 +1,69 @@
+name: Node LTS check
+
+# Compares the Node major the app runs on (the Dockerfile's
+# `FROM node:<major>-slim`) against the newest LTS line in the official
+# release index. When a newer LTS exists, opens a GitHub issue labelled
+# `node-lts` (once per LTS major, no repeat comments). Dependabot ignores
+# @types/node majors for this reason — it isn't LTS-aware. See RELEASING.md.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Compare runtime Node major with latest LTS
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          current=$(sed -nE 's/^FROM node:([0-9]+).*/\1/p' Dockerfile | head -n1)
+          if [ -z "$current" ]; then
+            echo "::error::Could not read the Node major from the Dockerfile"
+            exit 1
+          fi
+
+          # Entries on an LTS line have "lts": "<codename>", others false.
+          latest=$(curl -fsSL https://nodejs.org/dist/index.json \
+            | jq -r '[.[] | select(.lts != false) | .version
+                       | ltrimstr("v") | split(".")[0] | tonumber] | max')
+
+          echo "Runtime Node major: $current, latest LTS major: $latest"
+          if [ "$latest" -le "$current" ]; then
+            exit 0
+          fi
+
+          title="Node $latest is LTS — upgrade from Node $current"
+          gh label create node-lts --force \
+            --color 1D76DB --description "A newer Node LTS line is available"
+
+          existing=$(gh issue list --label node-lts --state all \
+            --search "in:title \"Node $latest is LTS\"" \
+            --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing already tracks Node $latest"
+            exit 0
+          fi
+
+          cat > body.md <<EOF
+          Node $latest is now an LTS line; the app runs on Node $current.
+
+          Upgrade in one commit:
+
+          - \`Dockerfile\`: \`FROM node:$latest-slim\`
+          - \`.github/workflows/audit.yml\`: \`node-version: $latest\`
+          - \`@types/node\` in \`apps/api/package.json\` and \`apps/web/package.json\`: \`^$latest\`
+
+          Then run the full verification gate and \`pnpm smoke\`. Dependabot
+          ignores \`@types/node\` major updates, so no PR will arrive for this.
+          EOF
+
+          gh issue create --label node-lts --title "$title" --body-file body.md

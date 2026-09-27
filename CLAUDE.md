@@ -57,7 +57,10 @@ setup.
 A scheduled GitHub Actions audit (`.github/workflows/audit.yml`, moderate+
 severity, opens a `dependency-audit` issue on failure) and weekly
 Dependabot PRs (`.github/dependabot.yml`) keep dependencies in check.
-`pnpm run audit` locally is the same check. Dependabot PRs get no CI
+`pnpm run audit` locally is the same check. `@types/node` majors are
+ignored by Dependabot — they must track the Dockerfile's Node major, and
+`.github/workflows/node-lts.yml` opens a `node-lts` issue when a newer
+LTS exists. Dependabot PRs get no CI
 verification gate — run the full gate locally before merging one. Details
 in `RELEASING.md`.
 

@@ -103,7 +103,17 @@ Two GitHub-side checks run between releases:
 - **`.github/dependabot.yml`** opens weekly update PRs (Mondays) for npm
   packages and GitHub Actions. Minor and patch updates are grouped into
   one PR per ecosystem; npm major updates arrive as separate PRs, since
-  they usually need code changes.
+  they usually need code changes. The exception is `@types/node`: its
+  major updates are ignored, because it must match the Node major the app
+  runs on, and Dependabot would propose each new major on release,
+  months before it becomes LTS.
+- **`.github/workflows/node-lts.yml`** checks every Monday (or on demand)
+  whether a newer Node LTS line exists than the Dockerfile's
+  `node:<major>-slim` image, and opens a GitHub issue labelled `node-lts`
+  once per new LTS major. Upgrade in a single commit: the Dockerfile base
+  image, `node-version` in `audit.yml`, and `@types/node` in both
+  workspaces. Then run the full verification gate plus `pnpm smoke`, and
+  close the issue.
 
 There is no CI workflow running tests/build/lint on PRs, so check out a
 Dependabot branch and run the full verification gate
