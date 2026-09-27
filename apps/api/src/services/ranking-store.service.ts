@@ -3,18 +3,10 @@ import { PlayerMatch } from "../domain/player-match.js";
 import { RankingRepository } from "../repositories/ranking.repository.js";
 
 export class RankingStoreService {
-  private readonly repository: RankingRepository;
+  constructor(private readonly repository: RankingRepository) {}
 
-  constructor(
-    repositoryOrPath: RankingRepository | string = new RankingRepository(),
-  ) {
-    this.repository =
-      typeof repositoryOrPath === "string"
-        ? new RankingRepository(repositoryOrPath)
-        : repositoryOrPath;
-  }
-
-  setMatches(matches: PlayerMatch[], userId: string, name?: string): string {
+  /** Creates the user's ranking, replacing any previous one. */
+  createRanking(matches: PlayerMatch[], userId: string, name?: string): string {
     return this.repository.create(matches, userId, name);
   }
 

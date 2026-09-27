@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import { RankingEditorService } from "../services/ranking-editor.service.js";
 
+import { requireUser } from "../utils/require-user.js";
+
 const rankingParamsSchema = z.object({
   rankingId: z.string().min(1),
 });
@@ -34,7 +36,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId } = rankingParamsSchema.parse(request.params);
 
@@ -48,7 +50,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId/players/:sleeperId",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId, sleeperId } = playerParamsSchema.parse(
           request.params,
@@ -73,7 +75,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId/players/:sleeperId",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId, sleeperId } = playerParamsSchema.parse(
           request.params,
@@ -94,7 +96,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId/tiers",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId } = rankingParamsSchema.parse(request.params);
 
@@ -116,7 +118,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId/tiers/:position",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId, position } = tierParamsSchema.parse(request.params);
 
@@ -136,7 +138,7 @@ export function createRankingEditorRoutes(
       "/rankings/:rankingId/unranked-players",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const { rankingId } = rankingParamsSchema.parse(request.params);
 

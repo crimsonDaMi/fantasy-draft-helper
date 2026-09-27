@@ -20,6 +20,8 @@ import type {
   SleeperPlayersResponse,
 } from "../types/sleeper.js";
 
+import { RankingRepository } from "../repositories/ranking.repository.js";
+
 const TEST_USER_ID = "test-user";
 
 interface DraftFixture {
@@ -69,9 +71,11 @@ function createRecommendationFixture(fixture: DraftFixture) {
     getSnapshot: async () => new Map<string, number>(),
   };
 
-  const rankingStore = new RankingStoreService(":memory:");
+  const rankingStore = new RankingStoreService(
+    new RankingRepository(":memory:"),
+  );
 
-  const rankingId = rankingStore.setMatches(
+  const rankingId = rankingStore.createRanking(
     [
       {
         ranking: {

@@ -13,12 +13,14 @@ export function createPlayersRoutes(playerService: PlayerService) {
       async () => {
         await playerService.ensurePlayersLoaded();
 
+        const players = playerService.getAllPlayers();
+
         return {
-          count: playerService.getAllPlayers().length,
+          count: players.length,
 
           updatedAt: playerService.getCacheUpdatedAt(),
 
-          players: playerService.getAllPlayers(),
+          players,
         };
       },
     );
@@ -55,10 +57,12 @@ export function createPlayersRoutes(playerService: PlayerService) {
       "/players/cache-status",
 
       async () => {
-        return {
-          loaded: playerService.getAllPlayers().length > 0,
+        const count = playerService.getAllPlayers().length;
 
-          count: playerService.getAllPlayers().length,
+        return {
+          loaded: count > 0,
+
+          count,
 
           updatedAt: playerService.getCacheUpdatedAt(),
         };

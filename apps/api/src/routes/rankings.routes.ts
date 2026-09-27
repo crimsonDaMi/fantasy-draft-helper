@@ -4,6 +4,8 @@ import { RankingImportService } from "../services/ranking-import.service.js";
 
 import { RankingStoreService } from "../services/ranking-store.service.js";
 
+import { requireUser } from "../utils/require-user.js";
+
 export function createRankingsRoutes(
   rankingImportService: RankingImportService,
 
@@ -14,7 +16,7 @@ export function createRankingsRoutes(
       "/rankings",
 
       async (request, reply) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const file = await request.file();
 
@@ -46,7 +48,7 @@ export function createRankingsRoutes(
           csvContent.toString("utf-8"),
         );
 
-        const rankingId = rankingStoreService.setMatches(
+        const rankingId = rankingStoreService.createRanking(
           result.matches,
           userId,
         );
@@ -91,9 +93,9 @@ export function createRankingsRoutes(
       "/rankings/new",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
-        const rankingId = rankingStoreService.setMatches(
+        const rankingId = rankingStoreService.createRanking(
           [],
 
           userId,
@@ -109,7 +111,7 @@ export function createRankingsRoutes(
       "/rankings/status",
 
       async (request) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         const matches = rankingStoreService.getMatches(userId);
 

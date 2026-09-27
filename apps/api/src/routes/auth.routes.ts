@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyReply } from "fastify";
 
 import { z } from "zod";
 
@@ -16,6 +16,15 @@ const credentialsSchema = z.object({
 
 const isProduction = process.env.NODE_ENV === "production";
 
+function setSessionCookie(reply: FastifyReply, token: string): void {
+  reply.setCookie("session", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isProduction,
+    path: "/",
+  });
+}
+
 export function createAuthRoutes(authService: AuthService) {
   return async function authRoutes(app: FastifyInstance) {
     app.post(
@@ -27,12 +36,7 @@ export function createAuthRoutes(authService: AuthService) {
         try {
           const { user, token } = authService.register(username, password);
 
-          reply.setCookie("session", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            secure: isProduction,
-            path: "/",
-          });
+          setSessionCookie(reply, token);
 
           return { user };
         } catch (error) {
@@ -64,12 +68,7 @@ export function createAuthRoutes(authService: AuthService) {
         try {
           const { user, token } = authService.login(username, password);
 
-          reply.setCookie("session", token, {
-            httpOnly: true,
-            sameSite: "lax",
-            secure: isProduction,
-            path: "/",
-          });
+          setSessionCookie(reply, token);
 
           return { user };
         } catch (error) {

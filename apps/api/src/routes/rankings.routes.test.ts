@@ -27,7 +27,7 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
   };
 
   const rankingStoreService = {
-    setMatches: () => "ranking-1",
+    createRanking: () => "ranking-1",
     getMatches: () => matches,
     hasRankings: () => matches.length > 0,
     getLatestRankingId: () => (matches.length > 0 ? "ranking-1" : undefined),
@@ -170,7 +170,7 @@ describe("rankings routes", () => {
   });
 
   it("creates an empty ranking and returns its id", async () => {
-    const setMatches = vi.fn(() => "ranking-2");
+    const createRanking = vi.fn(() => "ranking-2");
 
     const app = Fastify();
 
@@ -184,7 +184,7 @@ describe("rankings routes", () => {
         { importCsv: async () => ({}) } as never,
 
         {
-          setMatches,
+          createRanking,
           getMatches: () => [],
           hasRankings: () => false,
           getLatestRankingId: () => undefined,
@@ -199,7 +199,7 @@ describe("rankings routes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ rankingId: "ranking-2" });
-    expect(setMatches).toHaveBeenCalledWith([], TEST_USER.id, "New ranking");
+    expect(createRanking).toHaveBeenCalledWith([], TEST_USER.id, "New ranking");
 
     await app.close();
   });

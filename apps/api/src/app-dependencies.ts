@@ -20,6 +20,8 @@ import { PlayerMatchingService } from "./services/player-matching.service.js";
 
 import { RankingRepository } from "./repositories/ranking.repository.js";
 
+import { UserRepository } from "./repositories/user.repository.js";
+
 import { RankingEditorService } from "./services/ranking-editor.service.js";
 
 import { RankingImportService } from "./services/ranking-import.service.js";
@@ -61,7 +63,7 @@ export function createAppDependencies(): AppDependencies {
     .filter(Boolean);
 
   const authService = new AuthService(
-    process.env.AUTH_DATABASE_PATH,
+    new UserRepository(process.env.AUTH_DATABASE_PATH),
     allowedUsernames,
   );
 

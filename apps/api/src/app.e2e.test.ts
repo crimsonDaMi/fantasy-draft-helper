@@ -30,6 +30,8 @@ import type {
   SleeperPlayersResponse,
 } from "./types/sleeper.js";
 
+import { UserRepository } from "./repositories/user.repository.js";
+
 function createFixtureClient() {
   return {
     getDraft: async () =>
@@ -72,7 +74,10 @@ function createTestDependencies(): AppDependencies {
   const draftService = new DraftService(sleeperClient);
   const draftStateService = new DraftStateService(draftService, playerService);
 
-  const authService = new AuthService(":memory:", ["alice", "bob"]);
+  const authService = new AuthService(new UserRepository(":memory:"), [
+    "alice",
+    "bob",
+  ]);
   const rankingRepository = new RankingRepository(":memory:");
   const rankingStoreService = new RankingStoreService(rankingRepository);
   const rankingEditorService = new RankingEditorService(
@@ -131,7 +136,7 @@ describe("multi-user isolation (end to end)", () => {
     const alice = await registerUser(app, "alice");
     const bob = await registerUser(app, "bob");
 
-    const aliceRankingId = dependencies.rankingStoreService.setMatches(
+    const aliceRankingId = dependencies.rankingStoreService.createRanking(
       [
         {
           ranking: {
@@ -171,7 +176,7 @@ describe("multi-user isolation (end to end)", () => {
       alice.userId,
     );
 
-    const bobRankingId = dependencies.rankingStoreService.setMatches(
+    const bobRankingId = dependencies.rankingStoreService.createRanking(
       [
         {
           ranking: {
@@ -339,6 +344,23 @@ describe("error responses (end to end)", () => {
     expect(othersRanking.json()).toEqual({
       error: "RANKING_NOT_FOUND",
       message: "Ranking was not found",
+    });
+
+    dependencies.rankingStoreService.close();
+  });
+});
+
+describe("unknown routes", () => {
+  it("returns a JSON 404 for unknown paths under an API namespace", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+
+    const response = await app.inject({ method: "GET", url: "/auth/nope" });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      error: "NOT_FOUND",
+      message: "Route not found",
     });
 
     dependencies.rankingStoreService.close();

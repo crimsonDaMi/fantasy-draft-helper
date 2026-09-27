@@ -4,26 +4,23 @@ export class AllowlistError extends Error {}
 export class DuplicateUsernameError extends Error {}
 export class InvalidCredentialsError extends Error {}
 
+/** Usernames are case-insensitive and whitespace-trimmed everywhere. */
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
 export class AuthService {
-  private readonly repository: UserRepository;
   private readonly allowedUsernames: Set<string>;
 
   constructor(
-    repositoryOrPath: UserRepository | string = new UserRepository(),
+    private readonly repository: UserRepository,
     allowedUsernames: string[] = [],
   ) {
-    this.repository =
-      typeof repositoryOrPath === "string"
-        ? new UserRepository(repositoryOrPath)
-        : repositoryOrPath;
-
-    this.allowedUsernames = new Set(
-      allowedUsernames.map((name) => name.toLowerCase()),
-    );
+    this.allowedUsernames = new Set(allowedUsernames.map(normalizeUsername));
   }
 
   register(username: string, password: string): { user: User; token: string } {
-    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedUsername = normalizeUsername(username);
 
     if (!this.allowedUsernames.has(normalizedUsername)) {
       throw new AllowlistError("This username is not on the league allowlist.");
@@ -43,7 +40,7 @@ export class AuthService {
   }
 
   login(username: string, password: string): { user: User; token: string } {
-    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedUsername = normalizeUsername(username);
 
     const user = this.repository.verifyPassword(normalizedUsername, password);
 

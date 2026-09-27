@@ -6,6 +6,8 @@ import { RecommendationService } from "../services/recommendation.service.js";
 
 import { RankingStoreService } from "../services/ranking-store.service.js";
 
+import { requireUser } from "../utils/require-user.js";
+
 const draftParamsSchema = z.object({
   draftId: z.string().min(1),
 });
@@ -38,7 +40,7 @@ export function createRecommendationsRoutes(
       "/drafts/:draftId/recommendations",
 
       async (request, reply) => {
-        const userId = request.user!.id;
+        const userId = requireUser(request).id;
 
         if (!rankingStoreService.hasRankings(userId)) {
           return reply.status(400).send({

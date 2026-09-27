@@ -8,15 +8,17 @@ import { tmpdir } from "node:os";
 
 import { join } from "node:path";
 
+import { RankingRepository } from "../repositories/ranking.repository.js";
+
 const TEST_USER_ID = "test-user";
 
 describe("RankingStoreService", () => {
   it("stores matches", () => {
-    const store = new RankingStoreService(":memory:");
+    const store = new RankingStoreService(new RankingRepository(":memory:"));
 
     expect(store.hasRankings(TEST_USER_ID)).toBe(false);
 
-    store.setMatches(
+    store.createRanking(
       [
         {
           ranking: {
@@ -41,9 +43,9 @@ describe("RankingStoreService", () => {
   });
 
   it("clears matches", () => {
-    const store = new RankingStoreService(":memory:");
+    const store = new RankingStoreService(new RankingRepository(":memory:"));
 
-    store.setMatches(
+    store.createRanking(
       [
         {
           ranking: {
@@ -72,9 +74,11 @@ describe("RankingStoreService", () => {
 
     const databasePath = join(directory, "rankings.db");
 
-    const firstStore = new RankingStoreService(databasePath);
+    const firstStore = new RankingStoreService(
+      new RankingRepository(databasePath),
+    );
 
-    const rankingId = firstStore.setMatches(
+    const rankingId = firstStore.createRanking(
       [
         {
           ranking: {
@@ -95,7 +99,9 @@ describe("RankingStoreService", () => {
 
     firstStore.close();
 
-    const recreatedStore = new RankingStoreService(databasePath);
+    const recreatedStore = new RankingStoreService(
+      new RankingRepository(databasePath),
+    );
 
     expect(recreatedStore.hasRanking(rankingId, TEST_USER_ID)).toBe(true);
 
@@ -109,11 +115,11 @@ describe("RankingStoreService", () => {
   });
 
   it("returns the latest ranking id", () => {
-    const store = new RankingStoreService(":memory:");
+    const store = new RankingStoreService(new RankingRepository(":memory:"));
 
     expect(store.getLatestRankingId(TEST_USER_ID)).toBeUndefined();
 
-    const rankingId = store.setMatches(
+    const rankingId = store.createRanking(
       [
         {
           ranking: {

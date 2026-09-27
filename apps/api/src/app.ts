@@ -32,6 +32,13 @@ const { version: APP_VERSION } = JSON.parse(
   readFileSync(path.join(__dirname, "../../../package.json"), "utf-8"),
 ) as { version: string };
 
+// Route namespaces that require a logged-in session.
+const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
+
+// Every API namespace. Unknown paths under these get a JSON 404; anything
+// else falls through to the SPA shell for client-side routing.
+const API_PREFIXES = ["/health", "/auth", ...PROTECTED_PREFIXES];
+
 export async function buildApp(
   dependencies: AppDependencies = createAppDependencies(),
 ) {
@@ -75,8 +82,6 @@ export async function buildApp(
   await app.register(createAuthRoutes(dependencies.authService));
 
   app.decorateRequest("user", undefined);
-
-  const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 
   app.addHook("onRequest", async (request, reply) => {
     if (isSpaClientRoute(request.method, request.raw.url)) {
@@ -140,8 +145,7 @@ export async function buildApp(
   });
 
   app.setNotFoundHandler((request, reply) => {
-    const apiPrefixes = ["/health", "/drafts", "/players", "/rankings"];
-    if (apiPrefixes.some((prefix) => request.raw.url?.startsWith(prefix))) {
+    if (API_PREFIXES.some((prefix) => request.raw.url?.startsWith(prefix))) {
       return reply.status(404).send({
         error: "NOT_FOUND",
         message: "Route not found",
