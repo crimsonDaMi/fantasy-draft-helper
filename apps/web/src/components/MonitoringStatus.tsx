@@ -1,16 +1,20 @@
 import { isDebugUi } from "../config";
+import type { DraftStatus, RecommendationsResponse } from "../types/api";
+
+const STATUS_TEXT: Record<DraftStatus, string> = {
+  PRE_DRAFT: "Waiting for draft to start",
+  DRAFTING: "Draft in progress",
+  COMPLETE: "Draft complete",
+  UNKNOWN: "Status unknown",
+};
 
 interface MonitoringStatusProps {
   draftId?: string;
   rankingId?: string;
-  draftStatus?: "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
+  draftStatus?: DraftStatus;
   totalPicks?: number;
   draftedPlayerCount?: number;
-  lastPick?: {
-    playerId: string;
-    pickNo: number;
-    round?: number;
-  };
+  lastPick?: RecommendationsResponse["lastPick"];
   generatedAt?: string;
   lastUpdatedAt?: string;
   isLoading: boolean;
@@ -44,13 +48,7 @@ export function MonitoringStatus({
   const isLive = draftStatus === "DRAFTING";
   const statusText = isDebugUi
     ? draftStatus
-    : draftStatus === "PRE_DRAFT"
-      ? "Waiting for draft to start"
-      : draftStatus === "DRAFTING"
-        ? "Draft in progress"
-        : draftStatus === "COMPLETE"
-          ? "Draft complete"
-          : "Status unknown";
+    : STATUS_TEXT[draftStatus ?? "UNKNOWN"];
 
   return (
     <div>

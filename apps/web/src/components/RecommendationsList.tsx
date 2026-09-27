@@ -11,6 +11,12 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
       {" · "}
       {recommendation.player.team}
       {recommendation.tier && ` · Tier ${recommendation.tier}`}
+      {recommendation.adp && (
+        <>
+          {" · "}
+          <AdpBadge recommendation={recommendation} />
+        </>
+      )}
     </>
   );
 }
@@ -58,12 +64,6 @@ export function RecommendationsList({
           <span className="hero__name">{topPick.player.fullName}</span>
           <span className="hero__meta">
             <PlayerMeta recommendation={topPick} />
-            {topPick.adp && (
-              <>
-                {" · "}
-                <AdpBadge recommendation={topPick} />
-              </>
-            )}
           </span>
         </div>
       </div>
@@ -78,12 +78,6 @@ export function RecommendationsList({
               </span>
               <span className="rec-list__meta">
                 <PlayerMeta recommendation={recommendation} />
-                {recommendation.adp && (
-                  <>
-                    {" · "}
-                    <AdpBadge recommendation={recommendation} />
-                  </>
-                )}
               </span>
             </li>
           ))}

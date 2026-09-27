@@ -7,6 +7,10 @@ import { LoginForm } from "./components/LoginForm";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./hooks/useAuth";
 
+function navLinkClass({ isActive }: { isActive: boolean }): string {
+  return isActive ? "app-nav__link app-nav__link--active" : "app-nav__link";
+}
+
 function App() {
   const [theme, setTheme] = useTheme();
   const auth = useAuth();
@@ -44,21 +48,10 @@ function App() {
           </div>
         </div>
         <nav className="app-nav">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
-            }
-          >
+          <NavLink to="/" end className={navLinkClass}>
             Draft
           </NavLink>
-          <NavLink
-            to="/rankings/edit"
-            className={({ isActive }) =>
-              isActive ? "app-nav__link app-nav__link--active" : "app-nav__link"
-            }
-          >
+          <NavLink to="/rankings/edit" className={navLinkClass}>
             Edit rankings
           </NavLink>
         </nav>
