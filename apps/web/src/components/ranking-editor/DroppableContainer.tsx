@@ -13,7 +13,7 @@ import {
 } from "../ranking-editor-logic";
 import { SortablePlayer } from "./SortablePlayer";
 
-export interface TierRemoveControl {
+interface TierRemoveControl {
   canRemove: boolean;
   isConfirming: boolean;
   isPending: boolean;

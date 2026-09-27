@@ -155,10 +155,6 @@ export class RankingRepository {
     return this.getLatestRankingId(userId) !== undefined;
   }
 
-  clear(userId: string): void {
-    this.database.prepare(`DELETE FROM rankings WHERE user_id = ?`).run(userId);
-  }
-
   close(): void {
     this.database.close();
   }

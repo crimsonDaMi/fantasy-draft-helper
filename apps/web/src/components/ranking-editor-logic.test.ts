@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   buildContainers,
   computeGlobalRank,
-  findContainer,
   filterPlayersByPosition,
   filterPlayersByQuery,
   formatTierHeading,
@@ -64,27 +63,6 @@ describe("buildContainers", () => {
     const result = buildContainers(players as never, tiers, []);
 
     expect(result.S).toEqual([]);
-  });
-});
-
-describe("findContainer", () => {
-  const containers: Containers = {
-    S: [{ sleeperId: "1", fullName: "Player One" }],
-    A: [],
-    unranked: [{ sleeperId: "2", fullName: "Player Two" }],
-  };
-
-  it("resolves a player id to its containing tier", () => {
-    expect(findContainer(containers, "1")).toBe("S");
-    expect(findContainer(containers, "2")).toBe("unranked");
-  });
-
-  it("resolves a bare container id to itself (dropped on an empty tier)", () => {
-    expect(findContainer(containers, "A")).toBe("A");
-  });
-
-  it("returns undefined for an id in no container", () => {
-    expect(findContainer(containers, "missing")).toBeUndefined();
   });
 });
 

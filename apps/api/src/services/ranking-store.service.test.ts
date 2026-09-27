@@ -42,33 +42,6 @@ describe("RankingStoreService", () => {
     expect(store.getMatches(TEST_USER_ID)).toHaveLength(1);
   });
 
-  it("clears matches", () => {
-    const store = new RankingStoreService(new RankingRepository(":memory:"));
-
-    store.createRanking(
-      [
-        {
-          ranking: {
-            rank: 1,
-
-            playerName: "Josh Allen",
-
-            team: "BUF",
-
-            position: "QB",
-          },
-
-          method: "NONE",
-        },
-      ],
-      TEST_USER_ID,
-    );
-
-    store.clear(TEST_USER_ID);
-
-    expect(store.hasRankings(TEST_USER_ID)).toBe(false);
-  });
-
   it("loads imported matches after the store is recreated", () => {
     const directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-"));
 

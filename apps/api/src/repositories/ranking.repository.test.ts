@@ -72,16 +72,15 @@ describe("RankingRepository", () => {
     expect(repository.hasRankings("user-b")).toBe(false);
   });
 
-  it("clear only removes the calling user's rankings", () => {
+  it("replacing a user's ranking leaves other users' rankings intact", () => {
     const repository = new RankingRepository(":memory:");
 
     repository.create(createMatches(), "user-a");
-    repository.create(createMatches(), "user-b");
+    const userBRankingId = repository.create(createMatches(), "user-b");
 
-    repository.clear("user-a");
+    repository.create(createMatches(), "user-a");
 
-    expect(repository.hasRankings("user-a")).toBe(false);
-    expect(repository.hasRankings("user-b")).toBe(true);
+    expect(repository.hasRanking(userBRankingId, "user-b")).toBe(true);
   });
 
   it("replaces a user's previous ranking when creating a new one", () => {

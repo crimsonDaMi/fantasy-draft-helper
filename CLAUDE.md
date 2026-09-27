@@ -45,7 +45,9 @@ pnpm test && pnpm build && pnpm lint && pnpm format:check
 ```
 
 `pnpm lint` runs both workspaces: `apps/web` via oxlint, `apps/api` via
-oxlint with type-aware rules (`oxlint --type-aware`). Formatting is
+oxlint with type-aware rules (`oxlint --type-aware`), then knip for
+unused files/exports/dependencies (knip doesn't see unused class
+methods — those still need a manual grep). Formatting is
 Prettier for both workspaces (`pnpm format` / `pnpm format:check`) — oxfmt
 is deliberately not used yet (still alpha, not fully Prettier-compatible).
 `pnpm build` type-checks test files in both workspaces (vitest itself

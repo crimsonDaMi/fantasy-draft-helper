@@ -20,10 +20,4 @@ export class DraftService {
       .map(mapSleeperDraftPick)
       .filter((pick): pick is DraftPick => pick !== null);
   }
-
-  async getDraftedPlayerIds(draftId: string): Promise<Set<string>> {
-    const picks = await this.getDraftPicks(draftId);
-
-    return new Set(picks.map((pick) => pick.playerId));
-  }
 }

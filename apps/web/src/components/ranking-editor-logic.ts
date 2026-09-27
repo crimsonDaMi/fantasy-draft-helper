@@ -81,22 +81,6 @@ export function buildContainers(
   return containers;
 }
 
-/** Which container (tier label or "unranked") an id belongs to. `id`
- * may be a container id itself (dropped on an empty container) or a
- * player's sleeperId. */
-export function findContainer(
-  containers: Containers,
-  id: string,
-): string | undefined {
-  if (id in containers) {
-    return id;
-  }
-
-  return Object.keys(containers).find((key) =>
-    containers[key].some((player) => player.sleeperId === id),
-  );
-}
-
 /** Moves `activeId` from `activeContainer` into `overContainer`, just
  * before `overId` if that's a player there, else at the end (dropped on
  * the container itself). Returns `containers` unchanged if the player

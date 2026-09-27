@@ -29,10 +29,6 @@ export class RankingStoreService {
     return this.repository.hasRanking(rankingId, userId);
   }
 
-  clear(userId: string): void {
-    this.repository.clear(userId);
-  }
-
   hasRankings(userId: string): boolean {
     return this.repository.hasRankings(userId);
   }
