@@ -17,6 +17,8 @@ import {
 } from "../utils/tier.js";
 
 interface RankingPlayerRow {
+  rank: number;
+  tier: string | null;
   match_json: string;
 }
 
@@ -24,8 +26,24 @@ interface TierPositionRow {
   position: number;
 }
 
+/**
+ * `rank` and `tier` live only in their columns; `match_json` holds the rest
+ * of the match. Rows written before that split still carry rank/tier in
+ * their JSON too, so the columns always win.
+ */
 function parseMatchRows(rows: RankingPlayerRow[]): PlayerMatch[] {
-  return rows.map((row) => JSON.parse(row.match_json) as PlayerMatch);
+  return rows.map((row) => {
+    const match = JSON.parse(row.match_json) as PlayerMatch;
+
+    return {
+      ...match,
+      ranking: {
+        ...match.ranking,
+        rank: row.rank,
+        tier: row.tier ?? undefined,
+      },
+    };
+  });
 }
 
 export class RankingRepository {
@@ -113,7 +131,9 @@ export class RankingRepository {
   getMatches(rankingId: string, userId: string): PlayerMatch[] {
     const rows = this.database
       .prepare(
-        `SELECT ranking_players.match_json AS match_json
+        `SELECT ranking_players.rank AS rank,
+                ranking_players.tier AS tier,
+                ranking_players.match_json AS match_json
          FROM ranking_players
          JOIN rankings ON rankings.id = ranking_players.ranking_id
          WHERE ranking_players.ranking_id = ? AND rankings.user_id = ?
@@ -315,7 +335,7 @@ export class RankingRepository {
   private getOrderedMatches(rankingId: string): PlayerMatch[] {
     const rows = this.database
       .prepare(
-        `SELECT match_json AS match_json
+        `SELECT rank, tier, match_json
          FROM ranking_players
          WHERE ranking_id = ?
          ORDER BY rank ASC, id ASC`,
@@ -326,7 +346,7 @@ export class RankingRepository {
   }
 
   /** Deletes and re-inserts every ranking_players row for `rankingId` in
-   * the given order, renumbering rank 1..N and syncing match_json. */
+   * the given order, renumbering rank 1..N. */
   private replaceAllPlayers(rankingId: string, matches: PlayerMatch[]): void {
     this.database
       .prepare(`DELETE FROM ranking_players WHERE ranking_id = ?`)
@@ -349,16 +369,18 @@ export class RankingRepository {
     );
 
     for (const match of matches) {
+      const { rank, tier, ...ranking } = match.ranking;
+
       insertPlayer.run(
         rankingId,
-        match.ranking.rank,
-        match.ranking.playerName,
-        match.ranking.position ?? null,
-        match.ranking.team ?? null,
-        match.ranking.tier ?? null,
+        rank,
+        ranking.playerName,
+        ranking.position ?? null,
+        ranking.team ?? null,
+        tier ?? null,
         match.player?.sleeperId ?? null,
         this.getMatchStatus(match),
-        JSON.stringify(match),
+        JSON.stringify({ ...match, ranking }),
       );
     }
   }
@@ -427,7 +449,7 @@ export class RankingRepository {
     });
   }
 
-  /** Shifts every tier (row in ranking_tiers, plus the tier column/JSON of
+  /** Shifts every tier (row in ranking_tiers, plus the tier column of
    * every affected player) at or past `fromPosition` by `delta`. */
   private shiftTiersFrom(
     rankingId: string,
@@ -459,38 +481,23 @@ export class RankingRepository {
     }
   }
 
-  /** Rewrites every player row (column + match_json) whose tier currently
-   * maps to `fromPosition` so it maps to `toPosition` instead. */
+  /** Moves every player whose tier currently maps to `fromPosition` so it
+   * maps to `toPosition` instead. */
   private relabelPlayersAtPosition(
     rankingId: string,
     fromPosition: number,
     toPosition: number,
   ): void {
-    const fromLabel = numericTierToLabel(fromPosition)!;
-    const toLabel = numericTierToLabel(toPosition)!;
-
-    const rows = this.database
+    this.database
       .prepare(
-        `SELECT id, match_json FROM ranking_players
+        `UPDATE ranking_players SET tier = ?
          WHERE ranking_id = ? AND tier = ?`,
       )
-      .all(rankingId, fromLabel) as unknown as {
-      id: number;
-      match_json: string;
-    }[];
-
-    const update = this.database.prepare(
-      `UPDATE ranking_players SET tier = ?, match_json = ? WHERE id = ?`,
-    );
-
-    for (const row of rows) {
-      const match = JSON.parse(row.match_json) as PlayerMatch;
-      const updated: PlayerMatch = {
-        ...match,
-        ranking: { ...match.ranking, tier: toLabel },
-      };
-      update.run(toLabel, JSON.stringify(updated), row.id);
-    }
+      .run(
+        numericTierToLabel(toPosition)!,
+        rankingId,
+        numericTierToLabel(fromPosition)!,
+      );
   }
 
   private getMatchStatus(match: PlayerMatch): string {
