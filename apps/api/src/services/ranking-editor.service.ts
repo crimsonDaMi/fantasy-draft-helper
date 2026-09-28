@@ -121,8 +121,7 @@ export class RankingEditorService {
   /**
    * Full ranking detail (players in rank order plus the tier list) — the
    * entry state for the ranking editor. Reuses the same repository query
-   * as the recommendation flow rather than a second, lighter path: see
-   * discussion in DEVELOPMENT_PLAN.md's Phase 4 notes.
+   * as the recommendation flow rather than a second, lighter path.
    */
   getRanking(
     rankingId: string,
