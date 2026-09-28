@@ -1,8 +1,8 @@
 # Self-Hosting on a Raspberry Pi
 
-This documents the actual deployment running the league's shared instance,
-for future reference (by a human or a coding agent) if it ever needs to be
-rebuilt, debugged, or replicated on a new device.
+The league's shared instance runs on a Raspberry Pi and is exposed to the
+internet via Tailscale Funnel — no port forwarding, owned domain, or reverse
+proxy needed. These are the steps to rebuild, update, or replicate it.
 
 ## Hardware / OS
 
@@ -10,40 +10,19 @@ rebuilt, debugged, or replicated on a new device.
 - Raspberry Pi OS, **64-bit** (`aarch64`) — required, since the GHCR image
   is only published for `linux/amd64` and `linux/arm64`, not `armv7`. Check
   with `uname -m` before attempting this on different hardware.
-- Runs alongside an existing Pi-hole install on the same device. No port or
-  resource conflicts observed — Pi-hole uses port 53 (DNS) and its own web
-  admin; this stack only touches `127.0.0.1:3000` locally.
+- Coexists with Pi-hole on the same device: Pi-hole uses port 53 and its own
+  web admin; this stack only binds `127.0.0.1:3000`.
 
-## Why this setup, not the originally-planned one
+## How it's exposed
 
-The original plan was Oracle Cloud's Always Free tier. That was abandoned
-when Oracle's signup rejected a debit card (a widely-reported issue with
-their verification, not specific to one bank). Self-hosting on existing
-Raspberry Pi hardware became the free alternative.
-
-The first self-hosting attempt used DuckDNS (for a stable hostname despite
-a dynamic home IP) plus Caddy as a reverse proxy terminating TLS via
-Let's Encrypt (DNS-01 challenge, to avoid conflicting with Pi-hole's use of
-port 80). That plan was abandoned when it turned out **port forwarding
-isn't possible on this network** (router limitation or ISP-side CGNAT —
-never fully diagnosed, since the fix is the same either way).
-
-**Current approach: Tailscale Funnel.** It requires no port forwarding and
-no owned domain — `tailscaled` on the Pi makes an outbound-only connection
-to Tailscale's infrastructure, and Funnel exposes the app at a stable
-`https://<device>.<tailnet>.ts.net` URL. TLS is handled entirely by
-Tailscale; no Caddy, no DuckDNS, no router configuration at all.
+`tailscaled` on the Pi makes an outbound-only connection to Tailscale, and
+Funnel serves the app at a stable `https://<device>.<tailnet>.ts.net` URL.
+TLS is handled entirely by Tailscale; no router configuration is needed.
 
 ## Prerequisites
 
-- Docker: installed via Docker's official **apt repository** (not the
-  `get.docker.com` curl-piped-to-shell script — an attempt to use that
-  script on this exact device returned unexpected, non-standard script
-  content instead of Docker's real installer; switched to the
-  GPG-verified apt repo method out of caution and used it since).
-- Tailscale: installed via Tailscale's official apt repository, for the
-  same reason — avoiding any curl-piped-to-shell install pattern on this
-  device going forward.
+Docker and Tailscale, both installed from their official apt repositories
+(steps below) rather than curl-piped install scripts.
 
 ## Setup steps
 
@@ -153,9 +132,8 @@ docker compose up -d
   Documenting the exact public hostname in a searchable public repo would
   make the home server easier to find than necessary.
 - **Schema changes require a volume drop.** No migration system exists (a
-  deliberate choice — see DEVELOPMENT_PLAN.md's #6 entry). A schema change
-  is a major version bump (see RELEASING.md), and its release notes say
-  so. If a schema-changing version starts against an existing
+  deliberate choice), so a schema change is a major version bump (see
+  RELEASING.md), and its release notes say so. If a schema-changing version starts against an existing
   `draft-helper-data` volume anyway, it refuses to start and logs
   `Database schema does not match this version of the app` with the
   changed tables (a crash loop under `restart: unless-stopped`). Fix: ask

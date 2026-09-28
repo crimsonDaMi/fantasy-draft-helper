@@ -8,24 +8,24 @@ The application keeps the required flow:
 React web app -> Fastify API -> Sleeper API
 ```
 
-## MVP Features
+## Features
 
-- Import a player ranking CSV.
-- Match ranking rows to Sleeper player IDs during import.
-- Report matched, unmatched, and ambiguous players.
-- Persist imported rankings in SQLite.
-- Monitor Sleeper draft picks.
-- Exclude drafted players from recommendations.
-- Display the top available players in ranking order.
-- Poll before and during a draft using status-aware intervals.
-- Stop polling when the draft completes or a terminal request error occurs.
-
-## Post-MVP Features
-
-- Filter recommendations by position (`positions` query param / UI checkboxes).
-- Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
+- Import a player ranking CSV, matched to Sleeper player IDs at import time,
+  with a report of matched, unmatched, and ambiguous players.
+- Monitor a Sleeper draft with status-aware polling and see the top available
+  players in your ranking order, drafted players excluded.
+- Filter recommendations by position.
 - ADP vs. personal ranking diff, sourced from Sleeper's publicly-shared ADP
   sheet — see "ADP Data Source" below.
+- Drag-and-drop ranking editor at `/rankings/edit`: reorder players, move
+  them between tiers, add/remove tiers, build a ranking from scratch, and
+  export it as a CSV.
+- Username/password authentication with a username allowlist; rankings are
+  scoped per user.
+- Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
+- Switchable team-inspired color themes.
+
+Out of scope: payments, WebSockets, machine learning, and automated drafting.
 
 ## Prerequisites
 
@@ -46,10 +46,11 @@ This app can run two ways:
   repo's root — each person runs their own instance during their own
   draft. See "Run Locally" below.
 - **Centrally hosted**, one instance shared by a whole league, with
-  authentication gating access. [`deploy/pi/README.md`](deploy/pi/README.md)
-  documents a real working example of this (Raspberry Pi + Tailscale
-  Funnel, no port forwarding or owned domain required) — adaptable to
-  any always-on device.
+  authentication gating access. The league's instance runs on a Raspberry
+  Pi exposed via Tailscale Funnel (no port forwarding or owned domain
+  required); [`deploy/pi/README.md`](deploy/pi/README.md) has the setup,
+  update, and recovery steps, adaptable to any always-on device. Never
+  commit `deploy/pi/.env` or the Funnel URL.
 
 ## Run Locally
 
@@ -63,21 +64,17 @@ Open the web app at [http://localhost:5173](http://localhost:5173).
 
 The API listens on port `3000`. Its health endpoint is available at [http://localhost:3000/health](http://localhost:3000/health).
 
-The default SQLite database is created at `data/fantasy-draft-helper.db`. Set `RANKINGS_DATABASE_PATH` to use a different database file:
+The default SQLite database is `data/fantasy-draft-helper.db`, relative to
+the API's working directory (`apps/api/data/` under `pnpm dev`). Set
+`RANKINGS_DATABASE_PATH` to use a different database file:
 
 ```bash
 RANKINGS_DATABASE_PATH=/path/to/rankings.db pnpm --filter @fantasy-draft-helper/api dev
 ```
 
-There is no migration system for local development, matching the
-production policy in [`RELEASING.md`](RELEASING.md#telling-league-mates-about-an-update):
-a schema change (a new/altered column in any repository's `CREATE TABLE`)
-is a breaking change for an existing database file, since
-`CREATE TABLE IF NOT EXISTS` is a no-op against a table that already
-exists under the old schema. If `pnpm dev` fails at API startup with a
-SQLite error like `no such column: ...`, delete your local
-`data/fantasy-draft-helper.db` (or whatever `RANKINGS_DATABASE_PATH`
-points at) and restart — a fresh database will be created automatically,
+There is no migration system (see [`RELEASING.md`](RELEASING.md#telling-league-mates-about-an-update)).
+If the API refuses to start with `Database schema does not match`, delete
+the local database file and restart — a fresh one is created automatically,
 and you'll need to re-register and re-import your rankings.
 
 ## UI Modes (Debug vs. Draft)
@@ -216,7 +213,7 @@ GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20
 
 The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations.
 
-The frontend communicates only with these API endpoints. It does not call Sleeper directly.
+The frontend communicates only with this API. It does not call Sleeper directly.
 
 Each recommendation includes an optional `adp` field when Average Draft
 Position data is available for that player:
@@ -239,6 +236,21 @@ Position data is available for that player:
 ranked earlier than the field's consensus (a reach relative to ADP);
 positive means the field values them higher than you do. The `adp` field is
 omitted entirely (not `null`) for players not covered by the ADP source.
+
+### Ranking editor and export
+
+```text
+POST   /rankings/new                              create an empty ranking
+GET    /rankings/export                           current ranking as CSV
+GET    /rankings/:rankingId                       players and tiers
+PATCH  /rankings/:rankingId/players/:sleeperId    move or add a player
+DELETE /rankings/:rankingId/players/:sleeperId    remove a player
+POST   /rankings/:rankingId/tiers                 insert an empty tier
+DELETE /rankings/:rankingId/tiers/:position       remove a tier, merging its players
+GET    /rankings/:rankingId/unranked-players      fantasy-relevant players not ranked
+```
+
+Details in [`docs/ranking-editor-requirements.md`](docs/ranking-editor-requirements.md).
 
 ## Polling Behavior
 
@@ -301,7 +313,7 @@ for a small, known league rather than open signup. Configure it via an
 environment variable before starting the API:
 
 ```bash
-ALLOWED_USERNAMES=andrej,mike,sarah pnpm --filter @fantasy-draft-helper/api dev
+ALLOWED_USERNAMES=alice,bob pnpm --filter @fantasy-draft-helper/api dev
 ```
 
 Usernames are matched case-insensitively. Only usernames on this list can
@@ -311,8 +323,7 @@ Passwords are hashed with Node's built-in `scrypt` (no external hashing
 dependency) and never stored in plaintext. Sessions are opaque tokens
 stored server-side, carried via an `httpOnly` cookie, valid for 30 days.
 
-The default database is `data/fantasy-draft-helper.db` (same file as
-rankings, per `RANKINGS_DATABASE_PATH`). Set `AUTH_DATABASE_PATH` to use a
+Users and sessions live in the same database file as rankings by default. Set `AUTH_DATABASE_PATH` to use a
 different file for users/sessions specifically.
 
 ## Local Development Scripts
@@ -331,13 +342,12 @@ pnpm build         # all workspace builds
 pnpm lint          # web + api lint
 pnpm format        # apply Prettier formatting
 pnpm format:check  # verify formatting without writing (useful in CI)
-pnpm verify        # test + build + lint, in that order
+pnpm verify        # test + build + lint + format:check
 pnpm run audit     # dependency audit, fails on moderate+ (same check as CI)
 ```
 
-`pnpm verify` is the same check required before any change is considered
-complete (see `docs/CODING_AGENT_GUIDE.md`) — run it before opening a PR or
-handing work off.
+`pnpm verify` must pass before any change is considered complete; CI runs
+the same gate on every PR.
 
 ### Docker smoke testing
 
@@ -359,7 +369,7 @@ pnpm release vX.Y.Z
 See [`RELEASING.md`](RELEASING.md) for what this does and the versioning
 scheme.
 
-## Manual QA Chaecklist
+## Manual QA Checklist
 
 For an automated Docker build-and-run check, see `pnpm smoke` under
 [Local Development Scripts](#local-development-scripts). This checklist
@@ -386,32 +396,11 @@ Sleeper may delay exposing picks through its API. Recommendations represent the 
 apps/api/       Fastify API, Sleeper client, domain services, SQLite repository
 apps/web/       React and Vite dashboard
 scripts/        Release and Docker smoke-test scripts
-docs/           Agent guide, MVP completion plan, and known issues
+docs/           Coding agent guide, ranking editor docs, known issues
 test-data/      Sample ranking CSV
 ```
 
-The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/CODING_AGENT_GUIDE.md), and the acceptance checklist is in [docs/MVP_COMPLETION_PLAN.md](docs/MVP_COMPLETION_PLAN.md).
-
-## MVP Scope
-
-The original MVP intentionally did not include authentication, payments,
-collaboration, WebSockets, automated drafting, machine learning, positional
-scarcity, roster optimization, or advanced draft strategy. The MVP is now
-complete (see `docs/MVP_COMPLETION_PLAN.md`); authentication, hosting, and
-multi-user collaboration are planned as later phases — see
-[`DEVELOPMENT_PLAN.md`](DEVELOPMENT_PLAN.md) for current scope and status.
-Payments, WebSockets, machine learning, and automated drafting remain out of
-scope entirely.
-
-## Shared Raspberry Pi Deployment
-
-The league shared instance runs on a Raspberry Pi 4 and is exposed via
-Tailscale Funnel. Its Compose file binds the app to loopback only and keeps
-the SQLite data in a named Docker volume. Follow the reproducible setup,
-update, recovery, and access-control instructions in [`deploy/pi/README.md`](deploy/pi/README.md).
-Copy deploy/pi/.env.example to deploy/pi/.env and set the real
-ALLOWED_USERNAMES value before starting it; do not commit that file or the
-Funnel URL.
+The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/CODING_AGENT_GUIDE.md).
 
 ## Support
 
