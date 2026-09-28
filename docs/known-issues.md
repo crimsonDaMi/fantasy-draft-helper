@@ -1,6 +1,8 @@
 # Known Issues and Evaluation Items
 
-This document tracks external limitations and unresolved behavior that affects the app. Resolved items stay here, marked as such, for reference. Product requirements and completion criteria belong in [`MVP_COMPLETION_PLAN.md`](MVP_COMPLETION_PLAN.md); this file records risks and the evidence still needed.
+Open external limitations and unverified behavior, with the evidence still
+needed. Remove an item once it is resolved — git history and
+`CHANGELOG.md` keep the record.
 
 ## Sleeper Draft Pick Propagation Delay
 
@@ -12,7 +14,7 @@ Sleeper may take several seconds to expose a pick through its API after the pick
 
 Recommendations are based on the latest picks returned by Sleeper. During a propagation delay, a recently drafted player may temporarily appear as available, and multiple picks may appear between refreshes.
 
-### Current MVP Decision
+### Current Decision
 
 The application uses the state returned by Sleeper and does not infer picks or attempt to predict unavailable players. The frontend should display the last successful refresh time and an understandable freshness or delayed-data state. Polling more frequently than the active-draft interval is unlikely to solve an upstream propagation delay.
 
@@ -36,20 +38,7 @@ Future evaluation may consider:
 
 - A visible "data may be delayed" indicator.
 - Detection of multiple newly returned picks.
-- A refresh timestamp or draft-version display.
 - Alternative Sleeper endpoints, if they are documented and demonstrably fresher.
-
-## Initial Player Cache Availability — resolved
-
-An early end-to-end import returned all players as unmatched on the first
-attempt and matched them on an immediate retry: the lazy Sleeper player
-cache hadn't finished loading before matching began.
-
-Fixed before v0.1.0 (commit `ad666b3`): `PlayerService.ensurePlayersLoaded`
-shares one in-flight load between concurrent callers, and
-`RankingImportService.importCsv` awaits it before matching. Covered by
-`player.service.test.ts` ("shares concurrent first cache loads") and
-`ranking-import.service.test.ts`.
 
 ## Sleeper Defense Representation
 

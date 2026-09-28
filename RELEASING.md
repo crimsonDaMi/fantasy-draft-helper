@@ -29,7 +29,7 @@ Standard path — from the repository root:
 pnpm release vX.Y.Z
 ```
 
-For example: `pnpm release v0.4.0`.
+For example: `pnpm release v1.1.0`.
 
 This runs `scripts/release.sh`, which:
 
@@ -72,37 +72,27 @@ root `package.json`'s version tracks releases.
 
 Released images are built for both `linux/amd64` and `linux/arm64` (via
 QEMU emulation in the GitHub Actions workflow), published under a single
-multi-arch manifest per tag. This is what lets the same
-`ghcr.io/crimsondami/fantasy-draft-helper:vX.Y.Z` tag run on both a
-typical x86 server/VM and ARM devices like a Raspberry Pi — Docker pulls
-the right architecture automatically. Building the `arm64` leg under
-emulation is noticeably slower than a native build, so expect release
-builds to take longer than a single-arch build would.
+multi-arch manifest per tag, so the same tag runs on x86 hosts and ARM
+devices like a Raspberry Pi. The emulated `arm64` build makes releases
+noticeably slower than a single-arch build.
 
-### What the script does, spelled out manually
+### Releasing by hand
 
-Useful if you need to release by hand (script unavailable, or a step needs
-manual intervention). Before tagging, do step 6 above by hand (version,
-compose pins, changelog heading) and commit it. Steps 1–2 replace the
-tagging part of `scripts/release.sh`;
-after pushing the tag, the GitHub Actions workflow still handles the build
-and push automatically — you shouldn't need step 3 unless Actions itself is
-unavailable.
+If the script is unavailable: do step 6 above by hand (root `package.json`
+version, both compose pins, the `CHANGELOG.md` heading), commit and push
+it, then tag and push the tag. The release workflow builds and publishes
+from there. Only if GitHub Actions itself is unavailable, build and push
+the image locally:
 
 ```bash
-# 1. Tag the source
-git tag v0.1.0
+git tag v1.1.0
 git push --tags
 
-# 2. Wait for .github/workflows/release.yml to build and push the image,
-#    or check the Actions tab if it doesn't appear to have triggered.
-
-# 3. Only if Actions is unavailable — build and push the image yourself:
+# Only if Actions is unavailable:
 docker build \
-  -t ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0 \
+  -t ghcr.io/crimsondami/fantasy-draft-helper:v1.1.0 \
   -t ghcr.io/crimsondami/fantasy-draft-helper:latest .
-
-docker push ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0
+docker push ghcr.io/crimsondami/fantasy-draft-helper:v1.1.0
 docker push ghcr.io/crimsondami/fantasy-draft-helper:latest
 ```
 
@@ -158,7 +148,7 @@ deployment running from a repository checkout updates with `git pull`:
 ```yaml
 services:
   draft-helper:
-    image: ghcr.io/crimsondami/fantasy-draft-helper:v0.1.0
+    image: ghcr.io/crimsondami/fantasy-draft-helper:v1.0.0
 ```
 
 **Schema changes.** There's no migration system, so a release that
