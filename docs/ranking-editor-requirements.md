@@ -1,7 +1,7 @@
 # Ranking Editor — Requirements
 
-**Status:** Complete. See [`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md)'s
-Phase 4 section for implementation and verification details.
+**Status:** Complete (v0.8.0). Implementation constraints are in
+[`ranking-editor-history.md`](ranking-editor-history.md).
 
 ## Context
 
@@ -10,11 +10,6 @@ folded into the existing draft-monitoring view. Drafting remains the app's
 primary purpose, but there's no need to support editing rankings and
 monitoring an active draft at the same time. The user can switch between
 the draft view and the ranking editor view.
-
-_(This amends the original framing, which assumed the editor lived inside
-the draft view — clarified during requirements validation: no
-simultaneous draft-monitoring + editing support is needed, at least for
-now, so a dedicated route is simpler and sufficient.)_
 
 ## Requirements
 
@@ -35,17 +30,15 @@ now, so a dedicated route is simpler and sufficient.)_
 
 4. **Tier boundaries.** The user can add and remove tier boundaries via
    explicit controls — a "+" control to insert a new, empty tier, and a
-   "remove tier" control on each tier group. (Considered but rejected: an
-   implicit drag-to-gap approach — fewer clicks, but less discoverable
-   and predictable than explicit controls.)
+   "remove tier" control on each tier group.
 
    - **Adding a boundary** does not affect other tiers' contents — the
      new tier starts empty, and the user populates it by dragging
      players in.
-   - **Removing a tier** merges its players into the tier below,
-     preserving their existing relative rank order and placing them
-     above that tier's existing players. Tier labels are then
-     recalculated per the labeling scheme (see below).
+   - **Removing a tier** merges its players into the tier below (the
+     last tier merges into the tier above instead). Every player keeps
+     their rank; tier labels are then recalculated per the labeling
+     scheme (see below).
 
 5. **Autosave.** Rankings update automatically after each drag-and-drop
    action — no separate save step.
@@ -121,25 +114,7 @@ UI escape hatch.
 
 - Tiers shown as groupings; each player shown by name and current rank.
 
-## Deferred, but tracked for the future
+## Deferred
 
-- **Keyboard-operable drag-and-drop fallback.** Not needed for the first
-  version (mouse-only input is acceptable), but noted explicitly so
-  accessibility isn't forgotten — should be picked up in a later pass.
-- **Touch support.** Not a requirement, but if the chosen drag-and-drop
-  approach/library handles touch input for free (some do, treating touch
-  and mouse drags uniformly), it should be taken — just not worth extra
-  implementation effort on its own.
-
-## Resolved (from earlier open-questions and proposals)
-
-- Numeric ↔ alphabetical tier mapping: `S` = 1, `A` = 2, `B` = 3, `C` = 4,
-  etc. — to be covered by proper test coverage given it's the one piece
-  of internal representation the app relies on being correct.
-- Tier-boundary add/remove UI: explicit "+" and "remove tier" controls,
-  not implicit drag-to-gap.
-- No debug/production split for the editor view.
-- Scale/performance: a plain scrollable list is sufficient — no
-  virtualization/pagination needed.
-- Live draft interaction: not applicable — the editor is a separate
-  route, not usable simultaneously with draft monitoring.
+Keyboard-operable drag-and-drop and touch support are tracked in
+[`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#deferred-ideas).
