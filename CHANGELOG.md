@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Changed
+
+- Player positions now have their own color-coded column in the draft
+  recommendations and the ranking editor, instead of being part of the
+  right-aligned "position · team" text.
+
 ## v1.1.0 — 2026-09-28
 
 ### Upgrading

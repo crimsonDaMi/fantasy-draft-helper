@@ -1,4 +1,4 @@
-const POSITIONS = ["QB", "RB", "WR", "TE", "K", "DEF"] as const;
+import { POSITIONS } from "../utils/positions";
 
 interface PositionFilterProps {
   selected: string[];

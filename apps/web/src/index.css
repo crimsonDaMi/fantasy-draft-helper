@@ -20,6 +20,19 @@
   --color-accent-text: #14211b;
   --color-danger: #e8623d;
 
+  /*
+    Position colors are fixed across themes: every theme has a dark
+    background (useTheme.ts deriveTokens), and these read well on all
+    of them.
+  */
+  --pos-qb: #fc2b6d;
+  --pos-rb: #20ceb8;
+  --pos-wr: #56c9f8;
+  --pos-te: #feae58;
+  --pos-k: #bd66ff;
+  --pos-def: #bf755d;
+  --pos-other: var(--color-text-muted);
+
   font: 17px/1.5 var(--font-body);
   font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
@@ -165,6 +178,17 @@ button {
   gap: 4px;
 }
 
+.hero__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero__title .position-badge {
+  font-size: 14px;
+  line-height: 22px;
+}
+
 .hero__name {
   font-family: var(--font-display);
   font-size: 24px;
@@ -174,6 +198,52 @@ button {
 .hero__meta {
   font-size: 15px;
   color: var(--color-text-muted);
+}
+
+/* Position badge */
+
+.position-badge {
+  --pos-color: var(--pos-other);
+  display: inline-block;
+  flex-shrink: 0;
+  width: 3.4em;
+  border: 1px solid color-mix(in srgb, var(--pos-color) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--pos-color) 18%, transparent);
+  color: var(--pos-color);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.position-badge:empty {
+  visibility: hidden;
+}
+
+.position-badge--qb {
+  --pos-color: var(--pos-qb);
+}
+
+.position-badge--rb {
+  --pos-color: var(--pos-rb);
+}
+
+.position-badge--wr {
+  --pos-color: var(--pos-wr);
+}
+
+.position-badge--te {
+  --pos-color: var(--pos-te);
+}
+
+.position-badge--k {
+  --pos-color: var(--pos-k);
+}
+
+.position-badge--def {
+  --pos-color: var(--pos-def);
 }
 
 /* Position filter */
@@ -233,7 +303,7 @@ button {
 
 .rec-list__row {
   display: grid;
-  grid-template-columns: 2.5em 1fr auto;
+  grid-template-columns: 2.5em auto 1fr auto;
   gap: 12px;
   align-items: baseline;
   padding: 10px 4px;
@@ -657,6 +727,8 @@ button {
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  /* Fixed width so the position badge column lines up from #1 to #999. */
+  min-width: 3em;
 }
 
 /* Rows are virtualized at a fixed PLAYER_ROW_HEIGHT, so a wrapped name
