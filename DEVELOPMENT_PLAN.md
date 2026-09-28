@@ -46,6 +46,10 @@ rankings and roster optimization stay out of scope.
 - **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
 - **Touch support** in the ranking editor — worth taking only if it comes
   cheaply from the drag-and-drop library.
+- **Wide-screen draft layout**: use the space beside the page on large
+  screens — recommendations stay centered, with My team, recent picks,
+  and tier counts in side columns — so everything is visible at a glance
+  without scrolling. The page is capped at 640px today.
 - **Traded picks and auctions** for "you pick in N": the pick order is
   computed from the draft type and slot, so traded picks aren't reflected
   and auctions show no next pick. Sleeper exposes traded picks at
