@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.1.0 — 2026-09-28
+
 ### Upgrading
 
 - **Shared-instance deployments only:** `deploy/pi/` moved to
