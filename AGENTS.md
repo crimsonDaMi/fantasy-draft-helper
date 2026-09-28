@@ -36,8 +36,11 @@ New feature work needs its scope confirmed with the user before starting.
   preserves such blank lines rather than removing them, so this is by
   convention only
 - Guardrails belong in local scripts, not offloaded entirely to CI
-- Don't commit, create branches, reset the worktree, or revert user
-  changes unless explicitly asked
+- Agents may commit on their own once a meaningful change set is complete
+  and passes the verification gate below — one commit per concern, never
+  a work-in-progress commit. Never push; the user reviews and pushes
+- Don't create branches, reset the worktree, or revert user changes
+  unless explicitly asked
 - A change isn't done until it passes the full verification gate below —
   not just the test suite
 
