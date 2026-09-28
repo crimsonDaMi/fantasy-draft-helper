@@ -23,6 +23,7 @@ export interface EditorPlayer {
   fullName: string;
   position?: string;
   team?: string;
+  injuryStatus?: string;
   /** True 1..N position across the whole ranking (not tier-local), as
    * persisted by the backend. Undefined for unranked players. Baked
    * in once per settled server sync in buildContainers — never
@@ -40,6 +41,7 @@ function toEditorPlayer(player: ApiPlayer, globalRank?: number): EditorPlayer {
     fullName: player.fullName,
     position: player.position,
     team: player.team,
+    injuryStatus: player.injuryStatus,
     globalRank,
   };
 }
@@ -209,8 +211,9 @@ export function filterPlayersByPosition(
   );
 }
 
-/** Case-insensitive name/team substring search — used only for the
- * unranked panel. Same no-op-when-empty behavior as above. */
+/** Case-insensitive name/team substring search, for the tiers and the
+ * unranked panel (each with its own query). Same no-op-when-empty
+ * behavior as above. */
 export function filterPlayersByQuery(
   players: EditorPlayer[],
   query: string,

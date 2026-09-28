@@ -114,6 +114,9 @@ export function RankingEditorPage() {
     useState<number>();
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [unrankedSearch, setUnrankedSearch] = useState("");
+  // Separate from the unranked search on purpose: finding a player to
+  // drag in shouldn't also hide the tier rows you want to drop between.
+  const [rankedSearch, setRankedSearch] = useState("");
 
   // Re-derive local drag state from the server whenever a *new* server
   // snapshot arrives, using React's render-time "adjusting state when a
@@ -362,6 +365,14 @@ export function RankingEditorPage() {
           selected={positionFilter}
           onChange={setPositionFilter}
         />
+        <input
+          type="search"
+          className="search-input ranking-editor__ranked-search"
+          placeholder="Search ranked players…"
+          value={rankedSearch}
+          onChange={(event) => setRankedSearch(event.target.value)}
+          aria-label="Search ranked players"
+        />
       </div>
 
       {(!hasAnyRankedPlayers || hasOnlyOneTier) && (
@@ -413,9 +424,12 @@ export function RankingEditorPage() {
                     tier.position,
                     tierDisplayMode,
                   )}
-                  players={filterPlayersByPosition(
-                    containers[tier.label] ?? [],
-                    positionFilter,
+                  players={filterPlayersByQuery(
+                    filterPlayersByPosition(
+                      containers[tier.label] ?? [],
+                      positionFilter,
+                    ),
+                    rankedSearch,
                   )}
                   showRank
                   className="ranking-editor__tier"
@@ -453,7 +467,7 @@ export function RankingEditorPage() {
             <div className="ranking-editor__unranked-search-wrap">
               <input
                 type="search"
-                className="ranking-editor__unranked-search"
+                className="search-input"
                 placeholder="Search unranked players…"
                 value={unrankedSearch}
                 onChange={(event) => setUnrankedSearch(event.target.value)}

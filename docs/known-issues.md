@@ -52,3 +52,13 @@ Before relying on name-based defense matching, verify against the live Sleeper p
 - Whether common ranking names match Sleeper names.
 
 The CSV parser accepts `DEF`, but defense matching should be covered by fixtures once the Sleeper representation is confirmed.
+
+## Injury Status Freshness
+
+Injury badges come from Sleeper's player dataset (`/players/nfl`), which the
+API loads once and refreshes at most every 24 hours — as Sleeper's docs ask.
+A status change during that window (e.g. a player ruled out the morning of
+the draft) is not reflected until the next refresh or an API restart.
+
+Status: accepted limitation. Stored rankings don't freeze the status at
+import time; it is always read from the current player cache.

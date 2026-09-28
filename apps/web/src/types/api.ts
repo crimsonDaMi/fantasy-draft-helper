@@ -3,6 +3,7 @@ export interface ApiPlayer {
   fullName: string;
   team?: string;
   position?: string;
+  injuryStatus?: string;
 }
 
 export interface ApiRecommendation {
@@ -31,6 +32,57 @@ export interface RecommendationsResponse {
   generatedAt: string;
   recommendationCount: number;
   recommendations: ApiRecommendation[];
+  draft: ApiDraftInfo;
+  picks: ApiDraftPick[];
+  tierCounts: ApiPositionTierCounts[];
+}
+
+export interface ApiDraftInfo {
+  name?: string;
+  /** `snake`, `linear`, or `auction`. */
+  type?: string;
+  teams?: number;
+  rounds?: number;
+  reversalRound?: number;
+  /** Sleeper user ID → draft slot (1-based). */
+  draftOrder?: Record<string, number>;
+  /** Lineup slot → count, e.g. `{ QB: 1, SUPER_FLEX: 1, BN: 6 }`. */
+  rosterSlots: Record<string, number>;
+}
+
+export interface ApiDraftPick {
+  pickNo: number;
+  round?: number;
+  draftSlot?: number;
+  pickedBy?: string;
+  playerId: string;
+  playerName?: string;
+  position?: string;
+  team?: string;
+  /** Where the player sat in your ranking, when they were in it. */
+  rank?: number;
+  tier?: string;
+  adp?: number;
+}
+
+export interface ApiPositionTierCounts {
+  position: string;
+  tiers: { tier: string; remaining: number }[];
+}
+
+export interface ApiUserDraft {
+  draftId: string;
+  name?: string;
+  status: DraftStatus;
+  type?: string;
+  teams?: number;
+  season: string;
+  startTime?: number | null;
+}
+
+export interface UserDraftsResponse {
+  sleeperUserId: string;
+  drafts: ApiUserDraft[];
 }
 
 export interface RankingImportSummary {

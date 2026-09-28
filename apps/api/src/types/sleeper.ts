@@ -10,6 +10,13 @@ export interface SleeperDraft {
   last_message_time?: number | null;
   settings?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  draft_order?: Record<string, number> | null;
+}
+
+export interface SleeperUser {
+  user_id: string;
+  username?: string;
+  display_name?: string;
 }
 
 export interface SleeperDraftPick {
@@ -38,6 +45,7 @@ export interface SleeperPlayer {
   position?: string | null;
   team?: string | null;
   status?: string | null;
+  injury_status?: string | null;
   active?: boolean;
   sport?: string;
   fantasy_positions?: string[] | null;

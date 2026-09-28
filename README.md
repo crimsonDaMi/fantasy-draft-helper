@@ -14,18 +14,31 @@ React web app -> Fastify API -> Sleeper API
   with a report of matched, unmatched, and ambiguous players.
 - Monitor a Sleeper draft with status-aware polling and see the top available
   players in your ranking order, drafted players excluded.
-- Filter recommendations by position.
+- Filter recommendations by position and search them by name or team.
+- Injury status badges (Q, D, O, IR, …) next to players.
+- Find a draft by Sleeper username instead of pasting its ID (mock drafts,
+  which Sleeper doesn't list, take a pasted draft link or ID); the
+  monitored draft is remembered across page reloads.
+- "My team" panel: when you pick next, your drafted players, and how they
+  fill your league's lineup slots (e.g. `QB 1/1 · SF 0/1`).
+- Recent picks, each with where you ranked the player (reaches and steals
+  highlighted), and the positional run of the last 8 picks.
+- Players left in the best remaining tiers of your ranking, per position.
+- A draft recap once the draft completes: your picks against your ranking
+  and ADP, downloadable as a CSV.
 - ADP vs. personal ranking diff, sourced from Sleeper's publicly-shared ADP
   sheet — see "ADP Data Source" below.
 - Drag-and-drop ranking editor at `/rankings/edit`: reorder players, move
-  them between tiers, add/remove tiers, build a ranking from scratch, and
-  export it as a CSV.
+  them between tiers, add/remove tiers, search, build a ranking from
+  scratch, and export it as a CSV.
 - Username/password authentication with a username allowlist; rankings are
   scoped per user.
 - Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
 - Switchable team-inspired color themes.
 
-Out of scope: payments, WebSockets, machine learning, and automated drafting.
+Out of scope: payments, WebSockets, machine learning, automated drafting,
+and pick suggestions based on scarcity or roster optimization (the tier
+counts and roster slots above are informational only).
 
 ## Installation
 
@@ -217,6 +230,16 @@ usernames on the server's allowlist (see "Authentication Setup" below).
 All other API routes (`/rankings`, `/drafts`, `/players`) require a valid
 session cookie; `/health` and `/auth/*` remain open.
 
+### Find drafts by Sleeper username
+
+```text
+GET /drafts?username=<sleeper username>&season=2026
+```
+
+Returns `{ sleeperUserId, drafts: [...] }` — the user's NFL drafts for the
+season (default: the current year), newest first. `404` with
+`SLEEPER_USER_NOT_FOUND` for an unknown username.
+
 ### Get a draft
 
 ```text
@@ -228,8 +251,18 @@ Returns normalized draft metadata, including `PRE_DRAFT`, `DRAFTING`, `COMPLETE`
 ### Get recommendations
 
 ```text
-GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20
+GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20&positions=QB,RB&q=<search>
 ```
+
+`positions` and `q` (a case-insensitive name/team search) are optional and
+are applied before `limit`.
+
+Besides the recommendations, the response carries what the draft-day
+panels need: `draft` (type, teams, rounds, reversal round, draft order,
+and lineup slots), `picks` (every pick made, each with the player's rank,
+tier, and ADP from your ranking when available), and `tierCounts`
+(players left in the best two remaining tiers of your ranking, per
+position — unaffected by `positions`, `q`, and `limit`).
 
 The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations.
 

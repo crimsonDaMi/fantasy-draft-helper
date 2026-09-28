@@ -16,6 +16,7 @@ import type {
   SleeperDraft,
   SleeperDraftPick,
   SleeperPlayersResponse,
+  SleeperUser,
 } from "./types/sleeper.js";
 import { UserRepository } from "./repositories/user.repository.js";
 
@@ -29,6 +30,30 @@ function createFixtureClient() {
         season: "2026",
       }) satisfies SleeperDraft,
     getDraftPicks: async () => [] as SleeperDraftPick[],
+    getUser: async (username: string) =>
+      username === "sleeperuser"
+        ? ({ user_id: "sleeper-user-1" } satisfies SleeperUser)
+        : null,
+    getUserDrafts: async () =>
+      [
+        {
+          draft_id: "draft-older",
+          status: "complete",
+          sport: "nfl",
+          season: "2026",
+          start_time: 1,
+        },
+        {
+          draft_id: "draft-newer",
+          status: "pre_draft",
+          sport: "nfl",
+          season: "2026",
+          type: "snake",
+          start_time: 2,
+          metadata: { name: "Test League" },
+          settings: { teams: 12 },
+        },
+      ] satisfies SleeperDraft[],
     getNFLPlayers: async () =>
       ({
         "1": {
@@ -62,6 +87,7 @@ function createTestDependencies(): AppDependencies {
   const authService = new AuthService(new UserRepository(":memory:"), [
     "alice",
     "bob",
+    "testuser",
   ]);
   const rankingRepository = new RankingRepository(":memory:");
   const rankingStoreService = new RankingStoreService(rankingRepository);
@@ -78,6 +104,7 @@ function createTestDependencies(): AppDependencies {
     draftStateService,
     rankingStoreService,
     noopAdpService as never,
+    playerService,
   );
 
   return {
@@ -379,4 +406,73 @@ describe("CORS (cross-origin dev setup)", () => {
       dependencies.rankingStoreService.close();
     },
   );
+});
+
+describe("finding drafts by Sleeper username", () => {
+  it("lists the user's drafts, newest first", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+    const { cookie } = await registerUser(app, "testuser");
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts?username=sleeperuser&season=2026",
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      sleeperUserId: "sleeper-user-1",
+      drafts: [
+        {
+          draftId: "draft-newer",
+          name: "Test League",
+          status: "PRE_DRAFT",
+          type: "snake",
+          teams: 12,
+          season: "2026",
+          startTime: 2,
+        },
+        {
+          draftId: "draft-older",
+          status: "COMPLETE",
+          season: "2026",
+          startTime: 1,
+        },
+      ],
+    });
+
+    dependencies.rankingStoreService.close();
+  });
+
+  it("returns 404 for an unknown Sleeper user", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+    const { cookie } = await registerUser(app, "testuser");
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts?username=nobody",
+      headers: { cookie },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json().error).toBe("SLEEPER_USER_NOT_FOUND");
+
+    dependencies.rankingStoreService.close();
+  });
+
+  it("requires a login", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts?username=sleeperuser",
+    });
+
+    expect(response.statusCode).toBe(401);
+
+    dependencies.rankingStoreService.close();
+  });
 });

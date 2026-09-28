@@ -24,6 +24,7 @@ item needs its scope confirmed with the user before work starts.
 | Per-user data separation and multi-user support             | v0.7.0  |
 | Ranking editor ([history](docs/ranking-editor-history.md))  | v0.8.x  |
 | v1.0 hardening (schema guardrail, CSV export, auth lockout) | v1.0.0  |
+| Draft-day panels, search, injuries, draft lookup, recap     | Unrel.  |
 
 ## Out of scope
 
@@ -32,10 +33,21 @@ scarcity, value-over-replacement, roster optimization, advanced draft
 strategy, and acting on Sleeper on the user's behalf. Do not add these
 without an explicit request.
 
+Two of these are in scope only in a light, informational form, agreed
+with the user: **positional scarcity** as counts of players left per tier
+of the user's own ranking plus a recent-picks positional run, and
+**roster needs** as filled vs. required lineup slots. Neither may reorder,
+weight, or filter recommendations or suggest a pick — scarcity-weighted
+rankings and roster optimization stay out of scope.
+
 ## Deferred ideas
 
 - **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
 - **Touch support** in the ranking editor — worth taking only if it comes
   cheaply from the drag-and-drop library.
+- **Traded picks and auctions** for "you pick in N": the pick order is
+  computed from the draft type and slot, so traded picks aren't reflected
+  and auctions show no next pick. Sleeper exposes traded picks at
+  `/draft/{draft_id}/traded_picks` if this is ever needed.
 - **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
   pick propagation delay and team defense (`DEF`) matching.

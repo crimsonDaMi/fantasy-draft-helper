@@ -38,12 +38,22 @@ export function useDraftRecommendations(
   draftId?: string,
   rankingId?: string,
   positions?: string[],
+  searchQuery?: string,
 ): UseDraftRecommendationsResult {
   const isEnabled = Boolean(draftId && rankingId);
 
   const query = useQuery({
-    queryKey: queryKeys.recommendations(draftId, rankingId, positions),
-    queryFn: () => getRecommendations(draftId!, rankingId!, { positions }),
+    queryKey: queryKeys.recommendations(
+      draftId,
+      rankingId,
+      positions,
+      searchQuery,
+    ),
+    queryFn: () =>
+      getRecommendations(draftId!, rankingId!, {
+        positions,
+        query: searchQuery,
+      }),
     enabled: isEnabled,
     placeholderData: keepPreviousData,
     retry: (failureCount, error) => {

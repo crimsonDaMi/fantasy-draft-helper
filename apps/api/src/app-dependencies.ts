@@ -83,6 +83,7 @@ export function createAppDependencies(
     draftStateService,
     rankingStoreService,
     adpService,
+    playerService,
   );
 
   return {

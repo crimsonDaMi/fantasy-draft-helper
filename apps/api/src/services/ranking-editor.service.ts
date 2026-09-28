@@ -3,6 +3,7 @@ import { PlayerMatch } from "../domain/player-match.js";
 import { Player } from "../domain/player.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { RankingRepository } from "../repositories/ranking.repository.js";
+import { withLiveInjuryStatus } from "../utils/with-live-injury-status.js";
 import { NotFoundError } from "../utils/domain-errors.js";
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 import { PlayerService } from "./player.service.js";
@@ -50,12 +51,14 @@ export class RankingEditorService {
       };
     }
 
-    return this.repository.movePlayer(
-      rankingId,
-      sleeperId,
-      targetRank,
-      targetTier,
-      newMatch,
+    return this.withLiveStatus(
+      this.repository.movePlayer(
+        rankingId,
+        sleeperId,
+        targetRank,
+        targetTier,
+        newMatch,
+      ),
     );
   }
 
@@ -66,7 +69,9 @@ export class RankingEditorService {
   ): PlayerMatch[] {
     this.assertOwnership(rankingId, userId);
 
-    return this.repository.removePlayer(rankingId, sleeperId);
+    return this.withLiveStatus(
+      this.repository.removePlayer(rankingId, sleeperId),
+    );
   }
 
   insertTier(
@@ -130,9 +135,19 @@ export class RankingEditorService {
     this.assertOwnership(rankingId, userId);
 
     return {
-      players: this.repository.getMatches(rankingId, userId),
+      players: this.withLiveStatus(
+        this.repository.getMatches(rankingId, userId),
+      ),
       tiers: this.repository.getTiers(rankingId),
     };
+  }
+
+  private withLiveStatus(matches: PlayerMatch[]): PlayerMatch[] {
+    return matches.map((match) =>
+      withLiveInjuryStatus(match, (sleeperId) =>
+        this.playerService.getPlayerById(sleeperId),
+      ),
+    );
   }
 
   private assertOwnership(rankingId: string, userId: string): void {

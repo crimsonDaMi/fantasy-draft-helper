@@ -12,5 +12,6 @@ export const queryKeys = {
     draftId: string | undefined,
     rankingId: string | undefined,
     positions: string[] | undefined,
-  ) => ["recommendations", draftId, rankingId, positions] as const,
+    query: string | undefined,
+  ) => ["recommendations", draftId, rankingId, positions, query] as const,
 };

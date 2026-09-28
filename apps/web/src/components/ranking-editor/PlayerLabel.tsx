@@ -1,3 +1,4 @@
+import { InjuryBadge } from "../InjuryBadge";
 import { PositionBadge } from "../PositionBadge";
 import type { EditorPlayer } from "../ranking-editor-logic";
 
@@ -19,6 +20,7 @@ export function PlayerLabel({
       >
         {player.fullName}
       </span>
+      <InjuryBadge status={player.injuryStatus} />
       <span className="ranking-editor__meta">{player.team}</span>
     </>
   );

@@ -6,6 +6,7 @@ export interface Player {
   position?: string;
   team?: string;
   status?: string;
+  injuryStatus?: string;
   active: boolean;
   fantasyPositions: string[];
 }

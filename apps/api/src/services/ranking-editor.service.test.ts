@@ -176,6 +176,38 @@ describe("RankingEditorService", () => {
         "Ranking was not found",
       );
     });
+
+    it("reports the live injury status, not the imported snapshot", () => {
+      const repository = new RankingRepository(":memory:");
+
+      const stale = match(1, "S", "1");
+      const rankingId = repository.create(
+        [
+          { ...stale, player: { ...stale.player!, injuryStatus: "Out" } },
+          match(2, "S", "2"),
+        ],
+        USER_ID,
+      );
+
+      const playerService = createFixturePlayerService({
+        getPlayerById: (id: string) =>
+          id === "2"
+            ? { ...createFantasyPlayer("2", "Player 2"), injuryStatus: "IR" }
+            : createFantasyPlayer(id, `Player ${id}`),
+      });
+
+      const service = new RankingEditorService(
+        repository,
+        playerService as never,
+      );
+
+      const result = service.getRanking(rankingId, USER_ID);
+
+      expect(result.players.map((m) => m.player?.injuryStatus)).toEqual([
+        undefined,
+        "IR",
+      ]);
+    });
   });
 
   describe("removePlayer", () => {

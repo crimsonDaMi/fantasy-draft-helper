@@ -11,6 +11,7 @@ export function mapSleeperPlayer(player: SleeperPlayer): Player {
     position: player.position ?? undefined,
     team: player.team ?? undefined,
     status: player.status ?? undefined,
+    injuryStatus: player.injury_status ?? undefined,
     active: player.active ?? false,
     fantasyPositions: player.fantasy_positions ?? [],
   };

@@ -129,6 +129,7 @@ function createRecommendationFixture(fixture: DraftFixture) {
       draftStateService,
       rankingStore,
       noopAdpService as never,
+      playerService,
     ),
   };
 }

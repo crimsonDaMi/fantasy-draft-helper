@@ -1,4 +1,5 @@
 import type { ApiRecommendation } from "../types/api";
+import { InjuryBadge } from "./InjuryBadge";
 import { PositionBadge } from "./PositionBadge";
 
 interface RecommendationsListProps {
@@ -63,6 +64,7 @@ export function RecommendationsList({
           <span className="hero__title">
             <PositionBadge position={topPick.player.position} />
             <span className="hero__name">{topPick.player.fullName}</span>
+            <InjuryBadge status={topPick.player.injuryStatus} />
           </span>
           <span className="hero__meta">
             <PlayerMeta recommendation={topPick} />
@@ -77,7 +79,8 @@ export function RecommendationsList({
               <span className="rec-list__rank">#{recommendation.rank}</span>
               <PositionBadge position={recommendation.player.position} />
               <span className="rec-list__name">
-                {recommendation.player.fullName}
+                {recommendation.player.fullName}{" "}
+                <InjuryBadge status={recommendation.player.injuryStatus} />
               </span>
               <span className="rec-list__meta">
                 <PlayerMeta recommendation={recommendation} />

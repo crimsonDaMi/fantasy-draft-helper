@@ -2,6 +2,7 @@ import {
   SleeperDraft,
   SleeperDraftPick,
   SleeperPlayersResponse,
+  SleeperUser,
 } from "../types/sleeper.js";
 import { HttpError } from "../utils/http-error.js";
 
@@ -14,6 +15,19 @@ export class SleeperClient {
 
   async getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {
     return this.get<SleeperDraftPick[]>(`/draft/${draftId}/picks`);
+  }
+
+  /** Resolves to `null` for an unknown username (Sleeper answers 200). */
+  async getUser(username: string): Promise<SleeperUser | null> {
+    return this.get<SleeperUser | null>(
+      `/user/${encodeURIComponent(username)}`,
+    );
+  }
+
+  async getUserDrafts(userId: string, season: string): Promise<SleeperDraft[]> {
+    return this.get<SleeperDraft[]>(
+      `/user/${encodeURIComponent(userId)}/drafts/nfl/${encodeURIComponent(season)}`,
+    );
   }
 
   async getNFLPlayers(): Promise<SleeperPlayersResponse> {

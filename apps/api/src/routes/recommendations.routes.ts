@@ -24,6 +24,7 @@ const recommendationsQuerySchema = z.object({
             .filter(Boolean)
         : undefined,
     ),
+  q: z.string().trim().max(50).optional(),
 });
 
 export function createRecommendationsRoutes(
@@ -43,9 +44,8 @@ export function createRecommendationsRoutes(
 
       const { draftId } = draftParamsSchema.parse(request.params);
 
-      const { rankingId, limit, positions } = recommendationsQuerySchema.parse(
-        request.query,
-      );
+      const { rankingId, limit, positions, q } =
+        recommendationsQuerySchema.parse(request.query);
 
       if (!rankingStoreService.hasRanking(rankingId, userId)) {
         return reply.status(404).send({
@@ -60,6 +60,7 @@ export function createRecommendationsRoutes(
         userId,
         limit,
         positions,
+        q,
       );
 
       return mapRecommendationsResponse(draftId, result);

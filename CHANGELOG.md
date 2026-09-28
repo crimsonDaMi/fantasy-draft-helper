@@ -9,6 +9,25 @@ See `RELEASING.md`.
 
 ### Added
 
+- The monitored draft is remembered across page reloads; "Stop monitoring"
+  in Draft setup forgets it.
+- Find your draft by Sleeper username and season instead of pasting its
+  ID. Mock drafts aren't listed by Sleeper, so for those paste the draft's
+  link (or ID): the ID is taken from the link.
+- "My team" panel: when you pick next ("You pick in 4 (2.03)"), your
+  drafted players by position, and how they fill your league's lineup
+  slots. Your slot comes from Sleeper's draft order when the draft was
+  found by username; otherwise pick it by hand.
+- Recent picks, each with your rank for the player (reaches and steals
+  highlighted), and the positional run of the last 8 picks.
+- Players left in the best remaining tiers of your ranking, per position.
+- Draft recap once the draft completes: your picks against your ranking
+  and ADP, downloadable as a CSV.
+- Search available players by name or team on the draft page, and search
+  ranked players in the ranking editor (the unranked panel keeps its own
+  search).
+- Injury status badges (Q, D, O, IR, …) next to players in the
+  recommendations and the ranking editor.
 - Ranking CSV import accepts FantasyPros-style exports: `RK`,
   `PLAYER NAME`, `POS`, and `TIERS` headers, positional ranks like `RB12`,
   and `DST`/`D/ST` for defenses.

@@ -60,6 +60,26 @@ const recommendationResult = {
       },
     },
   ],
+  draft: {
+    id: "draft-1",
+    status: "DRAFTING",
+    sport: "nfl",
+    season: "2026",
+    type: "snake",
+    teams: 12,
+    rosterSlots: { QB: 1 },
+  },
+  picks: [
+    {
+      playerId: "9",
+      pickNo: 4,
+      round: 1,
+      draftSlot: 4,
+      playerName: "Player Nine",
+      rank: 3,
+    },
+  ],
+  tierCounts: [{ position: "QB", tiers: [{ tier: "A", remaining: 1 }] }],
   draftedPlayerCount: 4,
   draftStatus: "DRAFTING",
   totalPicks: 4,
@@ -107,6 +127,22 @@ describe("recommendations routes", () => {
           },
         },
       ],
+      draft: {
+        type: "snake",
+        teams: 12,
+        rosterSlots: { QB: 1 },
+      },
+      picks: [
+        {
+          pickNo: 4,
+          round: 1,
+          draftSlot: 4,
+          playerId: "9",
+          playerName: "Player Nine",
+          rank: 3,
+        },
+      ],
+      tierCounts: [{ position: "QB", tiers: [{ tier: "A", remaining: 1 }] }],
     });
 
     await app.close();
@@ -243,6 +279,7 @@ describe("recommendations routes", () => {
       TEST_USER.id,
       20,
       ["RB", "WR"],
+      undefined,
     );
 
     await app.close();
@@ -284,6 +321,45 @@ describe("recommendations routes", () => {
       TEST_USER.id,
       20,
       undefined,
+      undefined,
+    );
+
+    await app.close();
+  });
+
+  it("trims and forwards the search query", async () => {
+    const app = Fastify();
+
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+
+    const getRecommendations = vi.fn(async () => recommendationResult);
+
+    app.register(
+      createRecommendationsRoutes(
+        { getRecommendations } as never,
+        {
+          hasRankings: () => true,
+          hasRanking: () => true,
+        } as never,
+      ),
+    );
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts/draft-1/recommendations?rankingId=ranking-1&q=%20smith%20",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(getRecommendations).toHaveBeenCalledWith(
+      "draft-1",
+      "ranking-1",
+      TEST_USER.id,
+      20,
+      undefined,
+      "smith",
     );
 
     await app.close();

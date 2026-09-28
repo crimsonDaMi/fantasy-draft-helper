@@ -6,6 +6,7 @@ import type {
   RankingStatusResponse,
   RankingTierDto,
   RecommendationsResponse,
+  UserDraftsResponse,
 } from "../types/api";
 
 const API_BASE_URL =
@@ -112,6 +113,7 @@ export function createEmptyRanking(): Promise<{ rankingId: string }> {
 export interface GetRecommendationsOptions {
   limit?: number;
   positions?: string[];
+  query?: string;
 }
 
 export function getRecommendations(
@@ -119,7 +121,7 @@ export function getRecommendations(
   rankingId: string,
   options: GetRecommendationsOptions = {},
 ): Promise<RecommendationsResponse> {
-  const { limit = 20, positions } = options;
+  const { limit = 20, positions, query } = options;
 
   const params = new URLSearchParams({
     rankingId,
@@ -130,9 +132,22 @@ export function getRecommendations(
     params.set("positions", positions.join(","));
   }
 
+  if (query && query.trim() !== "") {
+    params.set("q", query.trim());
+  }
+
   const recommendationsPath = path`/drafts/${draftId}/recommendations`;
 
   return request(`${recommendationsPath}?${params.toString()}`);
+}
+
+export function findUserDrafts(
+  username: string,
+  season: string,
+): Promise<UserDraftsResponse> {
+  const params = new URLSearchParams({ username, season });
+
+  return request(`/drafts?${params.toString()}`);
 }
 
 export interface AuthUser {

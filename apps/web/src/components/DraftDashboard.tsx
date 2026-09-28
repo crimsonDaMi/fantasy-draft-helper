@@ -2,22 +2,39 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { DraftForm } from "./DraftForm";
+import { DraftRecap } from "./DraftRecap";
+import { MyTeamPanel } from "./MyTeamPanel";
+import { RecentPicks } from "./RecentPicks";
+import { TierCounts } from "./TierCounts";
 import { MonitoringStatus } from "./MonitoringStatus";
 import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
 import { getRankingsStatus } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { RankingImportSummary } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
+import { currentPickNo, picksForSlot } from "../utils/draft-order";
+import {
+  clearStoredDraft,
+  readStoredDraft,
+  type StoredDraft,
+  writeStoredDraft,
+} from "../utils/stored-draft";
 
 export function DraftDashboard() {
-  const [draftId, setDraftId] = useState<string>();
+  const [storedDraft, setStoredDraft] = useState(readStoredDraft);
+  const draftId = storedDraft?.draftId;
   const [rankingId, setRankingId] = useState<string>();
   const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
   const [positions, setPositions] = useState<string[]>([]);
-  const [setupOpen, setSetupOpen] = useState(true);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
+  // A draft restored from a previous page load resumes monitoring, so
+  // setup starts collapsed just like after pressing Start.
+  const [setupOpen, setSetupOpen] = useState(draftId === undefined);
 
   const statusQuery = useQuery({
     queryKey: queryKeys.rankingStatus(),
@@ -30,7 +47,34 @@ export function DraftDashboard() {
   const effectiveRankingId = rankingId ?? statusQuery.data?.rankingId;
 
   const { data, error, isLoading, pollingIntervalMs, retry } =
-    useDraftRecommendations(draftId, effectiveRankingId, positions);
+    useDraftRecommendations(
+      draftId,
+      effectiveRankingId,
+      positions,
+      debouncedSearch,
+    );
+
+  function updateStoredDraft(next: StoredDraft | undefined) {
+    setStoredDraft(next);
+    if (next) {
+      writeStoredDraft(next);
+    } else {
+      clearStoredDraft();
+    }
+  }
+
+  // Sleeper's draft order wins once it's set (it's randomized shortly
+  // before the draft); until then, or without a known Sleeper user, the
+  // slot the user picked by hand.
+  const sleeperUserId = storedDraft?.sleeperUserId;
+  const sleeperSlot = sleeperUserId
+    ? data?.draft.draftOrder?.[sleeperUserId]
+    : undefined;
+  const mySlot = sleeperSlot ?? storedDraft?.draftSlot;
+  const myPicks =
+    data && mySlot !== undefined
+      ? picksForSlot(data.picks, mySlot, sleeperUserId)
+      : [];
 
   return (
     <>
@@ -50,10 +94,44 @@ export function DraftDashboard() {
       />
 
       {data && (
-        <>
-          <PositionFilter selected={positions} onChange={setPositions} />
-          <RecommendationsList recommendations={data.recommendations} />
-        </>
+        <div className="draft-board">
+          <MyTeamPanel
+            draft={data.draft}
+            draftStatus={data.draftStatus}
+            currentPickNo={currentPickNo(data.picks)}
+            slot={mySlot}
+            slotFromSleeper={sleeperSlot !== undefined}
+            myPicks={myPicks}
+            onSlotChange={(draftSlot) =>
+              storedDraft && updateStoredDraft({ ...storedDraft, draftSlot })
+            }
+          />
+          <div className="draft-board__main">
+            {data.draftStatus === "COMPLETE" ? (
+              <DraftRecap draft={data.draft} myPicks={myPicks} />
+            ) : (
+              <>
+                <div className="recommendation-filters">
+                  <PositionFilter
+                    selected={positions}
+                    onChange={setPositions}
+                  />
+                  <input
+                    type="search"
+                    className="search-input recommendation-filters__search"
+                    placeholder="Search available players…"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    aria-label="Search available players"
+                  />
+                </div>
+                <TierCounts counts={data.tierCounts} />
+                <RecommendationsList recommendations={data.recommendations} />
+              </>
+            )}
+          </div>
+          <RecentPicks picks={data.picks} teams={data.draft.teams} />
+        </div>
       )}
 
       <details
@@ -97,8 +175,9 @@ export function DraftDashboard() {
           )}
 
           <DraftForm
-            onSubmit={(id) => {
-              setDraftId(id);
+            initialDraftId={draftId}
+            onSubmit={(selection) => {
+              updateStoredDraft(selection);
               // Monitoring can start as soon as any ranking is available —
               // imported just now or saved from an earlier session.
               if (effectiveRankingId) {
@@ -106,6 +185,12 @@ export function DraftDashboard() {
               }
             }}
           />
+
+          {draftId && (
+            <button type="button" onClick={() => updateStoredDraft(undefined)}>
+              Stop monitoring
+            </button>
+          )}
         </div>
       </details>
     </>

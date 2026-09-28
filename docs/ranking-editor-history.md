@@ -39,6 +39,9 @@ so only visible rows plus overscan are mounted.
 - The filter helpers (name search, global position filter) return the
   original array reference when no filter is active, to avoid per-dragover
   work.
+- There are two name searches on purpose: one for the tiers and one for
+  the unranked panel. A single shared query would hide the tier rows you
+  want to drop a searched-for unranked player between.
 
 Any change to how containers render must preserve all of this.
 
