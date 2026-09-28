@@ -62,9 +62,10 @@ the draft view and the ranking editor view.
 8. **Removing a player.** Dragging a ranked player into the unranked area
    removes them from the ranking.
 
-9. **Re-importing.** Uploading a new ranking CSV while the editor is open
-   **fully replaces** the user's existing ranking — no merge with
-   in-progress manual edits.
+9. **Re-importing.** Uploading a new ranking CSV never merges with
+   in-progress manual edits. Originally it replaced the user's ranking;
+   since multiple saved rankings were added it creates an additional
+   ranking (named after the file), and the existing ones are kept.
 
 ## Tier labeling scheme
 

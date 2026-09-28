@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
+import { PLAYER_FLAGS } from "../domain/player-flag.js";
 import { RankingEditorService } from "../services/ranking-editor.service.js";
 import { requireUser } from "../utils/require-user.js";
 
@@ -19,6 +20,10 @@ const tierParamsSchema = rankingParamsSchema.extend({
 const movePlayerBodySchema = z.object({
   rank: z.number().int().min(1),
   tier: z.string().min(1),
+});
+
+const setFlagBodySchema = z.object({
+  flag: z.enum(PLAYER_FLAGS).nullable(),
 });
 
 const insertTierBodySchema = z.object({
@@ -57,6 +62,29 @@ export function createRankingEditorRoutes(
 
       return { players };
     });
+
+    // Watch/avoid a ranked player, or clear the flag with `null`.
+    app.patch(
+      "/rankings/:rankingId/players/:sleeperId/flag",
+      async (request) => {
+        const userId = requireUser(request).id;
+
+        const { rankingId, sleeperId } = playerParamsSchema.parse(
+          request.params,
+        );
+
+        const { flag } = setFlagBodySchema.parse(request.body);
+
+        const flags = rankingEditorService.setFlag(
+          rankingId,
+          userId,
+          sleeperId,
+          flag ?? undefined,
+        );
+
+        return { flags };
+      },
+    );
 
     // Remove a player from the ranking (returns them to the unranked pool).
     app.delete("/rankings/:rankingId/players/:sleeperId", async (request) => {

@@ -280,6 +280,7 @@ describe("recommendations routes", () => {
       20,
       ["RB", "WR"],
       undefined,
+      false,
     );
 
     await app.close();
@@ -322,6 +323,7 @@ describe("recommendations routes", () => {
       20,
       undefined,
       undefined,
+      false,
     );
 
     await app.close();
@@ -360,6 +362,7 @@ describe("recommendations routes", () => {
       20,
       undefined,
       "smith",
+      false,
     );
 
     await app.close();

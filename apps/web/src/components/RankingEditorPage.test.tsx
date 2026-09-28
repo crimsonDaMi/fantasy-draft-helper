@@ -11,7 +11,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { RankingEditorPage } from "./RankingEditorPage";
 
 const mocks = vi.hoisted(() => ({
-  getRankingsStatus: vi.fn(),
+  listRankings: vi.fn(),
+  renameRanking: vi.fn(),
+  deleteRanking: vi.fn(),
+  setPlayerFlag: vi.fn(),
   getRanking: vi.fn(),
   getUnrankedPlayers: vi.fn(),
   moveRankingPlayer: vi.fn(),
@@ -22,7 +25,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../api/fantasy-api", () => ({
-  getRankingsStatus: mocks.getRankingsStatus,
+  listRankings: mocks.listRankings,
+  renameRanking: mocks.renameRanking,
+  deleteRanking: mocks.deleteRanking,
+  setPlayerFlag: mocks.setPlayerFlag,
   getRanking: mocks.getRanking,
   getUnrankedPlayers: mocks.getUnrankedPlayers,
   moveRankingPlayer: mocks.moveRankingPlayer,
@@ -30,7 +36,8 @@ vi.mock("../api/fantasy-api", () => ({
   insertTier: mocks.insertTier,
   removeTier: mocks.removeTier,
   createEmptyRanking: mocks.createEmptyRanking,
-  RANKINGS_EXPORT_URL: "http://api.test/rankings/export",
+  rankingExportUrl: (rankingId: string) =>
+    `http://api.test/rankings/export?rankingId=${rankingId}`,
 }));
 
 function renderWithClient(
@@ -60,11 +67,16 @@ function rankedPlayer(
 }
 
 function mockTwoTierRanking() {
-  mocks.getRankingsStatus.mockResolvedValue({
-    loaded: true,
-    rankingId: "ranking-1",
-    rankingCount: 3,
-    matchedCount: 3,
+  mocks.listRankings.mockResolvedValue({
+    rankings: [
+      {
+        id: "ranking-1",
+        name: "Test ranking",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        playerCount: 3,
+        matchedCount: 3,
+      },
+    ],
   });
 
   mocks.getRanking.mockResolvedValue({
@@ -92,14 +104,11 @@ describe("RankingEditorPage", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    window.localStorage.clear();
   });
 
   it("offers to import or start a new ranking when none exists", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: false,
-      rankingCount: 0,
-      matchedCount: 0,
-    });
+    mocks.listRankings.mockResolvedValue({ rankings: [] });
 
     renderWithClient();
 
@@ -113,11 +122,16 @@ describe("RankingEditorPage", () => {
   });
 
   it("renders players grouped by tier and the unranked panel", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 1,
-      matchedCount: 1,
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 1,
+          matchedCount: 1,
+        },
+      ],
     });
 
     mocks.getRanking.mockResolvedValue({
@@ -168,7 +182,10 @@ describe("RankingEditorPage", () => {
 
     const link = await screen.findByRole("link", { name: "Export CSV" });
 
-    expect(link).toHaveAttribute("href", "http://api.test/rankings/export");
+    expect(link).toHaveAttribute(
+      "href",
+      "http://api.test/rankings/export?rankingId=ranking-1",
+    );
     expect(link).toHaveAttribute("download");
   });
 
@@ -209,6 +226,80 @@ describe("RankingEditorPage", () => {
     expect(
       screen.getByText("Merge 2 player(s) into the next tier?"),
     ).toBeInTheDocument();
+  });
+
+  it("watches a ranked player from its row", async () => {
+    mockTwoTierRanking();
+    mocks.setPlayerFlag.mockResolvedValue({ flags: { "1": "watch" } });
+    renderWithClient();
+    await screen.findByText("Player One");
+
+    // The server's refetched detail includes the new flag.
+    const detail = await mocks.getRanking();
+    mocks.getRanking.mockResolvedValue({ ...detail, flags: { "1": "watch" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Watch Player One" }));
+
+    await waitFor(() =>
+      expect(mocks.setPlayerFlag).toHaveBeenCalledWith(
+        "ranking-1",
+        "1",
+        "watch",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Watch Player One" }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
+  });
+
+  it("edits the ranking remembered from an earlier visit", async () => {
+    window.localStorage.setItem("draft-helper-ranking", "ranking-2");
+    mockTwoTierRanking();
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "League A",
+          createdAt: "2026-01-02T00:00:00.000Z",
+          playerCount: 3,
+          matchedCount: 3,
+        },
+        {
+          id: "ranking-2",
+          name: "League B",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 3,
+          matchedCount: 3,
+        },
+      ],
+    });
+
+    renderWithClient();
+
+    await waitFor(() =>
+      expect(mocks.getRanking).toHaveBeenCalledWith("ranking-2"),
+    );
+    expect(
+      await screen.findByRole("combobox", { name: "Ranking" }),
+    ).toHaveValue("ranking-2");
+  });
+
+  it("switches to a newly started ranking", async () => {
+    mockTwoTierRanking();
+    mocks.createEmptyRanking.mockResolvedValue({ rankingId: "ranking-new" });
+    renderWithClient();
+    await screen.findByText("Player One");
+
+    fireEvent.click(screen.getByRole("button", { name: "+ New ranking" }));
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem("draft-helper-ranking")).toBe(
+        "ranking-new",
+      ),
+    );
+    expect(mocks.listRankings).toHaveBeenCalledTimes(2);
   });
 
   it("shows the ranking again when returning to the editor", async () => {

@@ -93,6 +93,7 @@ export class RecommendationService {
     limit: number,
     positions?: string[],
     query?: string,
+    showAvoided = false,
   ): Promise<RecommendationResult> {
     const draftState = await this.draftStateService.getDraftState(draftId);
 
@@ -102,11 +103,17 @@ export class RecommendationService {
 
     const adpBySleeperId = await this.adpService.getSnapshot();
 
+    const flags = this.rankingStoreService.getFlags(rankingId);
+
     const available = matches
       .filter(hasPlayer)
       .filter((match) => !draftedPlayerIds.has(match.player.sleeperId));
 
+    const isAvoided = (match: { player: Player }) =>
+      flags[match.player.sleeperId] === "avoid";
+
     const recommendations = available
+      .filter((match) => showAvoided || !isAvoided(match))
       .filter((match) => isInPositions(match.player, positions))
       .filter((match) => matchesQuery(match.player, query))
       .slice(0, limit)
@@ -121,6 +128,7 @@ export class RecommendationService {
         return {
           ranking: match.ranking,
           player: match.player,
+          flag: flags[match.player.sleeperId],
           adp:
             adpValue === undefined
               ? undefined
@@ -154,6 +162,7 @@ export class RecommendationService {
       draft: draftState.draft,
       picks,
       tierCounts: countRemainingByTier(available),
+      avoidedCount: available.filter(isAvoided).length,
       draftedPlayerCount: draftedPlayerIds.size,
       draftStatus: draftState.draft.status,
       totalPicks: draftState.picks.length,

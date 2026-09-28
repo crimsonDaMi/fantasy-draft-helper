@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { DraftForm } from "./DraftForm";
 import { DraftRecap } from "./DraftRecap";
 import { MyTeamPanel } from "./MyTeamPanel";
+import { RankingSelector } from "./RankingSelector";
 import { RecentPicks } from "./RecentPicks";
 import { TierCounts } from "./TierCounts";
 import { MonitoringStatus } from "./MonitoringStatus";
@@ -11,9 +12,9 @@ import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
-import { getRankingsStatus } from "../api/fantasy-api";
-import { queryKeys } from "../api/query-keys";
-import type { RankingImportSummary } from "../types/api";
+import { useSelectedRanking } from "../hooks/useSelectedRanking";
+import { setPlayerFlag } from "../api/fantasy-api";
+import type { PlayerFlag, RankingImportSummary } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
 import { currentPickNo, picksForSlot } from "../utils/draft-order";
@@ -27,24 +28,18 @@ import {
 export function DraftDashboard() {
   const [storedDraft, setStoredDraft] = useState(readStoredDraft);
   const draftId = storedDraft?.draftId;
-  const [rankingId, setRankingId] = useState<string>();
   const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
   const [positions, setPositions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [showAvoided, setShowAvoided] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim(), 250);
   // A draft restored from a previous page load resumes monitoring, so
   // setup starts collapsed just like after pressing Start.
   const [setupOpen, setSetupOpen] = useState(draftId === undefined);
 
-  const statusQuery = useQuery({
-    queryKey: queryKeys.rankingStatus(),
-    queryFn: getRankingsStatus,
-  });
-
-  // Prefer a ranking imported/created in this session; otherwise fall
-  // back to whatever the account's latest ranking is (from an earlier
-  // session, or just created in the ranking editor).
-  const effectiveRankingId = rankingId ?? statusQuery.data?.rankingId;
+  const queryClient = useQueryClient();
+  const { rankings, selectedRanking, selectRanking } = useSelectedRanking();
+  const effectiveRankingId = selectedRanking?.id;
 
   const { data, error, isLoading, pollingIntervalMs, retry } =
     useDraftRecommendations(
@@ -52,7 +47,20 @@ export function DraftDashboard() {
       effectiveRankingId,
       positions,
       debouncedSearch,
+      showAvoided,
     );
+
+  const flagMutation = useMutation({
+    mutationFn: ({
+      sleeperId,
+      flag,
+    }: {
+      sleeperId: string;
+      flag: PlayerFlag | null;
+    }) => setPlayerFlag(effectiveRankingId!, sleeperId, flag),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["recommendations"] }),
+  });
 
   function updateStoredDraft(next: StoredDraft | undefined) {
     setStoredDraft(next);
@@ -126,7 +134,22 @@ export function DraftDashboard() {
                   />
                 </div>
                 <TierCounts counts={data.tierCounts} />
-                <RecommendationsList recommendations={data.recommendations} />
+                {(data.avoidedCount > 0 || showAvoided) && (
+                  <label className="recommendation-filters__avoided">
+                    <input
+                      type="checkbox"
+                      checked={showAvoided}
+                      onChange={(event) => setShowAvoided(event.target.checked)}
+                    />{" "}
+                    Show hidden players ({data.avoidedCount})
+                  </label>
+                )}
+                <RecommendationsList
+                  recommendations={data.recommendations}
+                  onFlagChange={(sleeperId, flag) =>
+                    flagMutation.mutate({ sleeperId, flag })
+                  }
+                />
               </>
             )}
           </div>
@@ -144,9 +167,20 @@ export function DraftDashboard() {
           <RankingsUpload
             onImported={(summary, importedRankingId) => {
               setRankingSummary(summary);
-              setRankingId(importedRankingId);
+              selectRanking(importedRankingId);
             }}
           />
+
+          {rankings && selectedRanking && (
+            <RankingSelector
+              rankings={rankings}
+              selectedRanking={selectedRanking}
+              onSelect={(rankingId) => {
+                setRankingSummary(undefined);
+                selectRanking(rankingId);
+              }}
+            />
+          )}
 
           {rankingSummary ? (
             <div>
@@ -166,10 +200,10 @@ export function DraftDashboard() {
               )}
             </div>
           ) : (
-            statusQuery.data?.loaded && (
+            selectedRanking && (
               <p>
-                ✓ Using your saved ranking ({statusQuery.data.matchedCount} of{" "}
-                {statusQuery.data.rankingCount} players matched)
+                ✓ Using your saved ranking ({selectedRanking.matchedCount} of{" "}
+                {selectedRanking.playerCount} players matched)
               </p>
             )
           )}

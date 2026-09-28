@@ -3,7 +3,7 @@
  * that target it can't drift apart through a typo.
  */
 export const queryKeys = {
-  rankingStatus: () => ["ranking-status"] as const,
+  rankingList: () => ["ranking-list"] as const,
   rankingDetail: (rankingId: string | undefined) =>
     ["ranking-detail", rankingId] as const,
   rankingUnranked: (rankingId: string | undefined) =>
@@ -13,5 +13,14 @@ export const queryKeys = {
     rankingId: string | undefined,
     positions: string[] | undefined,
     query: string | undefined,
-  ) => ["recommendations", draftId, rankingId, positions, query] as const,
+    showAvoided: boolean,
+  ) =>
+    [
+      "recommendations",
+      draftId,
+      rankingId,
+      positions,
+      query,
+      showAvoided,
+    ] as const,
 };

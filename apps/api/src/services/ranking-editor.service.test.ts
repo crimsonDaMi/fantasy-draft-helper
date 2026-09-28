@@ -377,4 +377,30 @@ describe("RankingEditorService", () => {
       ).rejects.toThrow("Ranking was not found");
     });
   });
+
+  describe("setFlag", () => {
+    it("flags ranked players only, for the owning user", () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create([match(1, "S", "1")], USER_ID);
+
+      const service = new RankingEditorService(
+        repository,
+        createFixturePlayerService() as never,
+      );
+
+      expect(service.setFlag(rankingId, USER_ID, "1", "watch")).toEqual({
+        "1": "watch",
+      });
+      expect(service.getRanking(rankingId, USER_ID).flags).toEqual({
+        "1": "watch",
+      });
+      expect(() => service.setFlag(rankingId, USER_ID, "9", "watch")).toThrow(
+        "Player is not part of this ranking",
+      );
+      expect(() =>
+        service.setFlag(rankingId, OTHER_USER_ID, "1", "avoid"),
+      ).toThrow("Ranking was not found");
+    });
+  });
 });

@@ -29,6 +29,7 @@ export function mapRecommendationsResponse(
     },
     picks: result.picks.map(mapPick),
     tierCounts: result.tierCounts,
+    avoidedCount: result.avoidedCount,
   };
 }
 
@@ -44,6 +45,7 @@ function mapRecommendation(recommendation: Recommendation) {
       injuryStatus: recommendation.player.injuryStatus,
     },
     adp: recommendation.adp,
+    flag: recommendation.flag,
   };
 }
 

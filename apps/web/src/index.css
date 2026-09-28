@@ -340,7 +340,7 @@ button {
 
 .rec-list__row {
   display: grid;
-  grid-template-columns: 2.5em auto 1fr auto;
+  grid-template-columns: 2.5em auto 1fr auto auto;
   gap: 12px;
   align-items: baseline;
   padding: 10px 4px;
@@ -1201,4 +1201,93 @@ button {
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--color-danger);
+}
+
+/* Watch/avoid flags */
+
+.flag-buttons {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.flag-buttons__button {
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  cursor: pointer;
+  opacity: 0.45;
+}
+
+.flag-buttons__button:hover,
+.flag-buttons__button:focus-visible,
+.flag-buttons__button[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.flag-buttons__button--watch[aria-pressed="true"] {
+  color: var(--color-accent);
+}
+
+.flag-buttons__button--avoid[aria-pressed="true"] {
+  color: var(--color-danger);
+}
+
+.flagged--watch {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.flagged--avoid {
+  opacity: 0.55;
+}
+
+.recommendation-filters__avoided {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* Saved rankings */
+
+.ranking-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.ranking-selector select {
+  max-width: 100%;
+}
+
+.ranking-selector__confirm {
+  font-size: 13px;
+}
+
+.ranking-selector__danger {
+  color: var(--color-danger);
+}
+
+.ranking-selector__error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+.ranking-editor__rankings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranking-editor__rankings .ranking-selector {
+  margin: 8px 0;
 }

@@ -6,14 +6,22 @@ import {
   moveRankingPlayer,
   removeRankingPlayer,
   removeTier,
+  setPlayerFlag,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
+import type { PlayerFlag, RankingDetailResponse } from "../types/api";
 
 /** Every server mutation the ranking editor makes, each reconciling
  * exactly the queries it can affect once it settles. */
 export function useRankingEditorMutations(
   rankingId: string | undefined,
-  { onTierRemoved }: { onTierRemoved: () => void },
+  {
+    onTierRemoved,
+    onRankingCreated,
+  }: {
+    onTierRemoved: () => void;
+    onRankingCreated: (rankingId: string) => void;
+  },
 ) {
   const queryClient = useQueryClient();
 
@@ -23,6 +31,10 @@ export function useRankingEditorMutations(
     });
     void queryClient.invalidateQueries({
       queryKey: queryKeys.rankingUnranked(rankingId),
+    });
+    // Player counts shown in the ranking selector.
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.rankingList(),
     });
   }
 
@@ -69,11 +81,43 @@ export function useRankingEditorMutations(
 
   const createEmptyRankingMutation = useMutation({
     mutationFn: createEmptyRanking,
-    onSuccess: () => {
+    onSuccess: ({ rankingId: createdRankingId }) => {
+      onRankingCreated(createdRankingId);
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.rankingStatus(),
+        queryKey: queryKeys.rankingList(),
       });
     },
+  });
+
+  // Flags only touch the detail query's `flags` map, so update it
+  // optimistically — a toggle shouldn't wait for a round trip — and
+  // reconcile with the server once it settles.
+  const flagMutation = useMutation({
+    mutationFn: ({
+      sleeperId,
+      flag,
+    }: {
+      sleeperId: string;
+      flag: PlayerFlag | null;
+    }) => setPlayerFlag(rankingId!, sleeperId, flag),
+    onMutate: ({ sleeperId, flag }) => {
+      queryClient.setQueryData<RankingDetailResponse>(
+        queryKeys.rankingDetail(rankingId),
+        (detail) => {
+          if (!detail) {
+            return detail;
+          }
+          const flags = { ...detail.flags };
+          if (flag) {
+            flags[sleeperId] = flag;
+          } else {
+            delete flags[sleeperId];
+          }
+          return { ...detail, flags };
+        },
+      );
+    },
+    onSettled: settleTierQueries,
   });
 
   return {
@@ -82,5 +126,6 @@ export function useRankingEditorMutations(
     insertTierMutation,
     removeTierMutation,
     createEmptyRankingMutation,
+    flagMutation,
   };
 }

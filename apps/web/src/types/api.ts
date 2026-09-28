@@ -6,6 +6,8 @@ export interface ApiPlayer {
   injuryStatus?: string;
 }
 
+export type PlayerFlag = "watch" | "avoid";
+
 export interface ApiRecommendation {
   rank: number;
   tier?: string;
@@ -14,6 +16,15 @@ export interface ApiRecommendation {
     value: number;
     diff: number;
   };
+  flag?: PlayerFlag;
+}
+
+export interface RankingSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  playerCount: number;
+  matchedCount: number;
 }
 
 export type DraftStatus = "PRE_DRAFT" | "DRAFTING" | "COMPLETE" | "UNKNOWN";
@@ -35,6 +46,8 @@ export interface RecommendationsResponse {
   draft: ApiDraftInfo;
   picks: ApiDraftPick[];
   tierCounts: ApiPositionTierCounts[];
+  /** Available players hidden because they're flagged `avoid`. */
+  avoidedCount: number;
 }
 
 export interface ApiDraftInfo {
@@ -142,11 +155,6 @@ export interface RankingTierDto {
 export interface RankingDetailResponse {
   players: RankingPlayerDto[];
   tiers: RankingTierDto[];
-}
-
-export interface RankingStatusResponse {
-  loaded: boolean;
-  rankingId?: string;
-  rankingCount: number;
-  matchedCount: number;
+  /** Sleeper ID → flag, for the flagged players. */
+  flags: Record<string, PlayerFlag>;
 }

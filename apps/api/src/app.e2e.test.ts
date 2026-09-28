@@ -476,3 +476,93 @@ describe("finding drafts by Sleeper username", () => {
     dependencies.rankingStoreService.close();
   });
 });
+
+describe("saved rankings (end to end)", () => {
+  it("lists, renames, exports, and deletes only the user's own rankings", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+    const owner = await registerUser(app, "testuser");
+    const other = await registerUser(app, "alice");
+
+    const firstId = dependencies.rankingStoreService.createRanking(
+      [
+        {
+          ranking: { rank: 1, playerName: "Player One", tier: "S" },
+          player: {
+            sleeperId: "1",
+            fullName: "Player One",
+            active: true,
+            fantasyPositions: ["QB"],
+          },
+          method: "SLEEPER_ID",
+        },
+      ],
+      owner.userId,
+      "League A",
+    );
+    const secondId = dependencies.rankingStoreService.createRanking(
+      [],
+      owner.userId,
+      "League B",
+    );
+
+    const list = await app.inject({
+      method: "GET",
+      url: "/rankings",
+      headers: { cookie: owner.cookie },
+    });
+
+    expect(
+      list.json().rankings.map((ranking: { name: string }) => ranking.name),
+    ).toEqual(["League B", "League A"]);
+
+    const exported = await app.inject({
+      method: "GET",
+      url: `/rankings/export?rankingId=${firstId}`,
+      headers: { cookie: owner.cookie },
+    });
+
+    expect(exported.body).toContain("Player One");
+
+    const foreignRename = await app.inject({
+      method: "PATCH",
+      url: `/rankings/${firstId}`,
+      headers: { cookie: other.cookie },
+      payload: { name: "Mine now" },
+    });
+
+    expect(foreignRename.statusCode).toBe(404);
+
+    const rename = await app.inject({
+      method: "PATCH",
+      url: `/rankings/${firstId}`,
+      headers: { cookie: owner.cookie },
+      payload: { name: "  Main league  " },
+    });
+
+    expect(rename.json()).toEqual({ rankingId: firstId, name: "Main league" });
+
+    const foreignDelete = await app.inject({
+      method: "DELETE",
+      url: `/rankings/${secondId}`,
+      headers: { cookie: other.cookie },
+    });
+
+    expect(foreignDelete.statusCode).toBe(404);
+
+    const remove = await app.inject({
+      method: "DELETE",
+      url: `/rankings/${secondId}`,
+      headers: { cookie: owner.cookie },
+    });
+
+    expect(remove.statusCode).toBe(204);
+    expect(
+      dependencies.rankingStoreService
+        .listRankings(owner.userId)
+        .map((ranking) => ranking.name),
+    ).toEqual(["Main league"]);
+
+    dependencies.rankingStoreService.close();
+  });
+});

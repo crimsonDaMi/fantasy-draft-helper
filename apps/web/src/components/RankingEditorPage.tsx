@@ -14,16 +14,17 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   getRanking,
-  getRankingsStatus,
   getUnrankedPlayers,
-  RANKINGS_EXPORT_URL,
+  rankingExportUrl,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import { useContainerCollisionDetection } from "../hooks/useContainerCollisionDetection";
 import { useEdgeAutoscroll } from "../hooks/useEdgeAutoscroll";
 import { useRankingEditorMutations } from "../hooks/useRankingEditorMutations";
+import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
+import { RankingSelector } from "./RankingSelector";
 import { DroppableContainer } from "./ranking-editor/DroppableContainer";
 import { PlayerLabel } from "./ranking-editor/PlayerLabel";
 import { TierModeToggle } from "./ranking-editor/TierModeToggle";
@@ -41,12 +42,14 @@ import {
 } from "./ranking-editor-logic";
 
 export function RankingEditorPage() {
-  const statusQuery = useQuery({
-    queryKey: queryKeys.rankingStatus(),
-    queryFn: getRankingsStatus,
-  });
+  const {
+    rankings,
+    selectedRanking,
+    selectRanking,
+    isLoading: isLoadingRankings,
+  } = useSelectedRanking();
 
-  const rankingId = statusQuery.data?.rankingId;
+  const rankingId = selectedRanking?.id;
 
   const detailQuery = useQuery({
     queryKey: queryKeys.rankingDetail(rankingId),
@@ -145,6 +148,7 @@ export function RankingEditorPage() {
         detailQuery.data.players,
         detailQuery.data.tiers,
         unrankedQuery.data.players,
+        detailQuery.data.flags,
       ),
     );
   }
@@ -170,8 +174,10 @@ export function RankingEditorPage() {
     insertTierMutation,
     removeTierMutation,
     createEmptyRankingMutation,
+    flagMutation,
   } = useRankingEditorMutations(rankingId, {
     onTierRemoved: () => setConfirmingRemoveTierPosition(undefined),
+    onRankingCreated: selectRanking,
   });
 
   function handleRemoveTierClick(tier: RankingTierDto) {
@@ -295,7 +301,7 @@ export function RankingEditorPage() {
     moveMutation.mutate({ sleeperId: activeId, rank, tier: finalContainer });
   }
 
-  if (statusQuery.isLoading) {
+  if (isLoadingRankings) {
     return <p className="status-bar">Loading…</p>;
   }
 
@@ -345,7 +351,7 @@ export function RankingEditorPage() {
         <div className="ranking-editor__toolbar-actions">
           <a
             className="ranking-editor__mode-button ranking-editor__export-link"
-            href={RANKINGS_EXPORT_URL}
+            href={rankingExportUrl(rankingId)}
             download
           >
             Export CSV
@@ -356,6 +362,28 @@ export function RankingEditorPage() {
           />
         </div>
       </div>
+
+      {rankings && selectedRanking && (
+        <div className="ranking-editor__rankings">
+          <RankingSelector
+            rankings={rankings}
+            selectedRanking={selectedRanking}
+            onSelect={selectRanking}
+          />
+          <button
+            type="button"
+            onClick={() => createEmptyRankingMutation.mutate()}
+            disabled={createEmptyRankingMutation.isPending}
+          >
+            + New ranking
+          </button>
+          {createEmptyRankingMutation.isError && (
+            <p className="status-bar status-bar__error">
+              {createEmptyRankingMutation.error.message}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="ranking-editor__global-filters">
         <span className="ranking-editor__global-filters-label">
@@ -435,6 +463,9 @@ export function RankingEditorPage() {
                   className="ranking-editor__tier"
                   activeId={draggingPlayerId}
                   registerScrollElement={registerScrollElement}
+                  onFlagChange={(sleeperId, flag) =>
+                    flagMutation.mutate({ sleeperId, flag })
+                  }
                   removeControl={{
                     canRemove: tiers.length > 1,
                     playerCount: containers[tier.label]?.length ?? 0,

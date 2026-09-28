@@ -26,6 +26,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -96,6 +97,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -160,6 +162,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -241,6 +244,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -308,6 +312,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -373,6 +378,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -426,6 +432,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: {
@@ -482,6 +489,7 @@ describe("RecommendationService", () => {
     ];
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () =>
         players.map((player, index) => ({
           ranking: { rank: index + 1, playerName: player.fullName },
@@ -533,6 +541,7 @@ describe("RecommendationService", () => {
     };
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         {
           ranking: { rank: 1, playerName: "Player One" },
@@ -599,6 +608,7 @@ describe("RecommendationService", () => {
     });
 
     const rankingStoreService = {
+      getFlags: () => ({}),
       getMatches: () => [
         rankedPlayer("1", 1, "QB", "S"),
         rankedPlayer("2", 2, "QB", "S"),
@@ -663,6 +673,63 @@ describe("RecommendationService", () => {
         ],
       },
       { position: "WR", tiers: [{ tier: "S", remaining: 1 }] },
+    ]);
+  });
+
+  it("hides avoided players unless asked, and marks flagged ones", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING" },
+        picks: [],
+        draftedPlayerIds: new Set(),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankingStoreService = {
+      getFlags: () => ({ "1": "avoid", "2": "watch" }),
+      getMatches: () =>
+        ["1", "2", "3"].map((sleeperId, index) => ({
+          ranking: { rank: index + 1, playerName: `Player ${sleeperId}` },
+          player: { sleeperId, fullName: `Player ${sleeperId}` },
+          method: "SLEEPER_ID",
+        })),
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      noopAdpService as never,
+      noopPlayerService as never,
+    );
+
+    const hidden = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+    );
+    const shown = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+      undefined,
+      undefined,
+      true,
+    );
+
+    expect(
+      hidden.recommendations.map((r) => [r.player.sleeperId, r.flag]),
+    ).toEqual([
+      ["2", "watch"],
+      ["3", undefined],
+    ]);
+    expect(hidden.avoidedCount).toBe(1);
+    expect(shown.recommendations.map((r) => r.flag)).toEqual([
+      "avoid",
+      "watch",
+      undefined,
     ]);
   });
 });

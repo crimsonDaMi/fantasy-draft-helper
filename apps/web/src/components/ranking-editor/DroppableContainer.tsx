@@ -6,6 +6,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+import type { PlayerFlag } from "../../types/api";
 import {
   PLAYER_ROW_HEIGHT,
   withForcedActiveRow,
@@ -35,6 +36,7 @@ interface DroppableContainerProps {
   removeControl?: TierRemoveControl;
   activeId?: string;
   registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
+  onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
 }
 
 export function DroppableContainer({
@@ -46,6 +48,7 @@ export function DroppableContainer({
   removeControl,
   activeId,
   registerScrollElement,
+  onFlagChange,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -128,6 +131,7 @@ export function DroppableContainer({
                   player={player}
                   rank={showRank ? player.globalRank : undefined}
                   offsetTop={virtualRow.start}
+                  onFlagChange={onFlagChange}
                 />
               );
             })}

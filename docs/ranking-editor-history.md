@@ -75,14 +75,20 @@ Any change to how containers render must preserve all of this.
 
 ## Rankings and routing
 
-- One ranking per user: `RankingRepository.create()` deletes the user's
-  existing rankings first (FK cascade), for both CSV import and
-  `POST /rankings/new` ("Start a new ranking").
+- Several saved rankings per user (up to `MAX_RANKINGS_PER_USER`): CSV
+  import and `POST /rankings/new` each add one. This replaced the original
+  one-ranking-per-user rule, where `create()` deleted the previous ranking.
+- The ranking being edited is the one picked in the ranking selector
+  (`useSelectedRanking`, remembered in `localStorage`, falling back to the
+  newest). The Draft tab uses the same selection, so there is no server-side
+  "active ranking".
+- Watch/avoid flags live in their own table, `ranking_player_flags`, not in
+  `ranking_players`, because `replaceAllPlayers` rewrites every player row
+  on each move. In the editor they're baked into `EditorPlayer.flag` on
+  each server sync, like `globalRank`, and the toggle buttons stop
+  pointer-down propagation so clicking them doesn't start a drag.
 - The "drag players in" / "add more tiers" hints are derived state, so
   they reappear if the ranking returns to that state. That is intentional.
-- `DraftDashboard` falls back to `GET /rankings/status` when nothing was
-  imported this session, so a ranking built in the editor reaches the
-  Draft tab.
 - Direct loads of client routes such as `/rankings/edit` are served by an
   explicit SPA-route allowlist (`apps/api/src/utils/spa-client-routes.ts`),
   checked at the top of the `onRequest` hook before auth and routing.

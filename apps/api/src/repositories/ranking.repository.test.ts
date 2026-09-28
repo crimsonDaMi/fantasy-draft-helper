@@ -5,7 +5,10 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { PlayerMatch } from "../domain/player-match.js";
-import { RankingRepository } from "./ranking.repository.js";
+import {
+  MAX_RANKINGS_PER_USER,
+  RankingRepository,
+} from "./ranking.repository.js";
 
 function createMatches(): PlayerMatch[] {
   return [
@@ -75,36 +78,65 @@ describe("RankingRepository", () => {
     expect(repository.hasRankings("user-b")).toBe(false);
   });
 
-  it("replacing a user's ranking leaves other users' rankings intact", () => {
-    const repository = new RankingRepository(":memory:");
-
-    repository.create(createMatches(), "user-a");
-    const userBRankingId = repository.create(createMatches(), "user-b");
-
-    repository.create(createMatches(), "user-a");
-
-    expect(repository.hasRanking(userBRankingId, "user-b")).toBe(true);
-  });
-
-  it("replaces a user's previous ranking when creating a new one", () => {
+  it("keeps a user's previous rankings when creating a new one", () => {
     const repository = new RankingRepository(":memory:");
 
     const firstRankingId = repository.create(createMatches(), "user-a");
     const secondRankingId = repository.create(createMatches(), "user-a");
 
-    expect(repository.hasRanking(firstRankingId, "user-a")).toBe(false);
+    expect(repository.hasRanking(firstRankingId, "user-a")).toBe(true);
     expect(repository.hasRanking(secondRankingId, "user-a")).toBe(true);
     expect(repository.getLatestRankingId("user-a")).toBe(secondRankingId);
   });
 
-  it("does not affect another user's ranking when replacing", () => {
+  it("limits how many rankings a user keeps", () => {
     const repository = new RankingRepository(":memory:");
 
-    const otherUsersRankingId = repository.create(createMatches(), "user-b");
+    for (let index = 0; index < MAX_RANKINGS_PER_USER; index++) {
+      repository.create([], "user-a");
+    }
 
-    repository.create(createMatches(), "user-a");
+    expect(() => repository.create([], "user-a")).toThrow(
+      /at most 20 rankings/,
+    );
+    expect(() => repository.create([], "user-b")).not.toThrow();
+  });
 
-    expect(repository.hasRanking(otherUsersRankingId, "user-b")).toBe(true);
+  it("lists a user's rankings newest first with player counts", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const older = repository.create(createMatches(), "user-a", "Older");
+    const newer = repository.create([], "user-a", "Newer");
+    repository.create(createMatches(), "user-b");
+
+    const rankings = repository.listRankings("user-a");
+
+    expect(rankings.map((ranking) => [ranking.id, ranking.name])).toEqual([
+      [newer, "Newer"],
+      [older, "Older"],
+    ]);
+    expect(rankings[0]).toMatchObject({ playerCount: 0, matchedCount: 0 });
+    expect(rankings[1]?.playerCount).toBe(createMatches().length);
+  });
+
+  it("renames and deletes only the user's own rankings", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const rankingId = repository.create(createMatches(), "user-a");
+
+    expect(() => repository.rename(rankingId, "user-b", "Stolen")).toThrow(
+      "Ranking was not found",
+    );
+    expect(() => repository.delete(rankingId, "user-b")).toThrow(
+      "Ranking was not found",
+    );
+
+    repository.rename(rankingId, "user-a", "League A");
+    expect(repository.listRankings("user-a")[0]?.name).toBe("League A");
+
+    repository.delete(rankingId, "user-a");
+    expect(repository.hasRanking(rankingId, "user-a")).toBe(false);
+    expect(repository.getMatches(rankingId, "user-a")).toEqual([]);
   });
 });
 
@@ -206,6 +238,115 @@ describe("RankingRepository storage of rank and tier", () => {
     });
 
     rawDatabase.close();
+    repository.close();
+  });
+});
+
+describe("RankingRepository player flags", () => {
+  let directory: string | undefined;
+
+  afterEach(() => {
+    if (directory) {
+      rmSync(directory, { recursive: true, force: true });
+      directory = undefined;
+    }
+  });
+
+  function flaggableMatch(rank: number, sleeperId: string): PlayerMatch {
+    return {
+      ranking: { rank, playerName: `Player ${sleeperId}`, tier: "S" },
+      player: {
+        sleeperId,
+        fullName: `Player ${sleeperId}`,
+        active: true,
+        fantasyPositions: ["WR"],
+      },
+      method: "SLEEPER_ID",
+    };
+  }
+
+  it("sets, replaces, and clears flags, surviving editor moves", () => {
+    const repository = new RankingRepository(":memory:");
+    const rankingId = repository.create(
+      [flaggableMatch(1, "1"), flaggableMatch(2, "2")],
+      "user-a",
+    );
+
+    repository.setFlag(rankingId, "1", "watch");
+    repository.setFlag(rankingId, "2", "watch");
+    repository.setFlag(rankingId, "2", "avoid");
+    repository.movePlayer(rankingId, "2", 1, "S");
+
+    expect(repository.getFlags(rankingId)).toEqual({
+      "1": "watch",
+      "2": "avoid",
+    });
+
+    repository.setFlag(rankingId, "1", undefined);
+
+    expect(repository.getFlags(rankingId)).toEqual({ "2": "avoid" });
+  });
+
+  it("drops a player's flag when they leave the ranking, and with the ranking", () => {
+    const repository = new RankingRepository(":memory:");
+    const rankingId = repository.create(
+      [flaggableMatch(1, "1"), flaggableMatch(2, "2")],
+      "user-a",
+    );
+
+    repository.setFlag(rankingId, "1", "avoid");
+    repository.setFlag(rankingId, "2", "watch");
+    repository.removePlayer(rankingId, "1");
+
+    expect(repository.getFlags(rankingId)).toEqual({ "2": "watch" });
+
+    repository.delete(rankingId, "user-a");
+
+    expect(repository.getFlags(rankingId)).toEqual({});
+  });
+
+  it("opens a v1.1.0 database, which has no flags table yet", () => {
+    directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-flags-"));
+    const databasePath = join(directory, "test.db");
+    const legacy = new DatabaseSync(databasePath);
+
+    legacy.exec(`
+      CREATE TABLE rankings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE ranking_players (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ranking_id TEXT NOT NULL,
+        rank INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        position TEXT,
+        team TEXT,
+        tier TEXT,
+        sleeper_id TEXT,
+        match_status TEXT NOT NULL,
+        match_json TEXT NOT NULL,
+        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+          ON DELETE CASCADE
+      );
+      CREATE TABLE ranking_tiers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ranking_id TEXT NOT NULL,
+        position INTEGER NOT NULL,
+        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+          ON DELETE CASCADE
+      );
+      INSERT INTO rankings VALUES ('ranking-1', 'user-a', 'Old', '2026-01-01');
+    `);
+    legacy.close();
+
+    const repository = new RankingRepository(databasePath);
+
+    expect(repository.hasRanking("ranking-1", "user-a")).toBe(true);
+    expect(() => repository.setFlag("ranking-1", "1", "watch")).not.toThrow();
+
     repository.close();
   });
 });

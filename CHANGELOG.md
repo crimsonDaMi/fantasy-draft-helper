@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Upgrading
+
+- No database reset needed: the table for watch/avoid flags is added to
+  an existing database on startup, and existing accounts and rankings are
+  kept.
+
 ### Added
 
 - The monitored draft is remembered across page reloads; "Stop monitoring"
@@ -23,6 +29,12 @@ See `RELEASING.md`.
 - Players left in the best remaining tiers of your ranking, per position.
 - Draft recap once the draft completes: your picks against your ranking
   and ADP, downloadable as a CSV.
+- Keep several saved rankings (up to 20, e.g. one per league) and pick the
+  one to use in Draft setup or the ranking editor; rename or delete them
+  there. The choice is remembered per browser.
+- Watch (★) or avoid (⊘) players, per ranking, from the recommendations or
+  the ranking editor. Watched players are highlighted; avoided ones are
+  hidden from the recommendations until "Show hidden players" is ticked.
 - Search available players by name or team on the draft page, and search
   ranked players in the ranking editor (the unranked panel keeps its own
   search).
@@ -39,6 +51,8 @@ See `RELEASING.md`.
 
 ### Changed
 
+- Importing a ranking CSV or starting a new ranking now adds a saved
+  ranking (named after the file) instead of replacing your existing one.
 - Player positions now have their own color-coded column in the draft
   recommendations and the ranking editor, instead of being part of the
   right-aligned "position · team" text.

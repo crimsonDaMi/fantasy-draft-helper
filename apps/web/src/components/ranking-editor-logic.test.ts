@@ -25,6 +25,20 @@ function rankingPlayer(
 }
 
 describe("buildContainers", () => {
+  it("carries each ranked player's flag", () => {
+    const result = buildContainers(
+      [
+        rankingPlayer("1", "Player One", "S", 1),
+        rankingPlayer("2", "Player Two", "S", 2),
+      ],
+      [{ label: "S", position: 1, playerCount: 2 }],
+      [],
+      { "2": "avoid" },
+    );
+
+    expect(result.S.map((p) => p.flag)).toEqual([undefined, "avoid"]);
+  });
+
   it("groups matched players by tier and appends the unranked panel", () => {
     const players = [
       rankingPlayer("1", "Player One", "S", 1),

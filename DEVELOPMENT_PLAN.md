@@ -25,6 +25,7 @@ item needs its scope confirmed with the user before work starts.
 | Ranking editor ([history](docs/ranking-editor-history.md))  | v0.8.x  |
 | v1.0 hardening (schema guardrail, CSV export, auth lockout) | v1.0.0  |
 | Draft-day panels, search, injuries, draft lookup, recap     | Unrel.  |
+| Multiple saved rankings, watch/avoid flags                  | Unrel.  |
 
 ## Out of scope
 

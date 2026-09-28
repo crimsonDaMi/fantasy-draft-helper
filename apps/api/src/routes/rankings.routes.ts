@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 
 import { RankingImportService } from "../services/ranking-import.service.js";
 import { RankingStoreService } from "../services/ranking-store.service.js";
@@ -6,6 +7,43 @@ import { mapRankingImportResponse } from "../services/ranking-import.mapper.js";
 import { toRankingCsv } from "../services/ranking-csv-export.js";
 import { NotFoundError } from "../utils/domain-errors.js";
 import { requireUser } from "../utils/require-user.js";
+
+const rankingNameSchema = z.string().trim().min(1).max(60);
+
+const rankingParamsSchema = z.object({
+  rankingId: z.string().min(1),
+});
+
+const renameBodySchema = z.object({
+  name: rankingNameSchema,
+});
+
+const exportQuerySchema = z.object({
+  rankingId: z.string().min(1).optional(),
+});
+
+/** Name for an imported ranking: the form's `name` field when given,
+ * else the uploaded file's name without its extension. */
+function importedRankingName(
+  nameField: unknown,
+  filename: string,
+): string | undefined {
+  const field =
+    nameField && typeof nameField === "object" && "value" in nameField
+      ? nameField.value
+      : undefined;
+  const fromField = rankingNameSchema.safeParse(field);
+
+  if (fromField.success) {
+    return fromField.data;
+  }
+
+  const fromFile = rankingNameSchema.safeParse(
+    filename.replace(/\.[^.]*$/, ""),
+  );
+
+  return fromFile.success ? fromFile.data : undefined;
+}
 
 export function createRankingsRoutes(
   rankingImportService: RankingImportService,
@@ -43,9 +81,11 @@ export function createRankingsRoutes(
         csvContent.toString("utf-8"),
       );
 
+      // Multipart fields sent before the file are available here.
       const rankingId = rankingStoreService.createRanking(
         result.matches,
         userId,
+        importedRankingName(file.fields.name, file.filename),
       );
 
       return mapRankingImportResponse(rankingId, result);
@@ -63,14 +103,51 @@ export function createRankingsRoutes(
       return { rankingId };
     });
 
+    app.get("/rankings", async (request) => {
+      const userId = requireUser(request).id;
+
+      return { rankings: rankingStoreService.listRankings(userId) };
+    });
+
+    app.patch("/rankings/:rankingId", async (request) => {
+      const userId = requireUser(request).id;
+
+      const { rankingId } = rankingParamsSchema.parse(request.params);
+
+      const { name } = renameBodySchema.parse(request.body);
+
+      rankingStoreService.renameRanking(rankingId, userId, name);
+
+      return { rankingId, name };
+    });
+
+    app.delete("/rankings/:rankingId", async (request, reply) => {
+      const userId = requireUser(request).id;
+
+      const { rankingId } = rankingParamsSchema.parse(request.params);
+
+      rankingStoreService.deleteRanking(rankingId, userId);
+
+      return reply.status(204).send();
+    });
+
+    // The given ranking, or the newest one when `rankingId` is omitted.
     app.get("/rankings/export", async (request, reply) => {
       const userId = requireUser(request).id;
 
-      if (!rankingStoreService.hasRankings(userId)) {
+      const { rankingId } = exportQuerySchema.parse(request.query);
+
+      const exists = rankingId
+        ? rankingStoreService.hasRanking(rankingId, userId)
+        : rankingStoreService.hasRankings(userId);
+
+      if (!exists) {
         throw new NotFoundError("No ranking to export", "RANKING_NOT_FOUND");
       }
 
-      const csv = toRankingCsv(rankingStoreService.getMatches(userId));
+      const csv = toRankingCsv(
+        rankingStoreService.getMatches(userId, rankingId),
+      );
 
       return reply
         .header("content-type", "text/csv; charset=utf-8")

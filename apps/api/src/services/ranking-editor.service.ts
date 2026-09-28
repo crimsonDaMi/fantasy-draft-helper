@@ -1,3 +1,4 @@
+import { PlayerFlag } from "../domain/player-flag.js";
 import { FantasyPosition } from "../domain/ranking.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { Player } from "../domain/player.js";
@@ -131,7 +132,11 @@ export class RankingEditorService {
   getRanking(
     rankingId: string,
     userId: string,
-  ): { players: PlayerMatch[]; tiers: RankingTier[] } {
+  ): {
+    players: PlayerMatch[];
+    tiers: RankingTier[];
+    flags: Record<string, PlayerFlag>;
+  } {
     this.assertOwnership(rankingId, userId);
 
     return {
@@ -139,7 +144,34 @@ export class RankingEditorService {
         this.repository.getMatches(rankingId, userId),
       ),
       tiers: this.repository.getTiers(rankingId),
+      flags: this.repository.getFlags(rankingId),
     };
+  }
+
+  /** Flags a ranked player (watch/avoid), or clears the flag. Returns the
+   * ranking's flags after the change. */
+  setFlag(
+    rankingId: string,
+    userId: string,
+    sleeperId: string,
+    flag: PlayerFlag | undefined,
+  ): Record<string, PlayerFlag> {
+    this.assertOwnership(rankingId, userId);
+
+    const isRanked = this.repository
+      .getMatches(rankingId, userId)
+      .some((match) => match.player?.sleeperId === sleeperId);
+
+    if (!isRanked) {
+      throw new NotFoundError(
+        "Player is not part of this ranking",
+        "PLAYER_NOT_RANKED",
+      );
+    }
+
+    this.repository.setFlag(rankingId, sleeperId, flag);
+
+    return this.repository.getFlags(rankingId);
   }
 
   private withLiveStatus(matches: PlayerMatch[]): PlayerMatch[] {

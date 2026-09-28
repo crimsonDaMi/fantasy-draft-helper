@@ -244,4 +244,58 @@ describe("rankings routes", () => {
 
     await app.close();
   });
+
+  it.each([
+    ["the name field", "League A", "League A"],
+    ["the file name", undefined, "my-rankings"],
+  ])("names an imported ranking after %s", async (_, nameField, expected) => {
+    const createRanking = vi.fn(() => "ranking-1");
+
+    const app = Fastify();
+
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+    app.register(multipart);
+    app.register(
+      createRankingsRoutes(
+        {
+          importCsv: async () => ({
+            summary: {},
+            importResult: { errors: [] },
+            matches: [],
+          }),
+        } as never,
+        { createRanking } as never,
+      ),
+    );
+
+    const boundary = "----testboundary123456";
+    const namePart =
+      nameField === undefined
+        ? ""
+        : `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="name"\r\n\r\n` +
+          `${nameField}\r\n`;
+    const payload =
+      namePart +
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="file"; filename="my-rankings.csv"\r\n` +
+      `Content-Type: text/csv\r\n\r\n` +
+      `rank,player\n1,Player One\r\n` +
+      `--${boundary}--\r\n`;
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/rankings",
+      headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+      payload,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(createRanking).toHaveBeenCalledWith([], TEST_USER.id, expected);
+
+    await app.close();
+  });
 });

@@ -13,7 +13,10 @@ import { DraftDashboard } from "./DraftDashboard";
 import type { RecommendationsResponse } from "../types/api";
 
 const mocks = vi.hoisted(() => ({
-  getRankingsStatus: vi.fn(),
+  listRankings: vi.fn(),
+  renameRanking: vi.fn(),
+  deleteRanking: vi.fn(),
+  setPlayerFlag: vi.fn(),
   getRecommendations: vi.fn(),
   importRankings: vi.fn(),
   findUserDrafts: vi.fn(),
@@ -21,7 +24,10 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../api/fantasy-api", () => ({
   ApiRequestError: class extends Error {},
-  getRankingsStatus: mocks.getRankingsStatus,
+  listRankings: mocks.listRankings,
+  renameRanking: mocks.renameRanking,
+  deleteRanking: mocks.deleteRanking,
+  setPlayerFlag: mocks.setPlayerFlag,
   getRecommendations: mocks.getRecommendations,
   importRankings: mocks.importRankings,
   findUserDrafts: mocks.findUserDrafts,
@@ -42,6 +48,7 @@ function recommendationsResponse(
     draft: { type: "snake", teams: 4, rounds: 3, rosterSlots: { QB: 1 } },
     picks: [],
     tierCounts: [],
+    avoidedCount: 0,
     ...overrides,
   };
 }
@@ -66,11 +73,16 @@ describe("DraftDashboard", () => {
   });
 
   it("collapses draft setup after starting a draft with a saved ranking", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 2,
-      matchedCount: 2,
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
     });
     mocks.getRecommendations.mockResolvedValue(recommendationsResponse());
 
@@ -89,14 +101,10 @@ describe("DraftDashboard", () => {
   });
 
   it("keeps draft setup open when no ranking is available yet", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: false,
-      rankingCount: 0,
-      matchedCount: 0,
-    });
+    mocks.listRankings.mockResolvedValue({ rankings: [] });
 
     const { container } = renderWithClient();
-    await waitFor(() => expect(mocks.getRankingsStatus).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.listRankings).toHaveBeenCalled());
 
     fireEvent.change(screen.getByPlaceholderText("Sleeper draft link or ID"), {
       target: { value: "draft-1" },
@@ -113,11 +121,16 @@ describe("DraftDashboard", () => {
       "draft-helper-draft",
       JSON.stringify({ draftId: "draft-1" }),
     );
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 2,
-      matchedCount: 2,
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
     });
     mocks.getRecommendations.mockResolvedValue(recommendationsResponse());
 
@@ -143,11 +156,7 @@ describe("DraftDashboard", () => {
   });
 
   it("stores the draft when monitoring starts", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: false,
-      rankingCount: 0,
-      matchedCount: 0,
-    });
+    mocks.listRankings.mockResolvedValue({ rankings: [] });
 
     renderWithClient();
 
@@ -162,11 +171,16 @@ describe("DraftDashboard", () => {
   });
 
   it("finds drafts by Sleeper username and follows the user's slot", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 2,
-      matchedCount: 2,
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
     });
     mocks.findUserDrafts.mockResolvedValue({
       sleeperUserId: "sleeper-user-1",
@@ -245,11 +259,16 @@ describe("DraftDashboard", () => {
       "draft-helper-draft",
       JSON.stringify({ draftId: "draft-1", draftSlot: 1 }),
     );
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 2,
-      matchedCount: 2,
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
     });
     mocks.getRecommendations.mockResolvedValue(
       recommendationsResponse({
@@ -278,12 +297,66 @@ describe("DraftDashboard", () => {
     expect(screen.queryByLabelText("Search available players")).toBeNull();
   });
 
-  it("monitors a draft from a pasted Sleeper draft link", async () => {
-    mocks.getRankingsStatus.mockResolvedValue({
-      loaded: false,
-      rankingCount: 0,
-      matchedCount: 0,
+  it("flags players and can show the hidden ones", async () => {
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1" }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
     });
+    mocks.setPlayerFlag.mockResolvedValue({ flags: {} });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        draftStatus: "DRAFTING",
+        avoidedCount: 1,
+        recommendations: [
+          {
+            rank: 1,
+            player: { sleeperId: "1", fullName: "Player One" },
+            flag: "watch",
+          },
+        ],
+      }),
+    );
+
+    renderWithClient();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Avoid Player One" }),
+    );
+    await waitFor(() =>
+      expect(mocks.setPlayerFlag).toHaveBeenCalledWith(
+        "ranking-1",
+        "1",
+        "avoid",
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: "Watch Player One" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByLabelText("Show hidden players (1)"));
+
+    await waitFor(() =>
+      expect(mocks.getRecommendations).toHaveBeenLastCalledWith(
+        "draft-1",
+        "ranking-1",
+        expect.objectContaining({ showAvoided: true }),
+      ),
+    );
+  });
+
+  it("monitors a draft from a pasted Sleeper draft link", async () => {
+    mocks.listRankings.mockResolvedValue({ rankings: [] });
 
     renderWithClient();
 

@@ -90,7 +90,7 @@ describe("RankingsUpload", () => {
     expect(mocks.importRankings).not.toHaveBeenCalled();
   });
 
-  it("reports a successful import and refreshes the ranking status", async () => {
+  it("reports a successful import and refreshes the ranking list", async () => {
     mocks.importRankings.mockResolvedValue(importResponse());
     const { onImported, invalidateQueries } = renderUpload();
 
@@ -102,7 +102,7 @@ describe("RankingsUpload", () => {
     );
     expect(mocks.importRankings).toHaveBeenCalledWith(file);
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: queryKeys.rankingStatus(),
+      queryKey: queryKeys.rankingList(),
     });
     expect(screen.queryByText(/Import completed with CSV errors/)).toBeNull();
   });

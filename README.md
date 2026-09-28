@@ -31,6 +31,10 @@ React web app -> Fastify API -> Sleeper API
 - Drag-and-drop ranking editor at `/rankings/edit`: reorder players, move
   them between tiers, add/remove tiers, search, build a ranking from
   scratch, and export it as a CSV.
+- Several saved rankings (e.g. one per league), selectable on both tabs,
+  with rename and delete.
+- Watch (★) or avoid (⊘) players per ranking: watched players are
+  highlighted, avoided ones hidden from recommendations until shown again.
 - Username/password authentication with a username allowlist; rankings are
   scoped per user.
 - Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
@@ -175,7 +179,9 @@ POST /rankings
 Content-Type: multipart/form-data
 ```
 
-The multipart field is `file`. The response includes a `rankingId`, an
+The multipart field is `file`; an optional `name` field, sent before the
+file, names the ranking (default: the file name without its extension).
+Each import adds a new saved ranking. The response includes a `rankingId`, an
 import summary, row-level validation errors (if any), and details on
 unmatched and ambiguous players:
 
@@ -210,7 +216,19 @@ GET /rankings/status
 ```
 
 Returns whether any ranking has been imported, plus the total and matched
-player counts for the currently stored ranking(s).
+player counts for the newest ranking.
+
+### Saved rankings
+
+```text
+GET    /rankings                 the user's rankings, newest first
+PATCH  /rankings/:rankingId      rename: { "name": "string" }
+DELETE /rankings/:rankingId      delete a ranking (204)
+```
+
+Each ranking in the list has `id`, `name`, `createdAt`, `playerCount`, and
+`matchedCount`. A user can keep up to 20 rankings; importing or creating
+another returns `409 RANKING_LIMIT_REACHED`.
 
 ### Authentication
 
@@ -294,14 +312,20 @@ omitted entirely (not `null`) for players not covered by the ADP source.
 
 ```text
 POST   /rankings/new                              create an empty ranking
-GET    /rankings/export                           current ranking as CSV
+GET    /rankings/export?rankingId=<id>            a ranking as CSV (default: newest)
 GET    /rankings/:rankingId                       players and tiers
 PATCH  /rankings/:rankingId/players/:sleeperId    move or add a player
 DELETE /rankings/:rankingId/players/:sleeperId    remove a player
 POST   /rankings/:rankingId/tiers                 insert an empty tier
 DELETE /rankings/:rankingId/tiers/:position       remove a tier, merging its players
 GET    /rankings/:rankingId/unranked-players      fantasy-relevant players not ranked
+PATCH  /rankings/:rankingId/players/:sleeperId/flag   { "flag": "watch" | "avoid" | null }
 ```
+
+`GET /rankings/:rankingId` also returns `flags` (Sleeper ID → flag).
+Recommendations leave out `avoid`-flagged players unless
+`showAvoided=true`, report how many were hidden as `avoidedCount`, and
+carry each player's `flag`.
 
 Details in [`docs/ranking-editor-requirements.md`](docs/ranking-editor-requirements.md).
 

@@ -20,14 +20,11 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
     onSuccess: (result) => {
       onImported(result.summary, result.rankingId);
 
-      // A re-import fully replaces the ranking (requirement #9 — no
-      // merge with in-progress editor edits); the backend already
-      // creates a brand-new ranking rather than mutating the old one.
-      // Invalidate the cached status so the editor route (mutually
-      // exclusive with this one) never renders a stale cached
-      // rankingId on its next mount.
+      // An import always adds a new saved ranking (named after the file)
+      // rather than merging into an existing one. Refresh the list so
+      // the selector — here and in the editor — includes it.
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.rankingStatus(),
+        queryKey: queryKeys.rankingList(),
       });
     },
   });

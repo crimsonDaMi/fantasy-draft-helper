@@ -1,4 +1,9 @@
-import type { ApiPlayer, RankingPlayerDto, RankingTierDto } from "../types/api";
+import type {
+  ApiPlayer,
+  PlayerFlag,
+  RankingPlayerDto,
+  RankingTierDto,
+} from "../types/api";
 
 export const UNRANKED_CONTAINER = "unranked";
 
@@ -31,11 +36,18 @@ export interface EditorPlayer {
    * reordering can change it; it only updates when a fresh,
    * server-confirmed ranking arrives after a drop settles. */
   globalRank?: number;
+  /** Watch/avoid flag, baked in on each server sync like `globalRank`.
+   * Ranked players only. */
+  flag?: PlayerFlag;
 }
 
 export type Containers = Record<string, EditorPlayer[]>;
 
-function toEditorPlayer(player: ApiPlayer, globalRank?: number): EditorPlayer {
+function toEditorPlayer(
+  player: ApiPlayer,
+  globalRank?: number,
+  flag?: PlayerFlag,
+): EditorPlayer {
   return {
     sleeperId: player.sleeperId,
     fullName: player.fullName,
@@ -43,6 +55,7 @@ function toEditorPlayer(player: ApiPlayer, globalRank?: number): EditorPlayer {
     team: player.team,
     injuryStatus: player.injuryStatus,
     globalRank,
+    flag,
   };
 }
 
@@ -52,6 +65,7 @@ export function buildContainers(
   players: RankingPlayerDto[],
   tiers: RankingTierDto[],
   unranked: ApiPlayer[],
+  flags: Record<string, PlayerFlag> = {},
 ): Containers {
   const containers: Containers = {};
 
@@ -72,7 +86,13 @@ export function buildContainers(
     if (!containers[tier]) {
       containers[tier] = [];
     }
-    containers[tier].push(toEditorPlayer(entry.player, entry.ranking.rank));
+    containers[tier].push(
+      toEditorPlayer(
+        entry.player,
+        entry.ranking.rank,
+        flags[entry.player.sleeperId],
+      ),
+    );
     rankedIds.add(entry.player.sleeperId);
   }
 

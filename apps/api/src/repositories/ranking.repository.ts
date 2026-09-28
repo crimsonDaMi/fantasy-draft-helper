@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
 import { applySchema, openDatabase } from "./database.js";
+import { PlayerFlag } from "../domain/player-flag.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
@@ -15,6 +16,17 @@ interface RankingPlayerRow {
   rank: number;
   tier: string | null;
   match_json: string;
+}
+
+/** Keeps a user's storage bounded; each ranking holds a few hundred rows. */
+export const MAX_RANKINGS_PER_USER = 20;
+
+export interface RankingSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  playerCount: number;
+  matchedCount: number;
 }
 
 interface TierPositionRow {
@@ -82,6 +94,19 @@ const RANKING_SCHEMA = `
 
   CREATE UNIQUE INDEX IF NOT EXISTS ranking_tiers_ranking_id_position
     ON ranking_tiers (ranking_id, position);
+
+  -- Added after v1.1.0. A new table (not a column on ranking_players) so
+  -- existing databases pick it up without a reset, and so flags survive
+  -- replaceAllPlayers, which rewrites every ranking_players row on each
+  -- editor move.
+  CREATE TABLE IF NOT EXISTS ranking_player_flags (
+    ranking_id TEXT NOT NULL,
+    sleeper_id TEXT NOT NULL,
+    flag TEXT NOT NULL CHECK (flag IN ('watch', 'avoid')),
+    PRIMARY KEY (ranking_id, sleeper_id),
+    FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+      ON DELETE CASCADE
+  );
 `;
 
 export class RankingRepository {
@@ -102,14 +127,18 @@ export class RankingRepository {
     const createdAt = new Date().toISOString();
 
     this.transaction(() => {
-      // Each user has exactly one active ranking at a time — importing a
-      // new CSV or starting a fresh ranking from the editor fully
-      // replaces whatever came before, on disk as well as in the UI.
-      // Cascades to ranking_players and ranking_tiers via their FK
-      // ON DELETE CASCADE, so no orphaned rows accumulate.
-      this.database
-        .prepare(`DELETE FROM rankings WHERE user_id = ?`)
-        .run(userId);
+      // Users keep several rankings side by side (e.g. one per league);
+      // importing or starting a new one adds to them.
+      const { count } = this.database
+        .prepare(`SELECT COUNT(*) AS count FROM rankings WHERE user_id = ?`)
+        .get(userId) as unknown as { count: number };
+
+      if (count >= MAX_RANKINGS_PER_USER) {
+        throw new ConflictError(
+          `You can keep at most ${MAX_RANKINGS_PER_USER} rankings — delete one first`,
+          "RANKING_LIMIT_REACHED",
+        );
+      }
 
       this.database
         .prepare(
@@ -170,6 +199,45 @@ export class RankingRepository {
 
   hasRankings(userId: string): boolean {
     return this.getLatestRankingId(userId) !== undefined;
+  }
+
+  /** The user's rankings, newest first. */
+  listRankings(userId: string): RankingSummary[] {
+    return this.database
+      .prepare(
+        `SELECT rankings.id AS id,
+                rankings.name AS name,
+                rankings.created_at AS createdAt,
+                COUNT(ranking_players.id) AS playerCount,
+                COUNT(ranking_players.sleeper_id) AS matchedCount
+         FROM rankings
+         LEFT JOIN ranking_players ON ranking_players.ranking_id = rankings.id
+         WHERE rankings.user_id = ?
+         GROUP BY rankings.id
+         ORDER BY rankings.created_at DESC, rankings.rowid DESC`,
+      )
+      .all(userId) as unknown as RankingSummary[];
+  }
+
+  rename(rankingId: string, userId: string, name: string): void {
+    const result = this.database
+      .prepare(`UPDATE rankings SET name = ? WHERE id = ? AND user_id = ?`)
+      .run(name, rankingId, userId);
+
+    if (result.changes === 0) {
+      throw new NotFoundError("Ranking was not found", "RANKING_NOT_FOUND");
+    }
+  }
+
+  /** Deletes a ranking with its players, tiers, and flags (FK cascade). */
+  delete(rankingId: string, userId: string): void {
+    const result = this.database
+      .prepare(`DELETE FROM rankings WHERE id = ? AND user_id = ?`)
+      .run(rankingId, userId);
+
+    if (result.changes === 0) {
+      throw new NotFoundError("Ranking was not found", "RANKING_NOT_FOUND");
+    }
   }
 
   close(): void {
@@ -234,9 +302,47 @@ export class RankingRepository {
       );
 
       this.replaceAllPlayers(rankingId, ordered);
+      this.setFlag(rankingId, sleeperId, undefined);
     });
 
     return this.getOrderedMatches(rankingId);
+  }
+
+  /** Sets a player's flag, or clears it with `undefined`. */
+  setFlag(
+    rankingId: string,
+    sleeperId: string,
+    flag: PlayerFlag | undefined,
+  ): void {
+    if (flag === undefined) {
+      this.database
+        .prepare(
+          `DELETE FROM ranking_player_flags
+           WHERE ranking_id = ? AND sleeper_id = ?`,
+        )
+        .run(rankingId, sleeperId);
+
+      return;
+    }
+
+    this.database
+      .prepare(
+        `INSERT INTO ranking_player_flags (ranking_id, sleeper_id, flag)
+         VALUES (?, ?, ?)
+         ON CONFLICT (ranking_id, sleeper_id) DO UPDATE SET flag = excluded.flag`,
+      )
+      .run(rankingId, sleeperId, flag);
+  }
+
+  /** Sleeper ID → flag, for the flagged players of a ranking. */
+  getFlags(rankingId: string): Record<string, PlayerFlag> {
+    const rows = this.database
+      .prepare(
+        `SELECT sleeper_id, flag FROM ranking_player_flags WHERE ranking_id = ?`,
+      )
+      .all(rankingId) as unknown as { sleeper_id: string; flag: PlayerFlag }[];
+
+    return Object.fromEntries(rows.map((row) => [row.sleeper_id, row.flag]));
   }
 
   getTiers(rankingId: string): RankingTier[] {

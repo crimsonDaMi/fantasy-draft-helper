@@ -1,9 +1,10 @@
 import type {
   ApiPlayer,
+  PlayerFlag,
   RankingDetailResponse,
   RankingImportResponse,
   RankingPlayerDto,
-  RankingStatusResponse,
+  RankingSummary,
   RankingTierDto,
   RecommendationsResponse,
   UserDraftsResponse,
@@ -73,6 +74,10 @@ async function request<T>(
     throw new ApiRequestError(await getErrorMessage(response), response.status);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -98,9 +103,16 @@ function path(
   );
 }
 
-export function importRankings(file: File): Promise<RankingImportResponse> {
+export function importRankings(
+  file: File,
+  name?: string,
+): Promise<RankingImportResponse> {
   const formData = new FormData();
 
+  // Before the file: the API reads fields sent ahead of it.
+  if (name && name.trim() !== "") {
+    formData.append("name", name.trim());
+  }
   formData.append("file", file);
 
   return request("/rankings", { method: "POST", body: formData });
@@ -110,10 +122,40 @@ export function createEmptyRanking(): Promise<{ rankingId: string }> {
   return request("/rankings/new", { method: "POST" });
 }
 
+export function listRankings(): Promise<{ rankings: RankingSummary[] }> {
+  return request("/rankings");
+}
+
+export function renameRanking(
+  rankingId: string,
+  name: string,
+): Promise<{ rankingId: string; name: string }> {
+  return request(path`/rankings/${rankingId}`, {
+    method: "PATCH",
+    ...jsonBody({ name }),
+  });
+}
+
+export function deleteRanking(rankingId: string): Promise<void> {
+  return request(path`/rankings/${rankingId}`, { method: "DELETE" });
+}
+
+export function setPlayerFlag(
+  rankingId: string,
+  sleeperId: string,
+  flag: PlayerFlag | null,
+): Promise<{ flags: Record<string, PlayerFlag> }> {
+  return request(path`/rankings/${rankingId}/players/${sleeperId}/flag`, {
+    method: "PATCH",
+    ...jsonBody({ flag }),
+  });
+}
+
 export interface GetRecommendationsOptions {
   limit?: number;
   positions?: string[];
   query?: string;
+  showAvoided?: boolean;
 }
 
 export function getRecommendations(
@@ -121,7 +163,7 @@ export function getRecommendations(
   rankingId: string,
   options: GetRecommendationsOptions = {},
 ): Promise<RecommendationsResponse> {
-  const { limit = 20, positions, query } = options;
+  const { limit = 20, positions, query, showAvoided } = options;
 
   const params = new URLSearchParams({
     rankingId,
@@ -134,6 +176,10 @@ export function getRecommendations(
 
   if (query && query.trim() !== "") {
     params.set("q", query.trim());
+  }
+
+  if (showAvoided) {
+    params.set("showAvoided", "true");
   }
 
   const recommendationsPath = path`/drafts/${draftId}/recommendations`;
@@ -205,10 +251,8 @@ export async function getCurrentUser(): Promise<AuthUser | undefined> {
 }
 
 /** Plain link target (not fetched): the browser downloads the CSV itself. */
-export const RANKINGS_EXPORT_URL = `${API_BASE_URL}/rankings/export`;
-
-export function getRankingsStatus(): Promise<RankingStatusResponse> {
-  return request("/rankings/status");
+export function rankingExportUrl(rankingId: string): string {
+  return `${API_BASE_URL}${path`/rankings/export?rankingId=${rankingId}`}`;
 }
 
 export function getRanking(rankingId: string): Promise<RankingDetailResponse> {

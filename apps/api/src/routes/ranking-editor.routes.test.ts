@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRankingEditorRoutes } from "./ranking-editor.routes.js";
+import { errorHandler } from "../utils/error-handler.js";
 
 const TEST_USER = { id: "test-user", username: "testuser" };
 
@@ -12,6 +13,7 @@ function createTestApp(rankingEditorService: {
   insertTier?: (...args: unknown[]) => unknown;
   removeTier?: (...args: unknown[]) => unknown;
   getUnrankedPlayers?: (...args: unknown[]) => unknown;
+  setFlag?: (...args: unknown[]) => unknown;
 }) {
   const app = Fastify();
 
@@ -21,6 +23,7 @@ function createTestApp(rankingEditorService: {
   });
 
   app.register(createRankingEditorRoutes(rankingEditorService as never));
+  app.setErrorHandler(errorHandler);
 
   return app;
 }
@@ -203,6 +206,49 @@ describe("ranking editor routes", () => {
     });
 
     expect(getUnrankedPlayers).toHaveBeenCalledWith("ranking-1", TEST_USER.id);
+
+    await app.close();
+  });
+
+  it.each([
+    ["watch", "watch"],
+    [null, undefined],
+  ])("sets a player's flag to %s", async (flag, expected) => {
+    const setFlag = vi.fn(() => ({ "2": "avoid" }));
+
+    const app = createTestApp({ setFlag });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/players/1/flag",
+      payload: { flag },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ flags: { "2": "avoid" } });
+    expect(setFlag).toHaveBeenCalledWith(
+      "ranking-1",
+      TEST_USER.id,
+      "1",
+      expected,
+    );
+
+    await app.close();
+  });
+
+  it("rejects an unknown flag", async () => {
+    const setFlag = vi.fn();
+
+    const app = createTestApp({ setFlag });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/players/1/flag",
+      payload: { flag: "draft" },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(setFlag).not.toHaveBeenCalled();
 
     await app.close();
   });
