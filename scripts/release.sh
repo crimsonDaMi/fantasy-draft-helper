@@ -12,7 +12,7 @@ SKIP_AUDIT="${SKIP_AUDIT:-0}"
 CHANGELOG="CHANGELOG.md"
 # Compose files pinning the released image — bumped to the new version so
 # a `git pull` on a deployment picks up exactly this release.
-COMPOSE_FILES=(docker-compose.yml deploy/pi/docker-compose.yml)
+COMPOSE_FILES=(docker-compose.yml deploy/server/docker-compose.yml)
 
 if [[ -z "$VERSION" ]]; then
   echo "Usage: pnpm release -- vX.Y.Z   (e.g. pnpm release -- v0.4.0)"

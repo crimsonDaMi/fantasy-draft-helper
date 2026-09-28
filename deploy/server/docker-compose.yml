@@ -11,3 +11,5 @@ services:
 
 volumes:
   draft-helper-data:
+    # Fixed name, independent of the directory this file is run from.
+    name: fantasy-draft-helper-data

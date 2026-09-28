@@ -7,6 +7,23 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Upgrading
+
+- **Shared-instance deployments only:** `deploy/pi/` moved to
+  `deploy/server/`, and its data volume now has a fixed name,
+  `fantasy-draft-helper-data`, instead of one derived from the directory.
+  Before `git pull`, stop the app from `deploy/pi` (`docker compose down`).
+  After pulling, move `deploy/pi/.env` to `deploy/server/.env`, then copy
+  the old volume into the new one from `deploy/server`:
+  `docker compose run --rm --user root -v pi_draft-helper-data:/old draft-helper cp -a /old/. /app/data/`
+  and start it with `docker compose up -d`. The root `docker-compose.yml`
+  is unaffected.
+
+### Changed
+
+- Hosting documentation is now generic: local, self-hosted, and online
+  hosting, with no specific hardware or provider.
+
 ## v1.0.0 — 2026-09-28
 
 ### Upgrading

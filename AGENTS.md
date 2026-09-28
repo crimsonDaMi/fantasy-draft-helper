@@ -2,8 +2,8 @@
 
 Self-hosted NFL fantasy draft helper for a Sleeper Superflex league. pnpm
 monorepo: Fastify/Node/SQLite API (`apps/api`) + React/Vite web app
-(`apps/web`). Single Docker image, published to GHCR, self-hosted on a
-Raspberry Pi via Tailscale Funnel.
+(`apps/web`). Single Docker image, published to GHCR; shared instances
+are deployed with `deploy/server/`.
 
 ## Read these first
 

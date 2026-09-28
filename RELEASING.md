@@ -42,7 +42,7 @@ This runs `scripts/release.sh`, which:
    if you've reviewed an unfixable advisory and accept the risk).
 6. Bumps the root `package.json`'s `version` to match (without the leading
    `v`), pins the new image tag in both `docker-compose.yml` and
-   `deploy/pi/docker-compose.yml`, renames `## Unreleased` in
+   `deploy/server/docker-compose.yml`, renames `## Unreleased` in
    `CHANGELOG.md` to `## vX.Y.Z — <date>` (with a fresh, empty
    `## Unreleased` above it), commits all of that, and pushes the commit.
 7. Tags the resulting commit and pushes the tag.
@@ -73,8 +73,8 @@ root `package.json`'s version tracks releases.
 Released images are built for both `linux/amd64` and `linux/arm64` (via
 QEMU emulation in the GitHub Actions workflow), published under a single
 multi-arch manifest per tag, so the same tag runs on x86 hosts and ARM
-devices like a Raspberry Pi. The emulated `arm64` build makes releases
-noticeably slower than a single-arch build.
+boards. The emulated `arm64` build makes releases noticeably slower than a
+single-arch build.
 
 ### Releasing by hand
 
@@ -140,7 +140,7 @@ Dependabot alerts and security-update PRs are repository settings
 ## Telling league mates about an update
 
 Deployed instances — whether self-run per person or a shared hosted instance
-(see [`deploy/pi/README.md`](deploy/pi/README.md)) — pin an explicit version tag in `docker-compose.yml` (not `latest`),
+(see [`deploy/server/README.md`](deploy/server/README.md)) — pin an explicit version tag in `docker-compose.yml` (not `latest`),
 so updates are deliberate rather than automatic. The release script keeps
 the repository's two compose files pinned to the latest release, so a
 deployment running from a repository checkout updates with `git pull`:
@@ -163,7 +163,7 @@ the changed tables, rather than crashing later with `no such column`.
 When announcing such a release, ask everyone to use "Export CSV" in the
 ranking editor **before** the update, since the volume must be dropped
 (`docker compose down -v`, not just `down`) and everyone has to
-re-register and re-import (see `deploy/pi/README.md`'s Operational Notes).
+re-register and re-import (see `deploy/server/README.md`'s Operational notes).
 
 When a new version is ready:
 
