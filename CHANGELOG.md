@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Ranking CSV import accepts FantasyPros-style exports: `RK`,
+  `PLAYER NAME`, `POS`, and `TIERS` headers, positional ranks like `RB12`,
+  and `DST`/`D/ST` for defenses.
+
 ### Fixed
 
 - The ranking editor no longer shows an empty ranking when you return to

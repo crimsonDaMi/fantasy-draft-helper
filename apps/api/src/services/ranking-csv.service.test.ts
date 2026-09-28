@@ -116,4 +116,55 @@ WR,CIN
     expect(result.rankings).toHaveLength(0);
     expect(result.errors[0]?.message).toContain("Invalid CSV");
   });
+
+  it("accepts a FantasyPros-style export", () => {
+    const result =
+      service.parse(`\uFEFF"RK","TIERS","PLAYER NAME","TEAM","POS","BYE WEEK","SOS SEASON","ECR VS. ADP"
+"1","1","Player One","AAA","WR1","5","3 out of 5 stars","+2"
+"2","2","Player Two","BBB","RB12","7","2 out of 5 stars","-1"
+"3","9","Team Defense","CCC","DST1","9","",""
+`);
+
+    expect(result.errors).toHaveLength(0);
+
+    expect(result.rankings).toEqual([
+      {
+        rank: 1,
+        playerName: "Player One",
+        team: "AAA",
+        position: "WR",
+        sleeperPlayerId: undefined,
+        tier: "1",
+      },
+      {
+        rank: 2,
+        playerName: "Player Two",
+        team: "BBB",
+        position: "RB",
+        sleeperPlayerId: undefined,
+        tier: "2",
+      },
+      {
+        rank: 3,
+        playerName: "Team Defense",
+        team: "CCC",
+        position: "DEF",
+        sleeperPlayerId: undefined,
+        tier: "9",
+      },
+    ]);
+  });
+
+  it("maps D/ST to DEF and still rejects unknown positions with a rank", () => {
+    const result = service.parse(`
+rank,player,position
+1,Team Defense,D/ST
+2,Player Two,LB3
+`);
+
+    expect(result.rankings.map((ranking) => ranking.position)).toEqual(["DEF"]);
+    expect(result.errors).toEqual([
+      { row: 3, message: "Invalid position: LB3" },
+    ]);
+  });
 });

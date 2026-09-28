@@ -14,15 +14,33 @@ const VALID_POSITIONS = new Set<FantasyPosition>(FANTASY_POSITIONS);
 
 type CsvRow = Record<string, string | undefined>;
 
+// Canonical and legacy headers, plus the column names of common ranking
+// exports (FantasyPros: RK, TIERS, PLAYER NAME, TEAM, POS). Unknown
+// columns are ignored.
 const HEADER_ALIASES: Record<string, keyof NormalizedCsvRow> = {
   rank: "rank",
+  rk: "rank",
   player: "player",
   name: "player",
+  "player name": "player",
   position: "position",
+  pos: "position",
   team: "team",
   tier: "tier",
+  tiers: "tier",
   player_id: "sleeperPlayerId",
 };
+
+const DEFENSE_POSITIONS = new Set(["DEF", "DST", "D/ST"]);
+
+/** Uppercases a position and accepts the "positional rank" form many
+ * exports use (`RB12` → `RB`) and defense spellings (`DST` → `DEF`). */
+function normalizePosition(value: string): string {
+  const upper = value.toUpperCase();
+  const withoutRank = upper.match(/^([A-Z/]+)\d+$/)?.[1] ?? upper;
+
+  return DEFENSE_POSITIONS.has(withoutRank) ? "DEF" : withoutRank;
+}
 
 interface NormalizedCsvRow {
   rank?: string;
@@ -39,6 +57,7 @@ export class RankingCsvService {
 
     try {
       rows = parse(csvContent, {
+        bom: true,
         columns: true,
         skip_empty_lines: true,
         trim: true,
@@ -141,7 +160,8 @@ export class RankingCsvService {
       };
     }
 
-    const position = row.position?.toUpperCase();
+    const position =
+      row.position === undefined ? undefined : normalizePosition(row.position);
 
     if (
       position !== undefined &&

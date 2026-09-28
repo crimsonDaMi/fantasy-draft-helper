@@ -139,6 +139,12 @@ Optional columns:
 
 For compatibility, the importer also accepts the existing legacy headers `Rank`, `Name`, `Position`, `Team`, `Tier`, and `player_id`.
 
+Exports from other sites import as-is: headers are case-insensitive, and
+`RK`, `PLAYER NAME`, `POS`, and `TIERS` (as in a FantasyPros rankings
+export) are recognized. Positions may carry a positional rank (`RB12` is
+read as `RB`), and `DST`/`D/ST` are read as `DEF`. Other columns are
+ignored.
+
 The sample file is [test-data/example-rankings.csv](test-data/example-rankings.csv).
 
 ## API
