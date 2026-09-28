@@ -23,8 +23,8 @@ export class AuthService {
   private readonly allowedUsernames: Set<string>;
 
   // Failed logins per username, kept in memory (a restart resets them).
-  // Keyed by username rather than IP: behind Tailscale Funnel every
-  // request can arrive from the same proxy address.
+  // Keyed by username rather than IP: behind a reverse proxy or tunnel
+  // every request can arrive from the same proxy address.
   private readonly failedLogins = new Map<
     string,
     { count: number; windowStartedAt: number }

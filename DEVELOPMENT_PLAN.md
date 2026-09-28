@@ -20,7 +20,7 @@ item needs its scope confirmed with the user before work starts.
 | Draft-day view redesign                                     | v0.4.0  |
 | ADP vs. personal ranking diff                               | v0.5.0  |
 | Authentication and username allowlist                       | v0.6.1  |
-| Self-hosting (Raspberry Pi + Tailscale Funnel)              | v0.6.3  |
+| Shared-instance hosting setup                               | v0.6.3  |
 | Per-user data separation and multi-user support             | v0.7.0  |
 | Ranking editor ([history](docs/ranking-editor-history.md))  | v0.8.x  |
 | v1.0 hardening (schema guardrail, CSV export, auth lockout) | v1.0.0  |

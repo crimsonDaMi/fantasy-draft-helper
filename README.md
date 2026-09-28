@@ -27,36 +27,50 @@ React web app -> Fastify API -> Sleeper API
 
 Out of scope: payments, WebSockets, machine learning, and automated drafting.
 
-## Prerequisites
+## Installation
+
+The app ships as a Docker image (`ghcr.io/crimsondami/fantasy-draft-helper`,
+for `linux/amd64` and `linux/arm64`). Every option needs Docker with the
+Compose plugin; pick the one that fits how your league drafts.
+
+### Local — just for you
+
+Run it on your own computer for the duration of your draft. Copy the root
+[`docker-compose.yml`](docker-compose.yml) (or clone the repository), put
+your own username in its `ALLOWED_USERNAMES` line, then:
+
+```bash
+docker compose up -d
+```
+
+Open [http://localhost:3000](http://localhost:3000), register the username
+you allowed, and log in.
+
+### Self-hosting — an always-on machine you own
+
+One instance shared by the whole league, running on any always-on machine
+at home (a spare PC, home server, NAS, or single-board computer), exposed
+over HTTPS via a reverse proxy or a tunnel service.
+
+### Online hosting — a rented server
+
+The same shared setup on a VPS or cloud VM, with a domain and a reverse
+proxy providing HTTPS.
+
+Both shared options use [`deploy/server/`](deploy/server/README.md), which
+covers setup, exposing the app over HTTPS, updating, and backups.
+
+## Development Setup
+
+Prerequisites:
 
 - Node.js 24 or newer. The API uses Node's built-in `node:sqlite` module.
 - pnpm 11 or newer.
 
-Install dependencies from the repository root:
+Install dependencies and start the API and web app together:
 
 ```bash
 pnpm install
-```
-
-## Deployment Options
-
-This app can run two ways:
-
-- **Self-run locally**, per-user, via the `docker-compose.yml` in this
-  repo's root — each person runs their own instance during their own
-  draft. See "Run Locally" below.
-- **Centrally hosted**, one instance shared by a whole league, with
-  authentication gating access. The league's instance runs on a Raspberry
-  Pi exposed via Tailscale Funnel (no port forwarding or owned domain
-  required); [`deploy/pi/README.md`](deploy/pi/README.md) has the setup,
-  update, and recovery steps, adaptable to any always-on device. Never
-  commit `deploy/pi/.env` or the Funnel URL.
-
-## Run Locally
-
-Start the API and web app together:
-
-```bash
 pnpm dev
 ```
 
