@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.2.0 — 2026-09-29
+
 ### Upgrading
 
 - No database reset needed: the table for watch/avoid flags is added to
