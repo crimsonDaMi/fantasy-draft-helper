@@ -122,8 +122,12 @@ export function RankingEditorPage() {
   // React re-renders once more before painting, so there's no visible
   // flash and no separate effect pass. Skipped entirely mid-drag so a
   // background refetch can't yank items out from under the cursor.
-  const [syncedDetail, setSyncedDetail] = useState(detailQuery.data);
-  const [syncedUnranked, setSyncedUnranked] = useState(unrankedQuery.data);
+  // Start unsynced, not at the current data: on a return visit the
+  // queries are already cached, and starting "synced" to them would
+  // skip the first sync and leave `containers` empty.
+  const [syncedDetail, setSyncedDetail] = useState<typeof detailQuery.data>();
+  const [syncedUnranked, setSyncedUnranked] =
+    useState<typeof unrankedQuery.data>();
 
   if (
     !isDragging &&

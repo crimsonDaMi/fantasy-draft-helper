@@ -7,6 +7,11 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Fixed
+
+- The ranking editor no longer shows an empty ranking when you return to
+  it from the Draft tab without reloading the page.
+
 ### Changed
 
 - Player positions now have their own color-coded column in the draft

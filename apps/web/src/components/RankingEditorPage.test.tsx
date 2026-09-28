@@ -33,11 +33,11 @@ vi.mock("../api/fantasy-api", () => ({
   RANKINGS_EXPORT_URL: "http://api.test/rankings/export",
 }));
 
-function renderWithClient() {
-  const queryClient = new QueryClient({
+function renderWithClient(
+  queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
-
+  }),
+) {
   return render(
     <QueryClientProvider client={queryClient}>
       <RankingEditorPage />
@@ -209,5 +209,21 @@ describe("RankingEditorPage", () => {
     expect(
       screen.getByText("Merge 2 player(s) into the next tier?"),
     ).toBeInTheDocument();
+  });
+
+  it("shows the ranking again when returning to the editor", async () => {
+    mockTwoTierRanking();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    const firstVisit = renderWithClient(queryClient);
+    await screen.findByText("Player One");
+    firstVisit.unmount();
+
+    // Same cache, as after switching to the Draft tab and back.
+    renderWithClient(queryClient);
+
+    expect(await screen.findByText("Player One")).toBeInTheDocument();
   });
 });
