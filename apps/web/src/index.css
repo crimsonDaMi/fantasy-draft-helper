@@ -1320,3 +1320,139 @@ button {
 .ranking-editor__rankings .ranking-selector {
   margin: 8px 0;
 }
+
+/* Draft recap: the table scrolls on its own when it doesn't fit */
+
+.draft-recap__scroll {
+  overflow-x: auto;
+}
+
+/* My team, collapsed to its next-pick line (phones) */
+
+.my-team__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.my-team__summary::-webkit-details-marker {
+  display: none;
+}
+
+.my-team__summary::before {
+  content: "▸";
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.my-team--collapsible[open] > .my-team__summary {
+  margin-bottom: 8px;
+}
+
+.my-team--collapsible[open] > .my-team__summary::before {
+  transform: rotate(90deg);
+}
+
+.my-team__summary h2 {
+  font-size: 16px;
+}
+
+.my-team__summary .my-team__next {
+  margin: 0;
+}
+
+.my-team--collapsible .my-team__slot {
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Phones. Keep the breakpoint in sync with PHONE_QUERY in
+   DraftDashboard.tsx. */
+@media (max-width: 599px) {
+  #root {
+    padding: 0 12px 32px;
+  }
+
+  /* Title on its own row, the controls wrapping below it with the
+     account controls first. */
+  .app-header__top {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px 10px;
+  }
+
+  .app-header__top h1 {
+    flex-basis: 100%;
+  }
+
+  .app-header__controls {
+    display: contents;
+  }
+
+  .app-header__support,
+  .app-header__version {
+    order: 1;
+  }
+
+  /* Recommendations on two lines: rank, position, name, and flags, then
+     team, tier, and ADP under the name. */
+  .rec-list__row {
+    grid-template-columns: 2.5em auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "rank badge name flags"
+      ". . meta meta";
+    align-items: center;
+    gap: 0 10px;
+  }
+
+  .rec-list__rank {
+    grid-area: rank;
+  }
+
+  .rec-list__row > .position-badge {
+    grid-area: badge;
+  }
+
+  .rec-list__name {
+    grid-area: name;
+    overflow-wrap: anywhere;
+  }
+
+  .rec-list__meta {
+    grid-area: meta;
+    white-space: normal;
+  }
+
+  .rec-list__row > .flag-buttons {
+    grid-area: flags;
+  }
+
+  .hero {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .hero__body {
+    min-width: 0;
+  }
+
+  .hero__title {
+    flex-wrap: wrap;
+  }
+
+  .hero__name {
+    overflow-wrap: anywhere;
+  }
+
+  /* Tap-sized watch/avoid buttons. Not in the ranking editor: its rows
+     are virtualized at a fixed height. */
+  .rec-list .flag-buttons__button,
+  .hero .flag-buttons__button {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+  }
+}

@@ -63,47 +63,52 @@ export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
         </p>
       ) : (
         <>
-          <table className="draft-recap__table">
-            <thead>
-              <tr>
-                <th>Pick</th>
-                <th>Player</th>
-                <th>Your rank</th>
-                <th title="Pick number minus your rank">vs. rank</th>
-                <th>ADP</th>
-                <th title="Pick number minus ADP">vs. ADP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {picks.map((pick) => (
-                <tr key={pick.pickNo}>
-                  <td>{formatPick(pick.pickNo, draft.teams)}</td>
-                  <td>
-                    <span className="draft-recap__player">
-                      <PositionBadge position={pick.position} />
-                      {pick.playerName ?? pick.playerId}
-                    </span>
-                  </td>
-                  <td>{pick.rank === undefined ? "–" : `#${pick.rank}`}</td>
-                  <Value
-                    diff={
-                      pick.rank === undefined
-                        ? undefined
-                        : pick.pickNo - pick.rank
-                    }
-                  />
-                  <td>{pick.adp === undefined ? "–" : pick.adp.toFixed(1)}</td>
-                  <Value
-                    diff={
-                      pick.adp === undefined
-                        ? undefined
-                        : pick.pickNo - pick.adp
-                    }
-                  />
+          {/* Scrolls on its own on narrow screens instead of the page. */}
+          <div className="draft-recap__scroll">
+            <table className="draft-recap__table">
+              <thead>
+                <tr>
+                  <th>Pick</th>
+                  <th>Player</th>
+                  <th>Your rank</th>
+                  <th title="Pick number minus your rank">vs. rank</th>
+                  <th>ADP</th>
+                  <th title="Pick number minus ADP">vs. ADP</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {picks.map((pick) => (
+                  <tr key={pick.pickNo}>
+                    <td>{formatPick(pick.pickNo, draft.teams)}</td>
+                    <td>
+                      <span className="draft-recap__player">
+                        <PositionBadge position={pick.position} />
+                        {pick.playerName ?? pick.playerId}
+                      </span>
+                    </td>
+                    <td>{pick.rank === undefined ? "–" : `#${pick.rank}`}</td>
+                    <Value
+                      diff={
+                        pick.rank === undefined
+                          ? undefined
+                          : pick.pickNo - pick.rank
+                      }
+                    />
+                    <td>
+                      {pick.adp === undefined ? "–" : pick.adp.toFixed(1)}
+                    </td>
+                    <Value
+                      diff={
+                        pick.adp === undefined
+                          ? undefined
+                          : pick.pickNo - pick.adp
+                      }
+                    />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <RosterNeeds myPicks={picks} rosterSlots={draft.rosterSlots} />
         </>
       )}

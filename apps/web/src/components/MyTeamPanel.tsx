@@ -18,6 +18,8 @@ interface MyTeamPanelProps {
   slotFromSleeper: boolean;
   myPicks: ApiDraftPick[];
   onSlotChange: (slot: number) => void;
+  /** Collapsed to the heading and next pick until opened (phones). */
+  collapsible?: boolean;
 }
 
 function NextPickLine({
@@ -94,6 +96,7 @@ export function MyTeamPanel({
   slotFromSleeper,
   myPicks,
   onSlotChange,
+  collapsible = false,
 }: MyTeamPanelProps) {
   const teams = draft.teams ?? 0;
   const canPickSlot = !slotFromSleeper && teams > 0;
@@ -102,74 +105,103 @@ export function MyTeamPanel({
     draftStatus !== "COMPLETE" &&
     draft.type !== "auction";
 
+  const heading = <h2 id="my-team-heading">My team</h2>;
+  const slotSelect = canPickSlot && (
+    <label className="my-team__slot">
+      Slot{" "}
+      <select
+        value={slot ?? ""}
+        onChange={(event) => onSlotChange(Number(event.target.value))}
+      >
+        {slot === undefined && <option value="">–</option>}
+        {Array.from({ length: teams }, (_, index) => index + 1).map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const nextPick = showNextPick && (
+    <NextPickLine draft={draft} slot={slot} currentPickNo={currentPickNo} />
+  );
+  const body =
+    slot === undefined ? (
+      <p className="side-panel__empty">
+        {canPickSlot
+          ? "Choose your draft slot to follow your picks."
+          : "Your draft slot isn't known yet."}
+      </p>
+    ) : (
+      <MyTeamRoster myPicks={myPicks} rosterSlots={draft.rosterSlots} />
+    );
+
+  if (collapsible) {
+    // The slot select lives in the body: inside the summary, clicking it
+    // would toggle the panel.
+    return (
+      <details
+        className="side-panel my-team my-team--collapsible"
+        aria-labelledby="my-team-heading"
+      >
+        <summary className="my-team__summary">
+          {heading}
+          {nextPick}
+        </summary>
+        {slotSelect}
+        {body}
+      </details>
+    );
+  }
+
   return (
     <section className="side-panel my-team" aria-labelledby="my-team-heading">
       <div className="side-panel__header">
-        <h2 id="my-team-heading">My team</h2>
-        {canPickSlot && (
-          <label className="my-team__slot">
-            Slot{" "}
-            <select
-              value={slot ?? ""}
-              onChange={(event) => onSlotChange(Number(event.target.value))}
-            >
-              {slot === undefined && <option value="">–</option>}
-              {Array.from({ length: teams }, (_, index) => index + 1).map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-        )}
+        {heading}
+        {slotSelect}
       </div>
-
-      {slot === undefined ? (
-        <p className="side-panel__empty">
-          {canPickSlot
-            ? "Choose your draft slot to follow your picks."
-            : "Your draft slot isn't known yet."}
-        </p>
-      ) : (
-        <>
-          {showNextPick && (
-            <NextPickLine
-              draft={draft}
-              slot={slot}
-              currentPickNo={currentPickNo}
-            />
-          )}
-
-          {myPicks.length === 0 ? (
-            <p className="side-panel__empty">No players drafted yet.</p>
-          ) : (
-            <ul className="my-team__groups">
-              {POSITIONS.map((position) => {
-                const players = myPicks.filter(
-                  (pick) => pick.position === position,
-                );
-
-                return (
-                  players.length > 0 && (
-                    <li key={position} className="my-team__group">
-                      <PositionBadge position={position} />
-                      <span>
-                        {players
-                          .map((pick) => pick.playerName ?? pick.playerId)
-                          .join(", ")}
-                      </span>
-                    </li>
-                  )
-                );
-              })}
-            </ul>
-          )}
-
-          <RosterNeeds myPicks={myPicks} rosterSlots={draft.rosterSlots} />
-        </>
-      )}
+      {nextPick}
+      {body}
     </section>
+  );
+}
+
+/** Drafted players by position and how they fill the lineup. */
+function MyTeamRoster({
+  myPicks,
+  rosterSlots,
+}: {
+  myPicks: ApiDraftPick[];
+  rosterSlots: Record<string, number>;
+}) {
+  return (
+    <>
+      {myPicks.length === 0 ? (
+        <p className="side-panel__empty">No players drafted yet.</p>
+      ) : (
+        <ul className="my-team__groups">
+          {POSITIONS.map((position) => {
+            const players = myPicks.filter(
+              (pick) => pick.position === position,
+            );
+
+            return (
+              players.length > 0 && (
+                <li key={position} className="my-team__group">
+                  <PositionBadge position={position} />
+                  <span>
+                    {players
+                      .map((pick) => pick.playerName ?? pick.playerId)
+                      .join(", ")}
+                  </span>
+                </li>
+              )
+            );
+          })}
+        </ul>
+      )}
+
+      <RosterNeeds myPicks={myPicks} rosterSlots={rosterSlots} />
+    </>
   );
 }

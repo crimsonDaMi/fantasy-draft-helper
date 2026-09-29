@@ -28,6 +28,8 @@ import {
 
 /** Keep in sync with the .draft-board media query in index.css. */
 const WIDE_DRAFT_BOARD_QUERY = "(min-width: 1200px)";
+/** Keep in sync with the phone media query in index.css. */
+const PHONE_QUERY = "(max-width: 599px)";
 
 export function DraftDashboard() {
   const [storedDraft, setStoredDraft] = useState(readStoredDraft);
@@ -92,6 +94,9 @@ export function DraftDashboard() {
   // index.css); there tier counts move beside My team instead of
   // sitting above the recommendations.
   const isWide = useMediaQuery(WIDE_DRAFT_BOARD_QUERY);
+  // On phones My team collapses to its next-pick line, so the top
+  // recommendation shows without scrolling.
+  const isPhone = useMediaQuery(PHONE_QUERY);
   const tierCounts = data && <TierCounts counts={data.tierCounts} />;
 
   return (
@@ -124,6 +129,7 @@ export function DraftDashboard() {
               onSlotChange={(draftSlot) =>
                 storedDraft && updateStoredDraft({ ...storedDraft, draftSlot })
               }
+              collapsible={isPhone}
             />
             {isWide && data.draftStatus !== "COMPLETE" && tierCounts}
           </div>

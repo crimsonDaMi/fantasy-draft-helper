@@ -27,6 +27,7 @@ item needs its scope confirmed with the user before work starts.
 | Draft-day panels, search, injuries, draft lookup, recap     | v1.2.0  |
 | Multiple saved rankings, watch/avoid flags                  | v1.2.0  |
 | Wide-screen draft layout                                    | Unrel.  |
+| Phone draft layout                                          | Unrel.  |
 
 ## Out of scope
 
@@ -47,12 +48,6 @@ rankings and roster optimization stay out of scope.
 - **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
 - **Touch support** in the ranking editor — worth taking only if it comes
   cheaply from the drag-and-drop library.
-- **Mobile draft layout**: evaluate the draft page on phone-sized
-  screens. The single 640px column shrinks to fit, but nothing has been
-  checked on a real phone — e.g. whether My team pushes the
-  recommendations below the fold, and whether the recommendation and
-  recent-pick rows, filter pills, and header controls fit or wrap
-  cleanly.
 - **Traded picks and auctions** for "you pick in N": the pick order is
   computed from the draft type and slot, so traded picks aren't reflected
   and auctions show no next pick. Sleeper exposes traded picks at

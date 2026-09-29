@@ -12,6 +12,11 @@ See `RELEASING.md`.
 - Wide-screen draft layout: on screens at least 1200px wide, My team and
   your top-tier counts sit to the left of the recommendations and recent
   picks to the right, both staying in view while you scroll the list.
+- Phone layout for the draft page: My team collapses to your next pick
+  (tap to expand) so the top recommendation shows without scrolling,
+  recommendations take two lines instead of overflowing the screen,
+  watch/avoid buttons are bigger, the header wraps, and the draft recap
+  table scrolls on its own.
 
 ## v1.2.0 — 2026-09-29
 
