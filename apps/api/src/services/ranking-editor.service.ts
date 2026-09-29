@@ -24,6 +24,14 @@ export class RankingEditorService {
   ): Promise<PlayerMatch[]> {
     this.assertOwnership(rankingId, userId);
 
+    const tierExists = this.repository
+      .getTiers(rankingId)
+      .some((tier) => tier.label === targetTier);
+
+    if (!tierExists) {
+      throw new NotFoundError("Tier was not found", "TIER_NOT_FOUND");
+    }
+
     const existing = this.repository
       .getMatches(rankingId, userId)
       .some((match) => match.player?.sleeperId === sleeperId);

@@ -19,7 +19,7 @@ const tierParamsSchema = rankingParamsSchema.extend({
 
 const movePlayerBodySchema = z.object({
   rank: z.number().int().min(1),
-  tier: z.string().min(1),
+  tier: z.string().trim().toUpperCase().min(1),
 });
 
 const setFlagBodySchema = z.object({

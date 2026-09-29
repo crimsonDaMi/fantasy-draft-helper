@@ -75,7 +75,7 @@ describe("RankingEditorService", () => {
       const repository = new RankingRepository(":memory:");
 
       const rankingId = repository.create(
-        [match(1, "S", "1"), match(2, "S", "2")],
+        [match(1, "S", "1"), match(2, "A", "2")],
         USER_ID,
       );
 
@@ -115,6 +115,28 @@ describe("RankingEditorService", () => {
       await expect(
         service.movePlayer(rankingId, USER_ID, "unknown", 1, "S"),
       ).rejects.toThrow("Player was not found");
+    });
+
+    it("throws 404 when the target tier is not one of the ranking's tiers", async () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create(
+        [match(1, "S", "1"), match(2, "A", "2")],
+        USER_ID,
+      );
+
+      const service = new RankingEditorService(
+        repository,
+        createFixturePlayerService() as never,
+      );
+
+      await expect(
+        service.movePlayer(rankingId, USER_ID, "1", 1, "Z"),
+      ).rejects.toThrow("Tier was not found");
+
+      expect(
+        repository.getMatches(rankingId, USER_ID).map((m) => m.ranking.tier),
+      ).toEqual(["S", "A"]);
     });
 
     it("throws 404 when the ranking does not belong to the user", async () => {

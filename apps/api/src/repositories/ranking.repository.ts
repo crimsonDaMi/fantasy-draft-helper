@@ -274,8 +274,9 @@ export class RankingRepository {
         [entry] = ordered.splice(currentIndex, 1);
       } else {
         if (!newMatch) {
-          throw new Error(
-            `Player ${sleeperId} is not ranked and no new match was supplied`,
+          throw new NotFoundError(
+            "Player is not part of this ranking",
+            "PLAYER_NOT_RANKED",
           );
         }
         entry = newMatch;

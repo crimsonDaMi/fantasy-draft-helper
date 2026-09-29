@@ -104,6 +104,29 @@ describe("ranking editor routes", () => {
     await app.close();
   });
 
+  it("normalizes the target tier label before moving a player", async () => {
+    const movePlayer = vi.fn(async () => []);
+
+    const app = createTestApp({ movePlayer });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/players/1",
+      payload: { rank: 1, tier: " a " },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(movePlayer).toHaveBeenCalledWith(
+      "ranking-1",
+      TEST_USER.id,
+      "1",
+      1,
+      "A",
+    );
+
+    await app.close();
+  });
+
   it("removes a player and returns the updated ranking", async () => {
     const removePlayer = vi.fn(() => [
       {
