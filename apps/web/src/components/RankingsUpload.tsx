@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { importRankings } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { RankingImportSummary } from "../types/api";
+import { ErrorMessage } from "./ErrorMessage";
 
 interface RankingsUploadProps {
   onImported: (summary: RankingImportSummary, rankingId: string) => void;
@@ -73,7 +74,7 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
         </div>
       </form>
 
-      {error && <p className="upload-error">{error}</p>}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
 
       {validationErrors.length > 0 && (
         <ul className="upload-validation-list">

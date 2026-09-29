@@ -1,11 +1,13 @@
+import { ErrorMessage } from "../ErrorMessage";
+
 /** Shown when the user has no ranking yet. */
 export function StartRankingPrompt({
   isStarting,
-  hasFailed,
+  error,
   onStart,
 }: {
   isStarting: boolean;
-  hasFailed: boolean;
+  error: Error | null;
   onStart: () => void;
 }) {
   return (
@@ -23,10 +25,10 @@ export function StartRankingPrompt({
       >
         {isStarting ? "Starting…" : "Start a new ranking"}
       </button>
-      {hasFailed && (
-        <p className="status-bar status-bar__error">
-          Failed to start a new ranking. Try again.
-        </p>
+      {error && (
+        <ErrorMessage>
+          Couldn't start a new ranking: {error.message}
+        </ErrorMessage>
       )}
     </section>
   );

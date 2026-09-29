@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -12,7 +13,9 @@ import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingDetailResponse } from "../types/api";
 
 /** Every server mutation the ranking editor makes, each reconciling
- * exactly the queries it can affect once it settles. */
+ * exactly the queries it can affect once it settles. A failed save is
+ * reported in `saveError` until the next save succeeds; the refetch on
+ * settle has already put the ranking back to the server's state. */
 export function useRankingEditorMutations(
   rankingId: string | undefined,
   {
@@ -24,6 +27,14 @@ export function useRankingEditorMutations(
   },
 ) {
   const queryClient = useQueryClient();
+  const [saveError, setSaveError] = useState<string>();
+
+  // Shared by every mutation that saves an edit to the ranking.
+  const saveCallbacks = {
+    onSuccess: () => setSaveError(undefined),
+    onError: (error: Error) =>
+      setSaveError(`Your last change wasn't saved: ${error.message}`),
+  };
 
   function settleQueries() {
     void queryClient.invalidateQueries({
@@ -57,25 +68,32 @@ export function useRankingEditorMutations(
       rank: number;
       tier: string;
     }) => moveRankingPlayer(rankingId!, sleeperId, rank, tier),
+    ...saveCallbacks,
     onSettled: settleQueries,
   });
 
   const removeMutation = useMutation({
     mutationFn: ({ sleeperId }: { sleeperId: string }) =>
       removeRankingPlayer(rankingId!, sleeperId),
+    ...saveCallbacks,
     onSettled: settleQueries,
   });
 
   const insertTierMutation = useMutation({
     mutationFn: ({ position }: { position: number }) =>
       insertTier(rankingId!, position),
+    ...saveCallbacks,
     onSettled: settleDetailQuery,
   });
 
   const removeTierMutation = useMutation({
     mutationFn: ({ position }: { position: number }) =>
       removeTier(rankingId!, position),
-    onSuccess: onTierRemoved,
+    ...saveCallbacks,
+    onSuccess: () => {
+      saveCallbacks.onSuccess();
+      onTierRemoved();
+    },
     onSettled: settleDetailQuery,
   });
 
@@ -117,6 +135,7 @@ export function useRankingEditorMutations(
         },
       );
     },
+    ...saveCallbacks,
     onSettled: settleDetailQuery,
   });
 
@@ -127,5 +146,6 @@ export function useRankingEditorMutations(
     removeTierMutation,
     createEmptyRankingMutation,
     flagMutation,
+    saveError,
   };
 }

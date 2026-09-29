@@ -47,6 +47,7 @@ import {
   type KeyboardMove,
   type TierDisplayMode,
 } from "./ranking-editor-logic";
+import { ErrorMessage } from "./ErrorMessage";
 
 // Mouse drags start after a few pixels; touch drags need a long press,
 // so a swipe on a row scrolls the list instead of grabbing the player.
@@ -226,6 +227,7 @@ export function RankingEditorPage() {
     removeTierMutation,
     createEmptyRankingMutation,
     flagMutation,
+    saveError,
   } = useRankingEditorMutations(rankingId, {
     onTierRemoved: () => setConfirmingRemoveTierPosition(undefined),
     onRankingCreated: selectRanking,
@@ -510,7 +512,7 @@ export function RankingEditorPage() {
     return (
       <StartRankingPrompt
         isStarting={createEmptyRankingMutation.isPending}
-        hasFailed={createEmptyRankingMutation.isError}
+        error={createEmptyRankingMutation.error}
         onStart={() => createEmptyRankingMutation.mutate()}
       />
     );
@@ -520,11 +522,12 @@ export function RankingEditorPage() {
     return <p className="status-bar">Loading ranking…</p>;
   }
 
-  if (detailQuery.error || unrankedQuery.error) {
+  const loadError = detailQuery.error ?? unrankedQuery.error;
+  if (loadError) {
     return (
-      <p className="status-bar status-bar__error">
-        Failed to load the ranking.
-      </p>
+      <ErrorMessage>
+        Couldn't load the ranking: {loadError.message}
+      </ErrorMessage>
     );
   }
 
@@ -551,9 +554,10 @@ export function RankingEditorPage() {
             + New ranking
           </button>
           {createEmptyRankingMutation.isError && (
-            <p className="status-bar status-bar__error">
+            <ErrorMessage>
+              Couldn't start a new ranking:{" "}
               {createEmptyRankingMutation.error.message}
-            </p>
+            </ErrorMessage>
           )}
         </div>
       )}
@@ -575,6 +579,8 @@ export function RankingEditorPage() {
           aria-label="Search ranked players"
         />
       </div>
+
+      {saveError && <ErrorMessage>{saveError}</ErrorMessage>}
 
       <EditorHints
         isPhone={isPhone}

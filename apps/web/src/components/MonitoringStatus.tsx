@@ -1,5 +1,6 @@
 import { isDebugUi } from "../config";
 import type { DraftStatus, RecommendationsResponse } from "../types/api";
+import { ErrorMessage } from "./ErrorMessage";
 
 const STATUS_TEXT: Record<DraftStatus, string> = {
   PRE_DRAFT: "Waiting for draft to start",
@@ -91,14 +92,7 @@ export function MonitoringStatus({
         </p>
       )}
 
-      {error && (
-        <div className="status-bar status-bar__error">
-          <span>{error}</span>
-          <button type="button" className="status-bar__retry" onClick={onRetry}>
-            Retry
-          </button>
-        </div>
-      )}
+      {error && <ErrorMessage onRetry={onRetry}>{error}</ErrorMessage>}
     </div>
   );
 }

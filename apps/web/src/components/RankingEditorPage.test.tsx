@@ -383,6 +383,25 @@ describe("RankingEditorPage", () => {
       expect(row("Player One")).toHaveAttribute("tabindex", "-1");
     });
 
+    it("reports a move the server didn't save, and clears it after the next save", async () => {
+      mocks.moveRankingPlayer.mockRejectedValueOnce(new Error("Network down"));
+      renderWithClient();
+      await screen.findByText("Player One");
+      row("Player Two").focus();
+
+      fireEvent.keyDown(row("Player Two"), { key: "ArrowDown", altKey: true });
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Your last change wasn't saved: Network down",
+      );
+
+      fireEvent.keyDown(row("Player Two"), { key: "ArrowUp", altKey: true });
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+      );
+    });
+
     it("moves a player into the next tier with Alt+ArrowDown and keeps focus on it", async () => {
       renderWithClient();
       await screen.findByText("Player One");

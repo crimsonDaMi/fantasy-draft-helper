@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteRanking, renameRanking } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { RankingSummary } from "../types/api";
+import { ErrorMessage } from "./ErrorMessage";
 
 interface RankingSelectorProps {
   rankings: RankingSummary[];
@@ -72,9 +73,9 @@ export function RankingSelector({
           Cancel
         </button>
         {error && (
-          <p className="ranking-selector__error" role="alert">
+          <ErrorMessage className="ranking-selector__error">
             {error.message}
-          </p>
+          </ErrorMessage>
         )}
       </form>
     );
@@ -122,9 +123,9 @@ export function RankingSelector({
         </button>
       )}
       {error && (
-        <p className="ranking-selector__error" role="alert">
+        <ErrorMessage className="ranking-selector__error">
           {error.message}
-        </p>
+        </ErrorMessage>
       )}
     </div>
   );

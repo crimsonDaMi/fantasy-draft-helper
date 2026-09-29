@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ErrorMessage } from "./ErrorMessage";
 
 interface LoginFormProps {
   error?: string;
@@ -81,7 +82,7 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
         </p>
       )}
 
-      {error && <p className="upload-error">{error}</p>}
+      {error && <ErrorMessage>{error}</ErrorMessage>}
     </div>
   );
 }

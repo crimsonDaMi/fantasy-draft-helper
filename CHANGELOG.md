@@ -35,6 +35,10 @@ See `RELEASING.md`.
 - When Sleeper can't be reached, the draft view says so instead of "An
   unexpected error occurred", and a Sleeper rate limit is retried like
   other temporary Sleeper failures.
+- The ranking editor says when a change couldn't be saved, instead of
+  silently undoing it (e.g. a lost connection, or a 27th tier).
+- Error messages look the same everywhere and are announced by screen
+  readers, including on the login and CSV import forms.
 - Cancelling a drag in the ranking editor (Escape, resizing the window, or
   switching tabs) no longer stops the editor from picking up saved
   changes until the next drag.

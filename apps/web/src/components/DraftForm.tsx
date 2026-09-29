@@ -8,6 +8,7 @@ import {
   readStoredSleeperUsername,
   writeStoredSleeperUsername,
 } from "../utils/stored-sleeper-username";
+import { ErrorMessage } from "./ErrorMessage";
 
 interface DraftSelection {
   draftId: string;
@@ -96,11 +97,7 @@ export function DraftForm({ initialDraftId, onSubmit }: DraftFormProps) {
         below instead.
       </p>
 
-      {lookup.error && (
-        <p className="draft-form__error" role="alert">
-          {lookup.error.message}
-        </p>
-      )}
+      {lookup.error && <ErrorMessage>{lookup.error.message}</ErrorMessage>}
 
       {lookup.data && lookup.data.drafts.length === 0 && (
         <p className="draft-form__hint">No drafts found for {season}.</p>
