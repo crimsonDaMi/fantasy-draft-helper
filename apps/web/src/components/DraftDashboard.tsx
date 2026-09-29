@@ -12,6 +12,7 @@ import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import { setPlayerFlag } from "../api/fantasy-api";
 import type { PlayerFlag, RankingImportSummary } from "../types/api";
@@ -24,6 +25,9 @@ import {
   type StoredDraft,
   writeStoredDraft,
 } from "../utils/stored-draft";
+
+/** Keep in sync with the .draft-board media query in index.css. */
+const WIDE_DRAFT_BOARD_QUERY = "(min-width: 1200px)";
 
 export function DraftDashboard() {
   const [storedDraft, setStoredDraft] = useState(readStoredDraft);
@@ -84,6 +88,12 @@ export function DraftDashboard() {
       ? picksForSlot(data.picks, mySlot, sleeperUserId)
       : [];
 
+  // Side columns only fit on wide screens (see .draft-board in
+  // index.css); there tier counts move beside My team instead of
+  // sitting above the recommendations.
+  const isWide = useMediaQuery(WIDE_DRAFT_BOARD_QUERY);
+  const tierCounts = data && <TierCounts counts={data.tierCounts} />;
+
   return (
     <>
       <MonitoringStatus
@@ -103,17 +113,20 @@ export function DraftDashboard() {
 
       {data && (
         <div className="draft-board">
-          <MyTeamPanel
-            draft={data.draft}
-            draftStatus={data.draftStatus}
-            currentPickNo={currentPickNo(data.picks)}
-            slot={mySlot}
-            slotFromSleeper={sleeperSlot !== undefined}
-            myPicks={myPicks}
-            onSlotChange={(draftSlot) =>
-              storedDraft && updateStoredDraft({ ...storedDraft, draftSlot })
-            }
-          />
+          <div className="draft-board__side">
+            <MyTeamPanel
+              draft={data.draft}
+              draftStatus={data.draftStatus}
+              currentPickNo={currentPickNo(data.picks)}
+              slot={mySlot}
+              slotFromSleeper={sleeperSlot !== undefined}
+              myPicks={myPicks}
+              onSlotChange={(draftSlot) =>
+                storedDraft && updateStoredDraft({ ...storedDraft, draftSlot })
+              }
+            />
+            {isWide && data.draftStatus !== "COMPLETE" && tierCounts}
+          </div>
           <div className="draft-board__main">
             {data.draftStatus === "COMPLETE" ? (
               <DraftRecap draft={data.draft} myPicks={myPicks} />
@@ -133,7 +146,7 @@ export function DraftDashboard() {
                     aria-label="Search available players"
                   />
                 </div>
-                <TierCounts counts={data.tierCounts} />
+                {!isWide && tierCounts}
                 {(data.avoidedCount > 0 || showAvoided) && (
                   <label className="recommendation-filters__avoided">
                     <input
@@ -153,7 +166,9 @@ export function DraftDashboard() {
               </>
             )}
           </div>
-          <RecentPicks picks={data.picks} teams={data.draft.teams} />
+          <div className="draft-board__side">
+            <RecentPicks picks={data.picks} teams={data.draft.teams} />
+          </div>
         </div>
       )}
 

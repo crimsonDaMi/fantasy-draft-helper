@@ -155,6 +155,51 @@ describe("DraftDashboard", () => {
     ).toBeInTheDocument();
   });
 
+  it("moves tier counts beside My team on wide screens", async () => {
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1" }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        tierCounts: [{ position: "QB", tiers: [{ tier: "A", remaining: 2 }] }],
+      }),
+    );
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({
+        matches: query === "(min-width: 1200px)",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+
+    try {
+      const { container } = renderWithClient();
+      const tierCounts = await screen.findByText(/left in your top tiers/i);
+
+      expect(
+        container.querySelector(".draft-board__side")?.contains(tierCounts),
+      ).toBe(true);
+      expect(
+        container.querySelector(".draft-board__main")?.contains(tierCounts),
+      ).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("stores the draft when monitoring starts", async () => {
     mocks.listRankings.mockResolvedValue({ rankings: [] });
 

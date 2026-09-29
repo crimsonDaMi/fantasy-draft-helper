@@ -977,6 +977,29 @@ button {
 
 /* Draft board: my team, recommendations, recent picks */
 
+/* Wide screens: break out of #root's 640px column into three columns,
+   the recommendations staying centered at their usual width and the side
+   columns sticking in view while the list scrolls. Keep the breakpoint in
+   sync with WIDE_DRAFT_BOARD_QUERY in DraftDashboard.tsx. */
+@media (min-width: 1200px) {
+  .draft-board {
+    display: grid;
+    grid-template-columns: minmax(0, 340px) 600px minmax(0, 340px);
+    justify-content: center;
+    align-items: start;
+    gap: 24px;
+    width: calc(100vw - 40px);
+    margin-left: calc(50% - 50vw + 20px);
+  }
+
+  .draft-board__side {
+    position: sticky;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 .side-panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

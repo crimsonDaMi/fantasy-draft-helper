@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Changed
+
+- Wide-screen draft layout: on screens at least 1200px wide, My team and
+  your top-tier counts sit to the left of the recommendations and recent
+  picks to the right, both staying in view while you scroll the list.
+
 ## v1.2.0 — 2026-09-29
 
 ### Upgrading
