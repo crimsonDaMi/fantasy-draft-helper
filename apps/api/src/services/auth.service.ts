@@ -60,7 +60,7 @@ export class AuthService {
 
     if (this.isLockedOut(normalizedUsername)) {
       throw new TooManyLoginAttemptsError(
-        "Too many failed login attempts. Try again in 15 minutes.",
+        `Too many failed login attempts. Try again in ${LOCKOUT_WINDOW_MS / 60_000} minutes.`,
       );
     }
 

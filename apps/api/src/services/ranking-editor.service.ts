@@ -1,5 +1,5 @@
 import { PlayerFlag } from "../domain/player-flag.js";
-import { FantasyPosition } from "../domain/ranking.js";
+import { isFantasyPosition } from "../domain/ranking.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { Player } from "../domain/player.js";
 import { RankingTier } from "../domain/ranking-tier.js";
@@ -32,13 +32,9 @@ export class RankingEditorService {
       throw new NotFoundError("Tier was not found", "TIER_NOT_FOUND");
     }
 
-    const existing = this.repository
-      .getMatches(rankingId, userId)
-      .some((match) => match.player?.sleeperId === sleeperId);
-
     let newMatch: PlayerMatch | undefined;
 
-    if (!existing) {
+    if (!this.isRanked(rankingId, userId, sleeperId)) {
       await this.playerService.ensurePlayersLoaded();
       const player = this.playerService.getPlayerById(sleeperId);
 
@@ -51,7 +47,10 @@ export class RankingEditorService {
           rank: targetRank,
           playerName: player.fullName,
           team: player.team,
-          position: player.position as FantasyPosition | undefined,
+          position:
+            player.position && isFantasyPosition(player.position)
+              ? player.position
+              : undefined,
           sleeperPlayerId: player.sleeperId,
           tier: targetTier,
         },
@@ -105,8 +104,7 @@ export class RankingEditorService {
 
   /**
    * Active, fantasy-relevant players not currently part of this ranking —
-   * the pool shown in the editor's "unranked" side panel. Requirement #6
-   * in docs/ranking-editor-requirements.md.
+   * the pool shown in the editor's "unranked" side panel.
    */
   async getUnrankedPlayers(
     rankingId: string,
@@ -166,11 +164,7 @@ export class RankingEditorService {
   ): Record<string, PlayerFlag> {
     this.assertOwnership(rankingId, userId);
 
-    const isRanked = this.repository
-      .getMatches(rankingId, userId)
-      .some((match) => match.player?.sleeperId === sleeperId);
-
-    if (!isRanked) {
+    if (!this.isRanked(rankingId, userId, sleeperId)) {
       throw new NotFoundError(
         "Player is not part of this ranking",
         "PLAYER_NOT_RANKED",
@@ -180,6 +174,16 @@ export class RankingEditorService {
     this.repository.setFlag(rankingId, sleeperId, flag);
 
     return this.repository.getFlags(rankingId);
+  }
+
+  private isRanked(
+    rankingId: string,
+    userId: string,
+    sleeperId: string,
+  ): boolean {
+    return this.repository
+      .getMatches(rankingId, userId)
+      .some((match) => match.player?.sleeperId === sleeperId);
   }
 
   private withLiveStatus(matches: PlayerMatch[]): PlayerMatch[] {

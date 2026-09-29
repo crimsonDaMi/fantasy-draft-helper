@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
+import { draftParamsSchema } from "./params.schemas.js";
 import { DraftService } from "../services/draft.service.js";
 import { DraftStateService } from "../services/draft-state.service.js";
 
@@ -14,10 +15,6 @@ const userDraftsQuerySchema = z.object({
     .string()
     .regex(/^\d{4}$/)
     .default(() => String(new Date().getFullYear())),
-});
-
-const draftParamsSchema = z.object({
-  draftId: z.string().min(1),
 });
 
 export function createDraftsRoutes(

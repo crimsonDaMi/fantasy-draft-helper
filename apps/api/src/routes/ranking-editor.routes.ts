@@ -1,13 +1,10 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
+import { rankingParamsSchema } from "./params.schemas.js";
 import { PLAYER_FLAGS } from "../domain/player-flag.js";
 import { RankingEditorService } from "../services/ranking-editor.service.js";
 import { requireUser } from "../utils/require-user.js";
-
-const rankingParamsSchema = z.object({
-  rankingId: z.string().min(1),
-});
 
 const playerParamsSchema = rankingParamsSchema.extend({
   sleeperId: z.string().min(1),

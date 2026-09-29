@@ -8,6 +8,7 @@ import {
   InvalidCredentialsError,
   TooManyLoginAttemptsError,
 } from "../services/auth.service.js";
+import { LOGIN_REQUIRED, SESSION_COOKIE } from "../utils/require-user.js";
 
 const credentialsSchema = z.object({
   username: z.string().min(1),
@@ -21,7 +22,7 @@ function setSessionCookie(
   token: string,
   expiresAt: string,
 ): void {
-  reply.setCookie("session", token, {
+  reply.setCookie(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: isProduction,
@@ -97,26 +98,23 @@ export function createAuthRoutes(authService: AuthService) {
     });
 
     app.post("/auth/logout", async (request, reply) => {
-      const token = request.cookies.session;
+      const token = request.cookies[SESSION_COOKIE];
 
       if (token) {
         authService.logout(token);
       }
 
-      reply.clearCookie("session", { path: "/" });
+      reply.clearCookie(SESSION_COOKIE, { path: "/" });
 
       return { loggedOut: true };
     });
 
     app.get("/auth/me", async (request, reply) => {
-      const token = request.cookies.session;
+      const token = request.cookies[SESSION_COOKIE];
       const user = token ? authService.getUserForSession(token) : undefined;
 
       if (!user) {
-        return reply.status(401).send({
-          error: "UNAUTHENTICATED",
-          message: "Login required",
-        });
+        return reply.status(401).send(LOGIN_REQUIRED);
       }
 
       return { user };

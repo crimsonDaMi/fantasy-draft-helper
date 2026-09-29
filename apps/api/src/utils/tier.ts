@@ -49,7 +49,7 @@ export function isValidTierLabel(value: string): boolean {
 }
 
 /** The next-worse tier in sequence. Stays at "Z" if already there — no
-+ * tier past the worst one. */
+ * tier past the worst one. */
 export function nextTierLabel(label: string): string {
   const index = TIER_SEQUENCE.indexOf(label.trim().toUpperCase());
 

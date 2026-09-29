@@ -46,7 +46,20 @@ function matchesQuery(player: Player, query: string | undefined) {
   return haystack.includes(normalizedQuery);
 }
 
-const TIER_COUNT_TIERS = 2;
+const TIERS_SHOWN_PER_POSITION = 2;
+
+/** The player's ADP and its difference to their rank (`rank - adp`,
+ * rounded to one decimal). */
+function adpComparison(
+  rank: number,
+  adpValue: number | undefined,
+): Recommendation["adp"] {
+  if (adpValue === undefined) {
+    return undefined;
+  }
+
+  return { value: adpValue, diff: Math.round((rank - adpValue) * 10) / 10 };
+}
 
 /** Per position, the first tiers (in ranking order) that still have
  * undrafted players, with how many are left in each. */
@@ -72,7 +85,7 @@ function countRemainingByTier(
     (position) => ({
       position,
       tiers: [...byPosition.get(position)!]
-        .slice(0, TIER_COUNT_TIERS)
+        .slice(0, TIERS_SHOWN_PER_POSITION)
         .map(([tier, remaining]) => ({ tier, remaining })),
     }),
   );
@@ -105,9 +118,11 @@ export class RecommendationService {
 
     const flags = this.rankingStoreService.getFlags(rankingId);
 
-    const available = matches
-      .filter(hasPlayer)
-      .filter((match) => !draftedPlayerIds.has(match.player.sleeperId));
+    const matched = matches.filter(hasPlayer);
+
+    const available = matched.filter(
+      (match) => !draftedPlayerIds.has(match.player.sleeperId),
+    );
 
     const isAvoided = (match: { player: Player }) =>
       flags[match.player.sleeperId] === "avoid";
@@ -122,27 +137,18 @@ export class RecommendationService {
           this.playerService.getPlayerById(sleeperId),
         ),
       )
-      .map((match): Recommendation => {
-        const adpValue = adpBySleeperId.get(match.player.sleeperId);
-
-        return {
-          ranking: match.ranking,
-          player: match.player,
-          flag: flags[match.player.sleeperId],
-          adp:
-            adpValue === undefined
-              ? undefined
-              : {
-                  value: adpValue,
-                  diff: Math.round((match.ranking.rank - adpValue) * 10) / 10,
-                },
-        };
-      });
+      .map((match): Recommendation => ({
+        ranking: match.ranking,
+        player: match.player,
+        flag: flags[match.player.sleeperId],
+        adp: adpComparison(
+          match.ranking.rank,
+          adpBySleeperId.get(match.player.sleeperId),
+        ),
+      }));
 
     const matchesBySleeperId = new Map(
-      matches
-        .filter(hasPlayer)
-        .map((match) => [match.player.sleeperId, match] as const),
+      matched.map((match) => [match.player.sleeperId, match] as const),
     );
 
     const picks = draftState.picks.map((pick): RankedDraftPick => {

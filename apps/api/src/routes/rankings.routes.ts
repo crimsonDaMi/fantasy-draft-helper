@@ -1,18 +1,23 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
+import { rankingParamsSchema } from "./params.schemas.js";
 import { RankingImportService } from "../services/ranking-import.service.js";
 import { RankingStoreService } from "../services/ranking-store.service.js";
 import { mapRankingImportResponse } from "../services/ranking-import.mapper.js";
 import { toRankingCsv } from "../services/ranking-csv-export.js";
 import { NotFoundError } from "../utils/domain-errors.js";
+import { HttpError } from "../utils/http-error.js";
 import { requireUser } from "../utils/require-user.js";
 
 const rankingNameSchema = z.string().trim().min(1).max(60);
 
-const rankingParamsSchema = z.object({
-  rankingId: z.string().min(1),
-});
+// Browsers report CSV uploads inconsistently, so accept the common ones.
+const ALLOWED_CSV_MIME_TYPES = new Set([
+  "text/csv",
+  "application/vnd.ms-excel",
+  "application/octet-stream",
+]);
 
 const renameBodySchema = z.object({
   name: rankingNameSchema,
@@ -50,29 +55,17 @@ export function createRankingsRoutes(
   rankingStoreService: RankingStoreService,
 ) {
   return async function rankingsRoutes(app: FastifyInstance) {
-    app.post("/rankings", async (request, reply) => {
+    app.post("/rankings", async (request) => {
       const userId = requireUser(request).id;
 
       const file = await request.file();
 
       if (!file) {
-        return reply.status(400).send({
-          error: "CSV_FILE_REQUIRED",
-          message: "CSV file is required",
-        });
+        throw new HttpError(400, "CSV file is required", "CSV_FILE_REQUIRED");
       }
 
-      const allowedMimeTypes = new Set([
-        "text/csv",
-        "application/vnd.ms-excel",
-        "application/octet-stream",
-      ]);
-
-      if (!allowedMimeTypes.has(file.mimetype)) {
-        return reply.status(400).send({
-          error: "INVALID_FILE_TYPE",
-          message: "File must be a CSV",
-        });
+      if (!ALLOWED_CSV_MIME_TYPES.has(file.mimetype)) {
+        throw new HttpError(400, "File must be a CSV", "INVALID_FILE_TYPE");
       }
 
       const csvContent = await file.toBuffer();

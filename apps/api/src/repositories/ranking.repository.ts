@@ -347,7 +347,27 @@ export class RankingRepository {
   }
 
   getTiers(rankingId: string): RankingTier[] {
-    return this.readTiers(rankingId);
+    const positions = this.readTierPositions(rankingId);
+
+    const counts = this.database
+      .prepare(
+        `SELECT tier, COUNT(*) AS count
+         FROM ranking_players
+         WHERE ranking_id = ?
+         GROUP BY tier`,
+      )
+      .all(rankingId) as unknown as { tier: string; count: number }[];
+
+    const countByLabel = new Map(counts.map((row) => [row.tier, row.count]));
+
+    return positions.map((position) => {
+      const label = numericTierToLabel(position)!;
+      return {
+        position,
+        label,
+        playerCount: countByLabel.get(label) ?? 0,
+      };
+    });
   }
 
   /** Inserts a new, empty tier at 1-based `position`, shifting that tier
@@ -374,7 +394,7 @@ export class RankingRepository {
         .run(rankingId, clamped);
     });
 
-    return this.readTiers(rankingId);
+    return this.getTiers(rankingId);
   }
 
   /** Removes the tier at 1-based `position`, merging its players into the
@@ -416,7 +436,7 @@ export class RankingRepository {
       this.shiftTiersFrom(rankingId, position + 1, -1);
     });
 
-    return this.readTiers(rankingId);
+    return this.getTiers(rankingId);
   }
 
   // ---------------------------------------------------------------------
@@ -529,30 +549,6 @@ export class RankingRepository {
     return rows.map((row) => row.position);
   }
 
-  private readTiers(rankingId: string): RankingTier[] {
-    const positions = this.readTierPositions(rankingId);
-
-    const counts = this.database
-      .prepare(
-        `SELECT tier, COUNT(*) AS count
-         FROM ranking_players
-         WHERE ranking_id = ?
-         GROUP BY tier`,
-      )
-      .all(rankingId) as unknown as { tier: string; count: number }[];
-
-    const countByLabel = new Map(counts.map((row) => [row.tier, row.count]));
-
-    return positions.map((position) => {
-      const label = numericTierToLabel(position)!;
-      return {
-        position,
-        label,
-        playerCount: countByLabel.get(label) ?? 0,
-      };
-    });
-  }
-
   /** Shifts every tier (row in ranking_tiers, plus the tier column of
    * every affected player) at or past `fromPosition` by `delta`. */
   private shiftTiersFrom(
@@ -604,7 +600,9 @@ export class RankingRepository {
       );
   }
 
-  private getMatchStatus(match: PlayerMatch): string {
+  private getMatchStatus(
+    match: PlayerMatch,
+  ): "MATCHED" | "AMBIGUOUS" | "UNMATCHED" {
     if (match.player !== undefined) {
       return "MATCHED";
     }

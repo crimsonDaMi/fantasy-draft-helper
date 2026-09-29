@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { applySchema, openDatabase } from "./database.js";
 
 const SCRYPT_KEY_LENGTH = 64;
+const SALT_BYTES = 16;
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 const scryptAsync = promisify(scrypt) as (
@@ -15,7 +16,7 @@ const scryptAsync = promisify(scrypt) as (
 
 // Hashed against when the username doesn't exist, so a login attempt takes
 // the same time either way and doesn't reveal which usernames are taken.
-const DUMMY_SALT = randomBytes(16).toString("hex");
+const DUMMY_SALT = randomBytes(SALT_BYTES).toString("hex");
 
 export interface User {
   id: string;
@@ -59,7 +60,7 @@ export class UserRepository {
 
   async createUser(username: string, password: string): Promise<User> {
     const id = randomUUID();
-    const salt = randomBytes(16).toString("hex");
+    const salt = randomBytes(SALT_BYTES).toString("hex");
     const hash = await this.hashPassword(password, salt);
     const createdAt = new Date().toISOString();
 

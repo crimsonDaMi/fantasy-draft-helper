@@ -1,16 +1,10 @@
 import { parse } from "csv-parse/sync";
 
-import {
-  Ranking,
-  FantasyPosition,
-  FANTASY_POSITIONS,
-} from "../domain/ranking.js";
+import { Ranking, isFantasyPosition } from "../domain/ranking.js";
 import {
   RankingImportError,
   RankingImportResult,
 } from "../domain/ranking-import.js";
-
-const VALID_POSITIONS = new Set<FantasyPosition>(FANTASY_POSITIONS);
 
 type CsvRow = Record<string, string | undefined>;
 
@@ -51,6 +45,12 @@ interface NormalizedCsvRow {
   sleeperPlayerId?: string;
 }
 
+/** A result for a problem with the file as a whole, reported on the
+ * header row. */
+function fileError(message: string): RankingImportResult {
+  return { rankings: [], errors: [{ row: 1, message }] };
+}
+
 export class RankingCsvService {
   parse(csvContent: string): RankingImportResult {
     let rows: CsvRow[];
@@ -64,34 +64,17 @@ export class RankingCsvService {
         skip_records_with_empty_values: false,
       }) as CsvRow[];
     } catch (error) {
-      return {
-        rankings: [],
-        errors: [
-          {
-            row: 1,
-            message:
-              error instanceof Error
-                ? `Invalid CSV: ${error.message}`
-                : "Invalid CSV",
-          },
-        ],
-      };
+      return fileError(
+        error instanceof Error
+          ? `Invalid CSV: ${error.message}`
+          : "Invalid CSV",
+      );
     }
 
-    const rankings: Ranking[] = [];
-
-    const errors: RankingImportError[] = [];
-
     if (rows.length === 0) {
-      return {
-        rankings,
-        errors: [
-          {
-            row: 1,
-            message: "CSV must contain a header and at least one ranking row",
-          },
-        ],
-      };
+      return fileError(
+        "CSV must contain a header and at least one ranking row",
+      );
     }
 
     const normalizedRows = rows.map((row) => this.normalizeRow(row));
@@ -99,16 +82,12 @@ export class RankingCsvService {
     const firstRow = normalizedRows[0];
 
     if (firstRow?.rank === undefined || firstRow.player === undefined) {
-      return {
-        rankings,
-        errors: [
-          {
-            row: 1,
-            message: "CSV must include required columns: rank and player",
-          },
-        ],
-      };
+      return fileError("CSV must include required columns: rank and player");
     }
+
+    const rankings: Ranking[] = [];
+
+    const errors: RankingImportError[] = [];
 
     normalizedRows.forEach((row, index) => {
       const rowNumber = index + 2;
@@ -163,10 +142,7 @@ export class RankingCsvService {
     const position =
       row.position === undefined ? undefined : normalizePosition(row.position);
 
-    if (
-      position !== undefined &&
-      !VALID_POSITIONS.has(position as FantasyPosition)
-    ) {
+    if (position !== undefined && !isFantasyPosition(position)) {
       return {
         error: {
           row: rowNumber,
@@ -180,7 +156,7 @@ export class RankingCsvService {
         rank,
         playerName: row.player,
         team: row.team ? row.team.toUpperCase() : undefined,
-        position: position as FantasyPosition | undefined,
+        position,
         sleeperPlayerId: row.sleeperPlayerId || undefined,
         tier: row.tier || undefined,
       },

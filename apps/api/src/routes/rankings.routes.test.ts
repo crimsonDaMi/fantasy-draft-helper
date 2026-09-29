@@ -10,6 +10,7 @@ const TEST_USER = { id: "test-user", username: "testuser" };
 function createTestApp(importResult: unknown, matches: unknown[] = []) {
   const app = Fastify();
 
+  app.setErrorHandler(errorHandler);
   app.decorateRequest("user", undefined);
   app.addHook("onRequest", async (request) => {
     request.user = TEST_USER;
@@ -194,8 +195,6 @@ describe("rankings routes", () => {
 
   it("returns 404 when exporting without a ranking", async () => {
     const app = createTestApp({});
-
-    app.setErrorHandler(errorHandler);
 
     const response = await app.inject({
       method: "GET",
