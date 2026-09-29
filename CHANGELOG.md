@@ -17,6 +17,9 @@ See `RELEASING.md`.
   recommendations take two lines instead of overflowing the screen,
   watch/avoid buttons are bigger, the header wraps, and the draft recap
   table scrolls on its own.
+- Tap ⓘ to read what the tier counts, the ADP arrows, watch/avoid,
+  injury letters, and the recap columns mean. These explanations were
+  hover-only before, so they didn't show on phones.
 
 ## v1.2.0 — 2026-09-29
 

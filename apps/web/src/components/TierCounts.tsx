@@ -1,4 +1,6 @@
 import type { ApiPositionTierCounts } from "../types/api";
+import { InfoTipButton, InfoTipPanel } from "./InfoTip";
+import { useInfoTip } from "../hooks/useInfoTip";
 import { PositionBadge } from "./PositionBadge";
 
 const HINT =
@@ -7,26 +9,33 @@ const HINT =
 /** Players left in the best remaining tiers of your ranking, per
  * position — counts only, it doesn't reorder anything. */
 export function TierCounts({ counts }: { counts: ApiPositionTierCounts[] }) {
+  const { open, panelId, buttonProps } = useInfoTip();
+
   if (counts.length === 0) {
     return null;
   }
 
   return (
-    <div className="tier-counts" title={HINT}>
-      <span className="tier-counts__label">
-        Left in your top tiers <span aria-hidden="true">ⓘ</span>
-        <span className="visually-hidden">: {HINT}</span>
-      </span>
-      {counts.map(({ position, tiers }) => (
-        <span key={position} className="tier-counts__position">
-          <PositionBadge position={position} />
-          {tiers.map(({ tier, remaining }) => (
-            <span key={tier} className="tier-counts__tier">
-              {tier}: {remaining}
-            </span>
-          ))}
+    <div>
+      <div className="tier-counts" title={HINT}>
+        <span className="tier-counts__label">
+          Left in your top tiers{" "}
+          <InfoTipButton label="About tier counts" {...buttonProps} />
         </span>
-      ))}
+        {counts.map(({ position, tiers }) => (
+          <span key={position} className="tier-counts__position">
+            <PositionBadge position={position} />
+            {tiers.map(({ tier, remaining }) => (
+              <span key={tier} className="tier-counts__tier">
+                {tier}: {remaining}
+              </span>
+            ))}
+          </span>
+        ))}
+      </div>
+      <InfoTipPanel id={panelId} open={open}>
+        {HINT}
+      </InfoTipPanel>
     </div>
   );
 }

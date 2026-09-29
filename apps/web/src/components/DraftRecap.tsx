@@ -1,6 +1,8 @@
 import type { ApiDraftInfo, ApiDraftPick } from "../types/api";
 import { formatPick } from "../utils/draft-order";
 import { toRecapCsv } from "../utils/recap-csv";
+import { InfoTipButton, InfoTipPanel } from "./InfoTip";
+import { useInfoTip } from "../hooks/useInfoTip";
 import { RosterNeeds } from "./MyTeamPanel";
 import { PositionBadge } from "./PositionBadge";
 
@@ -42,11 +44,17 @@ interface DraftRecapProps {
 
 export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
   const picks = [...myPicks].sort((a, b) => a.pickNo - b.pickNo);
+  const { open, panelId, buttonProps } = useInfoTip();
 
   return (
     <section className="draft-recap" aria-labelledby="draft-recap-heading">
       <div className="draft-recap__header">
-        <h2 id="draft-recap-heading">Draft recap</h2>
+        <span className="draft-recap__title">
+          <h2 id="draft-recap-heading">Draft recap</h2>
+          {picks.length > 0 && (
+            <InfoTipButton label="About the recap columns" {...buttonProps} />
+          )}
+        </span>
         {picks.length > 0 && (
           <button
             type="button"
@@ -56,6 +64,14 @@ export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
           </button>
         )}
       </div>
+      <InfoTipPanel id={panelId} open={open && picks.length > 0}>
+        <p>
+          vs. rank: pick number minus your rank. Positive means you got the
+          player later than you ranked them (a steal); negative, earlier (a
+          reach).
+        </p>
+        <p>vs. ADP: the same, measured against ADP.</p>
+      </InfoTipPanel>
 
       {picks.length === 0 ? (
         <p className="rec-list__empty">

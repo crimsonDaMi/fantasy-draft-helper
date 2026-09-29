@@ -1,5 +1,7 @@
 import type { ApiRecommendation, PlayerFlag } from "../types/api";
 import { FlagButtons } from "./FlagButtons";
+import { InfoTipButton, InfoTipPanel } from "./InfoTip";
+import { useInfoTip } from "../hooks/useInfoTip";
 import { InjuryBadge } from "./InjuryBadge";
 import { PositionBadge } from "./PositionBadge";
 
@@ -54,6 +56,7 @@ export function RecommendationsList({
   recommendations,
   onFlagChange,
 }: RecommendationsListProps) {
+  const legend = useInfoTip();
   const flagButtons = (recommendation: ApiRecommendation) =>
     onFlagChange && (
       <FlagButtons
@@ -88,7 +91,36 @@ export function RecommendationsList({
             <PlayerMeta recommendation={topPick} />
           </span>
         </div>
+        <span className="hero__info">
+          <InfoTipButton
+            label="About these recommendations"
+            {...legend.buttonProps}
+          />
+        </span>
       </div>
+      <InfoTipPanel id={legend.panelId} open={legend.open}>
+        <ul className="info-tip__list">
+          {onFlagChange && (
+            <li>
+              ★ watch a player (highlighted) · ⊘ avoid (hidden from the
+              recommendations)
+            </li>
+          )}
+          <li>
+            <span className="adp-diff adp-diff--value">▼ ADP</span>: others
+            draft the player that many picks earlier than your rank — a value
+            while still available.
+          </li>
+          <li>
+            <span className="adp-diff adp-diff--reach">▲ ADP</span>: others
+            draft the player later than your rank — likely still available
+            later.
+          </li>
+          <li>
+            Injury: Q questionable · D doubtful · O out · IR injured reserve
+          </li>
+        </ul>
+      </InfoTipPanel>
 
       {rest.length > 0 && (
         <ol className="rec-list">

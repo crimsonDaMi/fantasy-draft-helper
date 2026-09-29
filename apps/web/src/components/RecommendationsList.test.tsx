@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { RecommendationsList } from "./RecommendationsList";
@@ -41,5 +41,35 @@ describe("RecommendationsList", () => {
     expect(container.querySelector(".rec-list__meta")).toHaveTextContent(
       /^BBB$/,
     );
+  });
+
+  it("reveals the legend on tap, without watch/avoid when flags are off", () => {
+    render(
+      <RecommendationsList
+        recommendations={[
+          {
+            rank: 1,
+            player: {
+              sleeperId: "1",
+              fullName: "Player One",
+              position: "QB",
+              team: "AAA",
+            },
+          },
+        ]}
+      />,
+    );
+
+    const button = screen.getByRole("button", {
+      name: "About these recommendations",
+    });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText(/injured reserve/)).not.toBeInTheDocument();
+
+    fireEvent.click(button);
+
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/injured reserve/)).toBeInTheDocument();
+    expect(screen.queryByText(/watch a player/)).not.toBeInTheDocument();
   });
 });
