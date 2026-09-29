@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Phone layout for the ranking editor: switch between the tiers and the
+  unranked players, and tap a player to move them to the end of a tier or
+  remove them from the ranking.
+
 ### Fixed
 
 - On phones, the ⓘ and watch/avoid buttons no longer stay highlighted

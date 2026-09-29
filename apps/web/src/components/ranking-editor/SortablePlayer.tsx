@@ -12,6 +12,8 @@ interface SortablePlayerProps {
   offsetTop: number;
   /** Shows watch/avoid toggles (ranked rows only). */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
+  /** Tap handler (phones only: opens the move menu). */
+  onSelect?: (sleeperId: string) => void;
 }
 
 export function SortablePlayer({
@@ -19,6 +21,7 @@ export function SortablePlayer({
   rank,
   offsetTop,
   onFlagChange,
+  onSelect,
 }: SortablePlayerProps) {
   const {
     attributes,
@@ -47,6 +50,7 @@ export function SortablePlayer({
       className={player.flag ? `flagged--${player.flag}` : undefined}
       {...attributes}
       {...listeners}
+      onClick={onSelect ? () => onSelect(player.sleeperId) : undefined}
     >
       {rank !== undefined && (
         <span className="ranking-editor__rank">#{rank}</span>

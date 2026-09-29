@@ -8,7 +8,8 @@ interface FlagButtonsProps {
 
 /** Watch (★) and avoid (⊘) toggles for a player. Pressing the active one
  * clears it. Pointer-down and touch-start don't propagate, so inside a
- * draggable row the buttons click instead of starting a drag. */
+ * draggable row the buttons click instead of starting a drag; clicks don't
+ * either, so they don't also count as a tap on the row. */
 export function FlagButtons({ playerName, flag, onChange }: FlagButtonsProps) {
   const toggle = (target: PlayerFlag) =>
     onChange(flag === target ? null : target);
@@ -18,6 +19,7 @@ export function FlagButtons({ playerName, flag, onChange }: FlagButtonsProps) {
       className="flag-buttons"
       onPointerDown={(event) => event.stopPropagation()}
       onTouchStart={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
     >
       <button
         type="button"

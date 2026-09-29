@@ -5,8 +5,9 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RankingEditorPage } from "./RankingEditorPage";
 
@@ -316,5 +317,116 @@ describe("RankingEditorPage", () => {
     renderWithClient(queryClient);
 
     expect(await screen.findByText("Player One")).toBeInTheDocument();
+  });
+
+  describe("on phones", () => {
+    beforeEach(() => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn((query: string) => ({
+          matches: query === "(max-width: 599px)",
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        })),
+      );
+      mockTwoTierRanking();
+      mocks.getUnrankedPlayers.mockResolvedValue({
+        players: [
+          {
+            sleeperId: "4",
+            fullName: "Player Four",
+            position: "TE",
+            team: "MIA",
+          },
+        ],
+      });
+      mocks.moveRankingPlayer.mockResolvedValue({});
+      mocks.removeRankingPlayer.mockResolvedValue({});
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("switches between the tiers and the unranked panel", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      expect(screen.queryByText("Player Four")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Unranked" }));
+
+      expect(screen.getByText("Player Four")).toBeInTheDocument();
+      expect(screen.queryByText("Player One")).not.toBeInTheDocument();
+    });
+
+    it("adds a tapped unranked player to the end of a tier", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+      fireEvent.click(screen.getByRole("button", { name: "Unranked" }));
+
+      fireEvent.click(screen.getByText("Player Four"));
+      const menu = screen.getByRole("dialog", { name: "Move Player Four" });
+      expect(
+        within(menu).queryByRole("button", { name: "Remove from ranking" }),
+      ).not.toBeInTheDocument();
+      fireEvent.click(within(menu).getByRole("button", { name: "Tier A" }));
+
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledWith(
+          "ranking-1",
+          "4",
+          4,
+          "A",
+        ),
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("moves a tapped ranked player to the end of another tier", async () => {
+      renderWithClient();
+      fireEvent.click(await screen.findByText("Player One"));
+
+      fireEvent.click(
+        within(
+          screen.getByRole("dialog", { name: "Move Player One" }),
+        ).getByRole("button", { name: "Tier A" }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledWith(
+          "ranking-1",
+          "1",
+          3,
+          "A",
+        ),
+      );
+    });
+
+    it("removes a tapped ranked player from the ranking", async () => {
+      renderWithClient();
+      fireEvent.click(await screen.findByText("Player Two"));
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Remove from ranking" }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.removeRankingPlayer).toHaveBeenCalledWith(
+          "ranking-1",
+          "2",
+        ),
+      );
+    });
+
+    it("doesn't open the menu when tapping a watch/avoid button", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+      mocks.setPlayerFlag.mockResolvedValue({});
+
+      fireEvent.click(screen.getByRole("button", { name: "Watch Player One" }));
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
   });
 });

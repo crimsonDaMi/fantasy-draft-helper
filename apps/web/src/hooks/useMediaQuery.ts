@@ -1,5 +1,8 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+/** Phones. Keep in sync with the phone media query in index.css. */
+export const PHONE_QUERY = "(max-width: 599px)";
+
 /** Whether a CSS media query currently matches, updated live. Always
  * false where `matchMedia` is missing (jsdom in tests). */
 export function useMediaQuery(query: string): boolean {

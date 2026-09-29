@@ -78,6 +78,26 @@ Any change to how containers render must preserve all of this.
 - `useEdgeAutoscroll` also listens to `touchmove`: not every browser keeps
   firing `pointermove` during a touch drag that has blocked scrolling.
 
+## Phone layout
+
+Below 600px (`PHONE_QUERY`, `hooks/useMediaQuery.ts`) the editor is one
+column, and dragging between far-apart containers stops being practical.
+
+- A Tiers | Unranked switch renders one of the two at a time, so the
+  unranked panel isn't stranded below every tier. Both stay inside the
+  `DndContext`, so long-press reordering works within the view shown.
+- Tapping a row opens `PlayerMoveMenu` (a native modal `<dialog>` as a
+  bottom sheet): move to the **end** of any tier, or remove from the
+  ranking. Appending keeps the menu to one choice; exact placement is a
+  long-press drag within the tier afterwards. `appendPlayerToTier` handles
+  the same-tier case that `movePlayerToContainer` doesn't.
+- A click right after a drag ends (a touch release can produce one) is
+  ignored, and `FlagButtons` stops click propagation so ★/⊘ don't also
+  open the menu.
+- Rows keep their fixed `PLAYER_ROW_HEIGHT` on phones — virtualization
+  depends on it — so the whole row is the tap target rather than a larger
+  button.
+
 ## Ranks and tiers
 
 - `#N` is the backend's persisted global rank, carried as a static field

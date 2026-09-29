@@ -37,6 +37,7 @@ interface DroppableContainerProps {
   activeId?: string;
   registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
+  onSelectPlayer?: (sleeperId: string) => void;
 }
 
 export function DroppableContainer({
@@ -49,6 +50,7 @@ export function DroppableContainer({
   activeId,
   registerScrollElement,
   onFlagChange,
+  onSelectPlayer,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -132,6 +134,7 @@ export function DroppableContainer({
                   rank={showRank ? player.globalRank : undefined}
                   offsetTop={virtualRow.start}
                   onFlagChange={onFlagChange}
+                  onSelect={onSelectPlayer}
                 />
               );
             })}

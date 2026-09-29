@@ -1440,8 +1440,80 @@ button {
   margin-bottom: 8px;
 }
 
+.ranking-editor__view-toggle {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+/* Phone move menu: a bottom sheet. */
+.ranking-editor__move-menu {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  box-sizing: border-box;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ranking-editor__move-menu::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.ranking-editor__move-menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.ranking-editor__move-menu h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  margin: 0;
+}
+
+.ranking-editor__move-menu-label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.ranking-editor__move-menu-tiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.ranking-editor__move-menu button {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ranking-editor__move-menu button[aria-current="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.ranking-editor__move-menu-remove {
+  margin-top: 8px;
+}
+
+.ranking-editor__move-menu button.ranking-editor__move-menu-remove {
+  color: var(--color-danger);
+}
+
 /* Phones. Keep the breakpoint in sync with PHONE_QUERY in
-   DraftDashboard.tsx. */
+   hooks/useMediaQuery.ts. */
 @media (max-width: 599px) {
   #root {
     padding: 0 12px 32px;
@@ -1516,6 +1588,33 @@ button {
 
   .hero__name {
     overflow-wrap: anywhere;
+  }
+
+  /* Ranking editor: tiers or unranked, one column (see phoneView in
+     RankingEditorPage). Rows keep their fixed virtualized height. */
+  .ranking-editor__toolbar {
+    flex-wrap: wrap;
+  }
+
+  .ranking-editor__layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ranking-editor__unranked-sticky {
+    position: static;
+  }
+
+  .ranking-editor__unranked {
+    width: auto;
+  }
+
+  .ranking-editor__player-list {
+    max-height: 60vh;
+  }
+
+  .ranking-editor__player-list-inner li {
+    cursor: pointer;
   }
 
   /* Tap-sized watch/avoid buttons. Not in the ranking editor: its rows

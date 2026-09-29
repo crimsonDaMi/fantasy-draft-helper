@@ -144,6 +144,32 @@ export function movePlayerToContainer(
   };
 }
 
+/** Moves a player to the end of `toTier` — the phone move menu's "Move to
+ * tier". Unlike `movePlayerToContainer`, the source and target may be the
+ * same container (moves the player to the end of their own tier). Returns
+ * `containers` unchanged when the player isn't in `fromContainer`. */
+export function appendPlayerToTier(
+  containers: Containers,
+  sleeperId: string,
+  fromContainer: string,
+  toTier: string,
+): Containers {
+  const source = containers[fromContainer] ?? [];
+  const moving = source.find((player) => player.sleeperId === sleeperId);
+  if (!moving) {
+    return containers;
+  }
+
+  const withoutPlayer = {
+    ...containers,
+    [fromContainer]: source.filter((player) => player !== moving),
+  };
+  return {
+    ...withoutPlayer,
+    [toTier]: [...(withoutPlayer[toTier] ?? []), moving],
+  };
+}
+
 /** Translates a "this player is now at position `indexInTier` within
  * `targetTier`" drop into the global (whole-ranking) rank the PATCH
  * endpoint expects, by summing the player counts of every tier that

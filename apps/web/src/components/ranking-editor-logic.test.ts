@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  appendPlayerToTier,
   buildContainers,
   computeGlobalRank,
   filterPlayersByPosition,
@@ -121,6 +122,62 @@ describe("movePlayerToContainer", () => {
 
     expect(containers.S).toHaveLength(2);
     expect(containers.A).toHaveLength(1);
+  });
+});
+
+describe("appendPlayerToTier", () => {
+  const containers: Containers = {
+    S: [
+      { sleeperId: "1", fullName: "Player One" },
+      { sleeperId: "2", fullName: "Player Two" },
+    ],
+    A: [{ sleeperId: "3", fullName: "Player Three" }],
+    unranked: [{ sleeperId: "4", fullName: "Player Four" }],
+  };
+  const ids = (result: Containers) =>
+    Object.fromEntries(
+      Object.entries(result).map(([id, players]) => [
+        id,
+        players.map((p) => p.sleeperId),
+      ]),
+    );
+
+  it("moves a player to the end of a lower tier", () => {
+    const result = appendPlayerToTier(containers, "1", "S", "A");
+
+    expect(ids(result)).toEqual({ S: ["2"], A: ["3", "1"], unranked: ["4"] });
+    expect(computeGlobalRank(result, ["S", "A"], "A", 1)).toBe(3);
+  });
+
+  it("moves a player to the end of a higher tier", () => {
+    const result = appendPlayerToTier(containers, "3", "A", "S");
+
+    expect(ids(result)).toEqual({
+      S: ["1", "2", "3"],
+      A: [],
+      unranked: ["4"],
+    });
+    expect(computeGlobalRank(result, ["S", "A"], "S", 2)).toBe(3);
+  });
+
+  it("adds an unranked player to the end of a tier", () => {
+    const result = appendPlayerToTier(containers, "4", "unranked", "S");
+
+    expect(ids(result)).toEqual({
+      S: ["1", "2", "4"],
+      A: ["3"],
+      unranked: [],
+    });
+  });
+
+  it("moves a player to the end of their own tier", () => {
+    const result = appendPlayerToTier(containers, "1", "S", "S");
+
+    expect(ids(result)).toEqual({ S: ["2", "1"], A: ["3"], unranked: ["4"] });
+  });
+
+  it("returns the same object when the player isn't in the source", () => {
+    expect(appendPlayerToTier(containers, "3", "S", "A")).toBe(containers);
   });
 });
 

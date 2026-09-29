@@ -21,6 +21,7 @@ import {
 import { queryKeys } from "../api/query-keys";
 import { useContainerCollisionDetection } from "../hooks/useContainerCollisionDetection";
 import { useEdgeAutoscroll } from "../hooks/useEdgeAutoscroll";
+import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useRankingEditorMutations } from "../hooks/useRankingEditorMutations";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import type { RankingTierDto } from "../types/api";
@@ -28,9 +29,11 @@ import { PositionFilter } from "./PositionFilter";
 import { RankingSelector } from "./RankingSelector";
 import { DroppableContainer } from "./ranking-editor/DroppableContainer";
 import { PlayerLabel } from "./ranking-editor/PlayerLabel";
+import { PlayerMoveMenu } from "./ranking-editor/PlayerMoveMenu";
 import { TierModeToggle } from "./ranking-editor/TierModeToggle";
 import {
   UNRANKED_CONTAINER,
+  appendPlayerToTier,
   buildContainers,
   computeGlobalRank,
   filterPlayersByPosition,
@@ -121,6 +124,12 @@ export function RankingEditorPage() {
   // Separate from the unranked search on purpose: finding a player to
   // drag in shouldn't also hide the tier rows you want to drop between.
   const [rankedSearch, setRankedSearch] = useState("");
+  const isPhone = useMediaQuery(PHONE_QUERY);
+  // Phones show the tiers or the unranked panel, not both.
+  const [phoneView, setPhoneView] = useState<"tiers" | "unranked">("tiers");
+  const [menuPlayerId, setMenuPlayerId] = useState<string>();
+  // A touch drag's release can still fire a click on the row; ignore it.
+  const lastDragEndAt = useRef(0);
 
   // Re-derive local drag state from the server whenever a *new* server
   // snapshot arrives, using React's render-time "adjusting state when a
@@ -197,6 +206,54 @@ export function RankingEditorPage() {
     setConfirmingRemoveTierPosition(tier.position);
   }
 
+  function handleSelectPlayer(sleeperId: string) {
+    if (Date.now() - lastDragEndAt.current < 400) {
+      return;
+    }
+    setMenuPlayerId(sleeperId);
+  }
+
+  function handleMoveToTier(sleeperId: string, tier: string) {
+    setMenuPlayerId(undefined);
+    const fromContainer = resolveContainer(sleeperId);
+    if (!fromContainer) {
+      return;
+    }
+
+    const working = appendPlayerToTier(
+      containers,
+      sleeperId,
+      fromContainer,
+      tier,
+    );
+    setContainers(working);
+    const rank = computeGlobalRank(
+      working,
+      tiers.map((t) => t.label),
+      tier,
+      working[tier].length - 1,
+    );
+    moveMutation.mutate({ sleeperId, rank, tier });
+  }
+
+  function handleRemoveFromRanking(sleeperId: string) {
+    setMenuPlayerId(undefined);
+    const fromContainer = resolveContainer(sleeperId);
+    if (!fromContainer) {
+      return;
+    }
+
+    setContainers(
+      appendPlayerToTier(
+        containers,
+        sleeperId,
+        fromContainer,
+        UNRANKED_CONTAINER,
+      ),
+    );
+    removeMutation.mutate({ sleeperId });
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setIsDragging(true);
     const activeId = String(event.active.id);
@@ -245,6 +302,7 @@ export function RankingEditorPage() {
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    lastDragEndAt.current = Date.now();
     setIsDragging(false);
     setDraggingPlayerId(undefined);
     setDraggingPlayer(undefined);
@@ -306,6 +364,13 @@ export function RankingEditorPage() {
 
     moveMutation.mutate({ sleeperId: activeId, rank, tier: finalContainer });
   }
+
+  const menuContainer = menuPlayerId
+    ? resolveContainer(menuPlayerId)
+    : undefined;
+  const menuPlayer = menuContainer
+    ? containers[menuContainer]?.find((p) => p.sleeperId === menuPlayerId)
+    : undefined;
 
   if (isLoadingRankings) {
     return <p className="status-bar">Loading…</p>;
@@ -413,8 +478,9 @@ export function RankingEditorPage() {
         <div className="ranking-editor__hints">
           {!hasAnyRankedPlayers && (
             <p className="ranking-editor__hint">
-              Drag players from the Unranked panel into a tier to start ranking
-              them.
+              {isPhone
+                ? "Tap a player in Unranked to add them to a tier."
+                : "Drag players from the Unranked panel into a tier to start ranking them."}
             </p>
           )}
           {hasOnlyOneTier && (
@@ -422,6 +488,35 @@ export function RankingEditorPage() {
               Use "+ Add tier here" to create more tiers.
             </p>
           )}
+        </div>
+      )}
+
+      {isPhone && (
+        <div
+          className="ranking-editor__view-toggle"
+          role="group"
+          aria-label="Show"
+        >
+          {(
+            [
+              ["tiers", "Tiers"],
+              ["unranked", "Unranked"],
+            ] as const
+          ).map(([view, label]) => (
+            <button
+              key={view}
+              type="button"
+              className={
+                view === phoneView
+                  ? "ranking-editor__mode-button ranking-editor__mode-button--active"
+                  : "ranking-editor__mode-button"
+              }
+              aria-pressed={view === phoneView}
+              onClick={() => setPhoneView(view)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       )}
 
@@ -440,93 +535,99 @@ export function RankingEditorPage() {
         }}
       >
         <div className="ranking-editor__layout">
-          <div className="ranking-editor__tiers">
-            <button
-              type="button"
-              className="ranking-editor__tier-add"
-              onClick={() => insertTierMutation.mutate({ position: 1 })}
-              disabled={insertTierMutation.isPending}
-            >
-              + Add tier here
-            </button>
-            {tiers.map((tier, index) => (
-              <div key={tier.label}>
-                <DroppableContainer
-                  id={tier.label}
-                  title={formatTierHeading(
-                    tier.label,
-                    tier.position,
-                    tierDisplayMode,
-                  )}
-                  players={filterPlayersByQuery(
-                    filterPlayersByPosition(
-                      containers[tier.label] ?? [],
-                      positionFilter,
-                    ),
-                    rankedSearch,
-                  )}
-                  showRank
-                  className="ranking-editor__tier"
-                  activeId={draggingPlayerId}
-                  registerScrollElement={registerScrollElement}
-                  onFlagChange={(sleeperId, flag) =>
-                    flagMutation.mutate({ sleeperId, flag })
-                  }
-                  removeControl={{
-                    canRemove: tiers.length > 1,
-                    playerCount: containers[tier.label]?.length ?? 0,
-                    isLastTier: index === tiers.length - 1,
-                    isConfirming:
-                      confirmingRemoveTierPosition === tier.position,
-                    isPending: removeTierMutation.isPending,
-                    onRequestRemove: () => handleRemoveTierClick(tier),
-                    onConfirmRemove: () =>
-                      removeTierMutation.mutate({ position: tier.position }),
-                    onCancelRemove: () =>
-                      setConfirmingRemoveTierPosition(undefined),
-                  }}
-                />
-                <button
-                  type="button"
-                  className="ranking-editor__tier-add"
-                  onClick={() =>
-                    insertTierMutation.mutate({ position: tier.position + 1 })
-                  }
-                  disabled={insertTierMutation.isPending}
-                >
-                  + Add tier here
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <aside className="ranking-editor__unranked-sticky">
-            <div className="ranking-editor__unranked-search-wrap">
-              <input
-                type="search"
-                className="search-input"
-                placeholder="Search unranked players…"
-                value={unrankedSearch}
-                onChange={(event) => setUnrankedSearch(event.target.value)}
-                aria-label="Search unranked players"
-              />
+          {(!isPhone || phoneView === "tiers") && (
+            <div className="ranking-editor__tiers">
+              <button
+                type="button"
+                className="ranking-editor__tier-add"
+                onClick={() => insertTierMutation.mutate({ position: 1 })}
+                disabled={insertTierMutation.isPending}
+              >
+                + Add tier here
+              </button>
+              {tiers.map((tier, index) => (
+                <div key={tier.label}>
+                  <DroppableContainer
+                    id={tier.label}
+                    title={formatTierHeading(
+                      tier.label,
+                      tier.position,
+                      tierDisplayMode,
+                    )}
+                    players={filterPlayersByQuery(
+                      filterPlayersByPosition(
+                        containers[tier.label] ?? [],
+                        positionFilter,
+                      ),
+                      rankedSearch,
+                    )}
+                    showRank
+                    className="ranking-editor__tier"
+                    activeId={draggingPlayerId}
+                    registerScrollElement={registerScrollElement}
+                    onFlagChange={(sleeperId, flag) =>
+                      flagMutation.mutate({ sleeperId, flag })
+                    }
+                    onSelectPlayer={isPhone ? handleSelectPlayer : undefined}
+                    removeControl={{
+                      canRemove: tiers.length > 1,
+                      playerCount: containers[tier.label]?.length ?? 0,
+                      isLastTier: index === tiers.length - 1,
+                      isConfirming:
+                        confirmingRemoveTierPosition === tier.position,
+                      isPending: removeTierMutation.isPending,
+                      onRequestRemove: () => handleRemoveTierClick(tier),
+                      onConfirmRemove: () =>
+                        removeTierMutation.mutate({ position: tier.position }),
+                      onCancelRemove: () =>
+                        setConfirmingRemoveTierPosition(undefined),
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="ranking-editor__tier-add"
+                    onClick={() =>
+                      insertTierMutation.mutate({ position: tier.position + 1 })
+                    }
+                    disabled={insertTierMutation.isPending}
+                  >
+                    + Add tier here
+                  </button>
+                </div>
+              ))}
             </div>
-            <DroppableContainer
-              id={UNRANKED_CONTAINER}
-              title="Unranked"
-              players={filterPlayersByQuery(
-                filterPlayersByPosition(
-                  containers[UNRANKED_CONTAINER] ?? [],
-                  positionFilter,
-                ),
-                unrankedSearch,
-              )}
-              showRank={false}
-              className="ranking-editor__unranked"
-              activeId={draggingPlayerId}
-              registerScrollElement={registerScrollElement}
-            />
-          </aside>
+          )}
+
+          {(!isPhone || phoneView === "unranked") && (
+            <aside className="ranking-editor__unranked-sticky">
+              <div className="ranking-editor__unranked-search-wrap">
+                <input
+                  type="search"
+                  className="search-input"
+                  placeholder="Search unranked players…"
+                  value={unrankedSearch}
+                  onChange={(event) => setUnrankedSearch(event.target.value)}
+                  aria-label="Search unranked players"
+                />
+              </div>
+              <DroppableContainer
+                id={UNRANKED_CONTAINER}
+                title="Unranked"
+                players={filterPlayersByQuery(
+                  filterPlayersByPosition(
+                    containers[UNRANKED_CONTAINER] ?? [],
+                    positionFilter,
+                  ),
+                  unrankedSearch,
+                )}
+                showRank={false}
+                className="ranking-editor__unranked"
+                activeId={draggingPlayerId}
+                registerScrollElement={registerScrollElement}
+                onSelectPlayer={isPhone ? handleSelectPlayer : undefined}
+              />
+            </aside>
+          )}
         </div>
 
         <DragOverlay>
@@ -537,6 +638,18 @@ export function RankingEditorPage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {menuPlayer && menuContainer && (
+        <PlayerMoveMenu
+          player={menuPlayer}
+          currentContainer={menuContainer}
+          tiers={tiers}
+          tierDisplayMode={tierDisplayMode}
+          onMoveToTier={(tier) => handleMoveToTier(menuPlayer.sleeperId, tier)}
+          onRemove={() => handleRemoveFromRanking(menuPlayer.sleeperId)}
+          onClose={() => setMenuPlayerId(undefined)}
+        />
+      )}
     </section>
   );
 }

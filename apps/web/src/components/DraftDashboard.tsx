@@ -12,7 +12,7 @@ import { RankingsUpload } from "./RankingsUpload";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
-import { useMediaQuery } from "../hooks/useMediaQuery";
+import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import { setPlayerFlag } from "../api/fantasy-api";
 import type { PlayerFlag, RankingImportSummary } from "../types/api";
@@ -28,8 +28,6 @@ import {
 
 /** Keep in sync with the .draft-board media query in index.css. */
 const WIDE_DRAFT_BOARD_QUERY = "(min-width: 1200px)";
-/** Keep in sync with the phone media query in index.css. */
-const PHONE_QUERY = "(max-width: 599px)";
 
 export function DraftDashboard() {
   const [storedDraft, setStoredDraft] = useState(readStoredDraft);

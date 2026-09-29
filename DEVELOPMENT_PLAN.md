@@ -28,6 +28,7 @@ item needs its scope confirmed with the user before work starts.
 | Multiple saved rankings, watch/avoid flags                  | v1.2.0  |
 | Wide-screen draft layout                                    | Unrel.  |
 | Phone draft layout                                          | Unrel.  |
+| Ranking editor touch support and phone layout               | Unrel.  |
 
 ## Out of scope
 
@@ -46,8 +47,6 @@ rankings and roster optimization stay out of scope.
 ## Deferred ideas
 
 - **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
-- **Touch support** in the ranking editor — worth taking only if it comes
-  cheaply from the drag-and-drop library.
 - **Traded picks and auctions** for "you pick in N": the pick order is
   computed from the draft type and slot, so traded picks aren't reflected
   and auctions show no next pick. Sleeper exposes traded picks at
