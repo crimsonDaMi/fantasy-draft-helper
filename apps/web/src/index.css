@@ -998,6 +998,12 @@ button {
     max-height: 100vh;
     overflow-y: auto;
   }
+
+  /* The side column is too narrow for the label and the positions on
+     one line; give the label its own row so the positions line up. */
+  .draft-board__side .tier-counts__label {
+    flex-basis: 100%;
+  }
 }
 
 .side-panel {
