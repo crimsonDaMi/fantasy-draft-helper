@@ -207,9 +207,10 @@ export interface VirtualRow {
  * they belong to this container but have scrolled outside the visible
  * window. Without this, a long drag (top of a 180-player tier to the
  * bottom) would unmount the dragged node mid-drag once it scrolls out
- * of view, breaking the drag — dnd-kit moves the dragged node via a CSS
- * transform on its own mounted DOM node, not a floating overlay, so
- * that node must stay mounted for the whole drag. Likewise a focused
+ * of view, breaking the drag — the visible preview is the DragOverlay,
+ * but dnd-kit still tracks the dragged row's own node (its measured rect
+ * drives the sortable transforms of the rows around it), so that node
+ * must stay mounted for the whole drag. Likewise a focused
  * row that unmounts drops keyboard focus to the page.
  */
 export function withForcedRows(
@@ -360,4 +361,17 @@ export function filterPlayersByQuery(
     const haystack = `${player.fullName} ${player.team ?? ""}`.toLowerCase();
     return haystack.includes(normalizedQuery);
   });
+}
+
+/** Both filters: position, then name search. Returns `players` itself
+ * when neither is active. */
+export function filterPlayers(
+  players: EditorPlayer[],
+  positions: string[],
+  query: string,
+): EditorPlayer[] {
+  return filterPlayersByQuery(
+    filterPlayersByPosition(players, positions),
+    query,
+  );
 }

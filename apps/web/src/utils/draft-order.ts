@@ -1,4 +1,16 @@
+import { POSITIONS } from "./positions";
 import type { ApiDraftInfo, ApiDraftPick } from "../types/api";
+
+/** Round and 1-based pick within the round of an overall pick number. */
+function pickPosition(
+  pickNo: number,
+  teams: number,
+): { round: number; pickInRound: number } {
+  return {
+    round: Math.ceil(pickNo / teams),
+    pickInRound: ((pickNo - 1) % teams) + 1,
+  };
+}
 
 /** Draft slot (1-based) that owns a given overall pick. Linear drafts
  * repeat the same order every round; snake drafts reverse every other
@@ -11,11 +23,10 @@ export function slotForPick(
   type: string | undefined,
   reversalRound?: number,
 ): number {
-  const round = Math.ceil(pickNo / teams);
-  const indexInRound = (pickNo - 1) % teams;
+  const { round, pickInRound } = pickPosition(pickNo, teams);
 
   if (type === "linear") {
-    return indexInRound + 1;
+    return pickInRound;
   }
 
   let reversed = round % 2 === 0;
@@ -24,7 +35,7 @@ export function slotForPick(
     reversed = !reversed;
   }
 
-  return reversed ? teams - indexInRound : indexInRound + 1;
+  return reversed ? teams - pickInRound + 1 : pickInRound;
 }
 
 export interface NextPick {
@@ -44,7 +55,7 @@ function pickOwner(
   pickSlot: number,
   draft: ApiDraftInfo,
 ): number | undefined {
-  const round = Math.ceil(pickNo / (draft.teams ?? 1));
+  const { round } = pickPosition(pickNo, draft.teams ?? 1);
   const originalRoster = draft.slotToRosterId?.[pickSlot];
   const trade = draft.tradedPicks?.find(
     (pick) => pick.round === round && pick.rosterId === originalRoster,
@@ -81,8 +92,7 @@ export function nextPickFor(
     if (isMine) {
       return {
         pickNo,
-        round: Math.ceil(pickNo / teams),
-        pickInRound: ((pickNo - 1) % teams) + 1,
+        ...pickPosition(pickNo, teams),
         picksUntil: pickNo - currentPickNo,
         traded: pickSlot !== slot,
       };
@@ -157,14 +167,16 @@ const FLEX_SLOTS: { slot: string; positions: string[] }[] = [
   { slot: "SUPER_FLEX", positions: ["QB", "RB", "WR", "TE"] },
 ];
 
-const STARTER_SLOTS = ["QB", "RB", "WR", "TE", "K", "DEF"];
+const STARTER_SLOTS = POSITIONS;
+
+export const BENCH_SLOT = "BN";
 
 export const ROSTER_SLOT_LABELS: Record<string, string> = {
   WRRB_FLEX: "W/R",
   REC_FLEX: "W/T",
   FLEX: "FLEX",
   SUPER_FLEX: "SF",
-  BN: "BN",
+  [BENCH_SLOT]: "BN",
 };
 
 export interface RosterSlotFill {
@@ -218,11 +230,11 @@ export function fillRoster(
     take(slot, accepts);
   }
 
-  if (remaining.length > 0 || rosterSlots.BN) {
+  if (remaining.length > 0 || rosterSlots[BENCH_SLOT]) {
     fills.push({
-      slot: "BN",
+      slot: BENCH_SLOT,
       filled: remaining.length,
-      required: rosterSlots.BN ?? 0,
+      required: rosterSlots[BENCH_SLOT] ?? 0,
     });
   }
 
@@ -257,8 +269,7 @@ export function formatPick(pickNo: number, teams?: number): string {
     return `#${pickNo}`;
   }
 
-  const round = Math.ceil(pickNo / teams);
-  const pickInRound = ((pickNo - 1) % teams) + 1;
+  const { round, pickInRound } = pickPosition(pickNo, teams);
 
   return `${round}.${String(pickInRound).padStart(2, "0")}`;
 }

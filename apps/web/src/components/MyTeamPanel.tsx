@@ -4,6 +4,7 @@ import {
   fillRoster,
   formatPick,
   nextPickFor,
+  BENCH_SLOT,
   ROSTER_SLOT_LABELS,
 } from "../utils/draft-order";
 import { POSITIONS } from "../utils/positions";
@@ -95,7 +96,7 @@ export function RosterNeeds({
         <span
           key={fill.slot}
           className={`my-team__need${
-            fill.slot !== "BN" && fill.filled < fill.required
+            fill.slot !== BENCH_SLOT && fill.filled < fill.required
               ? " my-team__need--open"
               : ""
           }`}

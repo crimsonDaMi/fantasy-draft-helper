@@ -38,8 +38,7 @@ import {
   appendPlayerToTier,
   buildContainers,
   computeGlobalRank,
-  filterPlayersByPosition,
-  filterPlayersByQuery,
+  filterPlayers,
   formatTierHeading,
   movePlayerToContainer,
   stepPlayer,
@@ -48,6 +47,15 @@ import {
   type KeyboardMove,
   type TierDisplayMode,
 } from "./ranking-editor-logic";
+
+// Mouse drags start after a few pixels; touch drags need a long press,
+// so a swipe on a row scrolls the list instead of grabbing the player.
+const MOUSE_DRAG_DISTANCE_PX = 4;
+const TOUCH_DRAG_DELAY_MS = 200;
+const TOUCH_DRAG_TOLERANCE_PX = 8;
+// A touch drag's release can still fire a click on the row; clicks this
+// soon after a drag ends are ignored.
+const POST_DRAG_CLICK_GUARD_MS = 400;
 
 // Replaces dnd-kit's default "press space to pick up" text: there's no
 // keyboard drag, rows have keyboard commands instead.
@@ -184,6 +192,7 @@ export function RankingEditorPage() {
   }
 
   const tiers = detailQuery.data?.tiers ?? [];
+  const tierOrder = tiers.map((tier) => tier.label);
 
   const hasAnyRankedPlayers = Object.entries(containers).some(
     ([containerId, players]) =>
@@ -192,14 +201,15 @@ export function RankingEditorPage() {
 
   const hasOnlyOneTier = tiers.length <= 1;
 
-  // Mouse drags start after a few pixels; touch drags need a long press,
-  // so a swipe on a row scrolls the list instead of grabbing the player.
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      activationConstraint: { distance: 4 },
+      activationConstraint: { distance: MOUSE_DRAG_DISTANCE_PX },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 8 },
+      activationConstraint: {
+        delay: TOUCH_DRAG_DELAY_MS,
+        tolerance: TOUCH_DRAG_TOLERANCE_PX,
+      },
     }),
   );
 
@@ -242,16 +252,11 @@ export function RankingEditorPage() {
 
   // Whether a player passes the position filter and a name search.
   function matchesFilters(player: EditorPlayer, search: string): boolean {
-    return (
-      filterPlayersByQuery(
-        filterPlayersByPosition([player], positionFilter),
-        search,
-      ).length > 0
-    );
+    return filterPlayers([player], positionFilter, search).length > 0;
   }
 
   function handleSelectPlayer(sleeperId: string) {
-    if (Date.now() - lastDragEndAt.current < 400) {
+    if (Date.now() - lastDragEndAt.current < POST_DRAG_CLICK_GUARD_MS) {
       return;
     }
     menuOpenedByKeyboard.current = false;
@@ -277,8 +282,22 @@ export function RankingEditorPage() {
     }
   }
 
+  /** Applies a move locally, saves it, and announces it. */
+  function commitMove(
+    working: Containers,
+    sleeperId: string,
+    tier: string,
+    index: number,
+  ) {
+    setContainers(working);
+    const rank = computeGlobalRank(working, tierOrder, tier, index);
+    moveMutation.mutate({ sleeperId, rank, tier });
+    setAnnouncement(
+      `${findPlayer(sleeperId)?.fullName ?? "Player"} moved to ${tierHeading(tier)}, rank ${rank}`,
+    );
+  }
+
   function handleKeyboardMove(sleeperId: string, direction: KeyboardMove) {
-    const tierOrder = tiers.map((t) => t.label);
     const result = stepPlayer(
       containers,
       tierOrder,
@@ -290,19 +309,8 @@ export function RankingEditorPage() {
       return;
     }
 
-    setContainers(result.containers);
-    const rank = computeGlobalRank(
-      result.containers,
-      tierOrder,
-      result.tier,
-      result.index,
-    );
-    moveMutation.mutate({ sleeperId, rank, tier: result.tier });
+    commitMove(result.containers, sleeperId, result.tier, result.index);
     setFocusRequestId(sleeperId);
-    const player = findPlayer(sleeperId);
-    setAnnouncement(
-      `${player?.fullName ?? "Player"} moved to ${tierHeading(result.tier)}, rank ${rank}`,
-    );
   }
 
   function handleMoveToTier(sleeperId: string, tier: string) {
@@ -318,17 +326,7 @@ export function RankingEditorPage() {
       fromContainer,
       tier,
     );
-    setContainers(working);
-    const rank = computeGlobalRank(
-      working,
-      tiers.map((t) => t.label),
-      tier,
-      working[tier].length - 1,
-    );
-    moveMutation.mutate({ sleeperId, rank, tier });
-    setAnnouncement(
-      `${findPlayer(sleeperId)?.fullName ?? "Player"} moved to ${tierHeading(tier)}, rank ${rank}`,
-    );
+    commitMove(working, sleeperId, tier, working[tier].length - 1);
   }
 
   function handleRemoveFromRanking(sleeperId: string) {
@@ -380,12 +378,7 @@ export function RankingEditorPage() {
     setIsDragging(true);
     const activeId = String(event.active.id);
     setDraggingPlayerId(activeId);
-    const container = resolveContainer(activeId);
-    setDraggingPlayer(
-      container
-        ? containers[container]?.find((p) => p.sleeperId === activeId)
-        : undefined,
-    );
+    setDraggingPlayer(findPlayer(activeId));
     resetLastOverId();
   }
 
@@ -479,7 +472,7 @@ export function RankingEditorPage() {
 
     const rank = computeGlobalRank(
       working,
-      tiers.map((tier) => tier.label),
+      tierOrder,
       finalContainer,
       resolvedIndex,
     );
@@ -490,9 +483,7 @@ export function RankingEditorPage() {
   const menuContainer = menuPlayerId
     ? resolveContainer(menuPlayerId)
     : undefined;
-  const menuPlayer = menuContainer
-    ? containers[menuContainer]?.find((p) => p.sleeperId === menuPlayerId)
-    : undefined;
+  const menuPlayer = menuPlayerId ? findPlayer(menuPlayerId) : undefined;
 
   if (isLoadingRankings) {
     return <p className="status-bar">Loading…</p>;
@@ -686,11 +677,9 @@ export function RankingEditorPage() {
                       tier.position,
                       tierDisplayMode,
                     )}
-                    players={filterPlayersByQuery(
-                      filterPlayersByPosition(
-                        containers[tier.label] ?? [],
-                        positionFilter,
-                      ),
+                    players={filterPlayers(
+                      containers[tier.label] ?? [],
+                      positionFilter,
                       rankedSearch,
                     )}
                     showRank
@@ -750,11 +739,9 @@ export function RankingEditorPage() {
               <DroppableContainer
                 id={UNRANKED_CONTAINER}
                 title="Unranked"
-                players={filterPlayersByQuery(
-                  filterPlayersByPosition(
-                    containers[UNRANKED_CONTAINER] ?? [],
-                    positionFilter,
-                  ),
+                players={filterPlayers(
+                  containers[UNRANKED_CONTAINER] ?? [],
+                  positionFilter,
                   unrankedSearch,
                 )}
                 showRank={false}

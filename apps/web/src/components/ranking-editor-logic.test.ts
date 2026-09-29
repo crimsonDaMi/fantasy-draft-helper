@@ -4,6 +4,7 @@ import {
   appendPlayerToTier,
   buildContainers,
   computeGlobalRank,
+  filterPlayers,
   filterPlayersByPosition,
   filterPlayersByQuery,
   formatTierHeading,
@@ -390,6 +391,23 @@ describe("filterPlayersByQuery", () => {
 
   it("trims and ignores case in the query", () => {
     const result = filterPlayersByQuery(players, "  MOORE  ");
+    expect(result.map((p) => p.sleeperId)).toEqual(["2"]);
+  });
+});
+
+describe("filterPlayers", () => {
+  const players = [
+    { sleeperId: "1", fullName: "Josh Allen", team: "BUF", position: "QB" },
+    { sleeperId: "2", fullName: "Josh Jacobs", team: "GB", position: "RB" },
+    { sleeperId: "3", fullName: "James Cook", team: "BUF", position: "RB" },
+  ];
+
+  it("returns the same array when no filter is active", () => {
+    expect(filterPlayers(players, [], "")).toBe(players);
+  });
+
+  it("applies the position filter and the name search together", () => {
+    const result = filterPlayers(players, ["RB"], "josh");
     expect(result.map((p) => p.sleeperId)).toEqual(["2"]);
   });
 });

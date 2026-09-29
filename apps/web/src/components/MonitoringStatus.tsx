@@ -65,7 +65,7 @@ export function MonitoringStatus({
           </span>
         )}
 
-        {isDebugUi && draftId && <span>Draft ID: {draftId}</span>}
+        {isDebugUi && <span>Draft ID: {draftId}</span>}
 
         {isDebugUi && lastUpdatedAt && (
           <span>Refresh: {new Date(lastUpdatedAt).toLocaleTimeString()}</span>

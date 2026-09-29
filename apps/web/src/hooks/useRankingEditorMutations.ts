@@ -38,10 +38,10 @@ export function useRankingEditorMutations(
     });
   }
 
-  function settleTierQueries() {
-    // Tier boundary changes only shift tier labels/assignments within
-    // the existing ranking — the unranked pool is untouched, so only
-    // ranking-detail needs to reconcile.
+  function settleDetailQuery() {
+    // Tier boundary and flag changes stay within the ranking — the
+    // unranked pool is untouched, so only ranking-detail needs to
+    // reconcile.
     void queryClient.invalidateQueries({
       queryKey: queryKeys.rankingDetail(rankingId),
     });
@@ -69,14 +69,14 @@ export function useRankingEditorMutations(
   const insertTierMutation = useMutation({
     mutationFn: ({ position }: { position: number }) =>
       insertTier(rankingId!, position),
-    onSettled: settleTierQueries,
+    onSettled: settleDetailQuery,
   });
 
   const removeTierMutation = useMutation({
     mutationFn: ({ position }: { position: number }) =>
       removeTier(rankingId!, position),
     onSuccess: onTierRemoved,
-    onSettled: settleTierQueries,
+    onSettled: settleDetailQuery,
   });
 
   const createEmptyRankingMutation = useMutation({
@@ -117,7 +117,7 @@ export function useRankingEditorMutations(
         },
       );
     },
-    onSettled: settleTierQueries,
+    onSettled: settleDetailQuery,
   });
 
   return {

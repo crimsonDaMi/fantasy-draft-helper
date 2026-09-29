@@ -31,8 +31,9 @@ the unranked panel is therefore virtualized with `@tanstack/react-virtual`,
 so only visible rows plus overscan are mounted.
 
 - The dragged row is force-kept-mounted (`withForcedRows`) when it
-  scrolls out of the virtualized window, because dnd-kit moves the row's
-  own DOM node rather than an overlay.
+  scrolls out of the virtualized window: the visible preview is a
+  `DragOverlay`, but dnd-kit still tracks the row's own node (its rect
+  drives the sortable transforms around it) for the whole drag.
 - Rows have a fixed height (`PLAYER_ROW_HEIGHT`); long names are truncated
   with an ellipsis and a `title` tooltip. Dynamic row heights would break
   `withForcedRows`'s assumptions.

@@ -15,6 +15,7 @@ import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
 import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import { setPlayerFlag } from "../api/fantasy-api";
+import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingImportSummary } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
@@ -63,7 +64,9 @@ export function DraftDashboard() {
       flag: PlayerFlag | null;
     }) => setPlayerFlag(effectiveRankingId!, sleeperId, flag),
     onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ["recommendations"] }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.allRecommendations(),
+      }),
   });
 
   function updateStoredDraft(next: StoredDraft | undefined) {

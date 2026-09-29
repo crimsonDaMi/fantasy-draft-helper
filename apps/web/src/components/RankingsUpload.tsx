@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { importRankings } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
-
 import type { RankingImportSummary } from "../types/api";
 
 interface RankingsUploadProps {
@@ -94,9 +93,7 @@ function describeImportError(
   validationErrorCount: number,
 ): string | undefined {
   if (importError) {
-    return importError instanceof Error
-      ? `${importError.message} Check the CSV headers and row values, then choose the corrected file and try again.`
-      : "Failed to import rankings. Check the CSV headers and row values, then try again.";
+    return `${importError.message} Check the CSV headers and row values, then choose the corrected file and try again.`;
   }
 
   if (validationErrorCount > 0) {

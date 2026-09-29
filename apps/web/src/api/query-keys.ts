@@ -8,6 +8,8 @@ export const queryKeys = {
     ["ranking-detail", rankingId] as const,
   rankingUnranked: (rankingId: string | undefined) =>
     ["ranking-unranked", rankingId] as const,
+  /** Prefix of every `recommendations` key, for invalidating them all. */
+  allRecommendations: () => ["recommendations"] as const,
   recommendations: (
     draftId: string | undefined,
     rankingId: string | undefined,

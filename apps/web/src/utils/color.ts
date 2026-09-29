@@ -73,9 +73,11 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+export const LIGHT_TEXT = "#F1F4F0";
+
 export function contrastTextColor(
   bgHex: string,
-  light = "#F1F4F0",
+  light = LIGHT_TEXT,
   dark = "#14211B",
 ): string {
   return relativeLuminance(bgHex) > 0.45 ? dark : light;

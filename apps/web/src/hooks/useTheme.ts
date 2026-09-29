@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import {
   adjustLightness,
   contrastTextColor,
+  LIGHT_TEXT,
   relativeLuminance,
 } from "../utils/color";
 import { readStoredJson, writeStorage } from "../utils/storage";
 import { DEFAULT_THEME_ID, findTheme } from "../themes";
 
 const STORAGE_KEY = "draft-helper-theme";
-const UNIVERSAL_TEXT = "#F1F4F0";
+const UNIVERSAL_TEXT = LIGHT_TEXT;
 const UNIVERSAL_TEXT_MUTED = "#8FA396";
 const UNIVERSAL_DANGER = "#E8623D";
 
