@@ -23,6 +23,10 @@ See `RELEASING.md`.
 - Auction drafts show your budget in My team instead of a next pick, e.g.
   "$142 of $200 left · max bid $130" (the max bid keeps $1 for every
   other open roster spot).
+- After a ranking import, the players that couldn't be matched to a
+  Sleeper player are listed (with rank and why), with a link to fix them
+  in the ranking editor; a saved ranking with unmatched players links
+  there too.
 
 ### Fixed
 

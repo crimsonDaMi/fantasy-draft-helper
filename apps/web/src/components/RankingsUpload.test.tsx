@@ -98,7 +98,7 @@ describe("RankingsUpload", () => {
     submit();
 
     await waitFor(() =>
-      expect(onImported).toHaveBeenCalledWith(SUMMARY, "ranking-1"),
+      expect(onImported).toHaveBeenCalledWith(importResponse()),
     );
     expect(mocks.importRankings).toHaveBeenCalledWith(file);
     expect(invalidateQueries).toHaveBeenCalledWith({

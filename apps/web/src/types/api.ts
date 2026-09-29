@@ -116,7 +116,7 @@ export interface UserDraftsResponse {
   drafts: ApiUserDraft[];
 }
 
-export interface RankingImportSummary {
+interface RankingImportSummary {
   imported: number;
   matched: number;
   unmatched: number;
@@ -131,8 +131,8 @@ export interface RankingImportResponse {
   unmatchedPlayers: {
     rank: number;
     name: string;
-    team: string;
-    position: string;
+    team?: string;
+    position?: string;
   }[];
   ambiguousPlayers: {
     rank: number;

@@ -7,6 +7,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DraftDashboard } from "./DraftDashboard";
@@ -59,9 +60,11 @@ function renderWithClient() {
   });
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <DraftDashboard />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <DraftDashboard />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 

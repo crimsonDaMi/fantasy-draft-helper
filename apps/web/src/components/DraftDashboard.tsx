@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router";
 
 import { DraftForm } from "./DraftForm";
 import { DraftRecap } from "./DraftRecap";
+import { ImportIssues } from "./ImportIssues";
 import { MyTeamPanel } from "./MyTeamPanel";
 import { RankingSelector } from "./RankingSelector";
 import { RecentPicks } from "./RecentPicks";
@@ -16,7 +18,7 @@ import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import { setPlayerFlag } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
-import type { PlayerFlag, RankingImportSummary } from "../types/api";
+import type { PlayerFlag, RankingImportResponse } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
 import { currentPickNo, picksForSlot } from "../utils/draft-order";
@@ -33,7 +35,9 @@ const WIDE_DRAFT_BOARD_QUERY = "(min-width: 1200px)";
 export function DraftDashboard() {
   const [storedDraft, setStoredDraft] = useState(readStoredDraft);
   const draftId = storedDraft?.draftId;
-  const [rankingSummary, setRankingSummary] = useState<RankingImportSummary>();
+  // The last import's result, shown until another ranking is selected.
+  const [importResult, setImportResult] = useState<RankingImportResponse>();
+  const rankingSummary = importResult?.summary;
   const [positions, setPositions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [showAvoided, setShowAvoided] = useState(false);
@@ -192,9 +196,9 @@ export function DraftDashboard() {
         <summary>Draft setup</summary>
         <div className="draft-setup__content">
           <RankingsUpload
-            onImported={(summary, importedRankingId) => {
-              setRankingSummary(summary);
-              selectRanking(importedRankingId);
+            onImported={(result) => {
+              setImportResult(result);
+              selectRanking(result.rankingId);
             }}
           />
 
@@ -203,13 +207,13 @@ export function DraftDashboard() {
               rankings={rankings}
               selectedRanking={selectedRanking}
               onSelect={(rankingId) => {
-                setRankingSummary(undefined);
+                setImportResult(undefined);
                 selectRanking(rankingId);
               }}
             />
           )}
 
-          {rankingSummary ? (
+          {importResult && rankingSummary ? (
             <div>
               {isDebugUi ? (
                 <>
@@ -225,12 +229,22 @@ export function DraftDashboard() {
                   ✓ Rankings loaded ({rankingSummary.matched} players matched)
                 </p>
               )}
+              <ImportIssues
+                unmatchedPlayers={importResult.unmatchedPlayers}
+                ambiguousPlayers={importResult.ambiguousPlayers}
+              />
             </div>
           ) : (
             selectedRanking && (
               <p>
                 ✓ Using your saved ranking ({selectedRanking.matchedCount} of{" "}
                 {selectedRanking.playerCount} players matched)
+                {selectedRanking.matchedCount < selectedRanking.playerCount && (
+                  <>
+                    {" "}
+                    — <Link to="/rankings/edit">fix the rest</Link>
+                  </>
+                )}
               </p>
             )
           )}

@@ -3,11 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { importRankings } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
-import type { RankingImportSummary } from "../types/api";
+import type { RankingImportResponse } from "../types/api";
 import { ErrorMessage } from "./ErrorMessage";
 
 interface RankingsUploadProps {
-  onImported: (summary: RankingImportSummary, rankingId: string) => void;
+  onImported: (result: RankingImportResponse) => void;
 }
 
 export function RankingsUpload({ onImported }: RankingsUploadProps) {
@@ -18,7 +18,7 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
   const importMutation = useMutation({
     mutationFn: (csvFile: File) => importRankings(csvFile),
     onSuccess: (result) => {
-      onImported(result.summary, result.rankingId);
+      onImported(result);
 
       // An import always adds a new saved ranking (named after the file)
       // rather than merging into an existing one. Refresh the list so
