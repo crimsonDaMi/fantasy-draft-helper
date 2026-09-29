@@ -20,6 +20,10 @@ function match(rank: number, tier: string, sleeperId: string): PlayerMatch {
   };
 }
 
+function unmatched(rank: number, tier: string, name: string): PlayerMatch {
+  return { ranking: { rank, playerName: name, tier }, method: "NONE" };
+}
+
 const USER_ID = "test-user";
 
 describe("RankingRepository editor mutations", () => {
@@ -184,5 +188,87 @@ describe("RankingRepository editor mutations", () => {
         code: "TIER_LIMIT_REACHED",
       }),
     );
+  });
+
+  it("counts only matched players for the target rank, keeping unmatched rows in place", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const rankingId = repository.create(
+      [
+        match(1, "S", "1"),
+        unmatched(2, "S", "Nobody"),
+        match(3, "S", "2"),
+        match(4, "A", "3"),
+      ],
+      USER_ID,
+    );
+
+    // The editor shows S = [1, 2], A = [3]; moving 3 to the start of A
+    // is matched rank 3, which must land after player 2, not before it.
+    const result = repository.movePlayer(rankingId, "3", 3, "A");
+
+    expect(
+      result.map((m) => m.player?.sleeperId ?? m.ranking.playerName),
+    ).toEqual(["1", "Nobody", "2", "3"]);
+    expect(result.map((m) => m.ranking.tier)).toEqual(["S", "S", "S", "A"]);
+  });
+
+  describe("replaceUnmatchedRow", () => {
+    it("resolves an unmatched row in place, keeping its tier", () => {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create(
+        [match(1, "S", "1"), unmatched(2, "S", "Nobody"), match(3, "A", "2")],
+        USER_ID,
+      );
+
+      const result = repository.replaceUnmatchedRow(rankingId, 2, {
+        ...match(0, "B", "9"),
+        method: "MANUAL",
+      });
+
+      expect(result.map((m) => m.player?.sleeperId)).toEqual(["1", "9", "2"]);
+      expect(result[1]?.ranking).toMatchObject({ rank: 2, tier: "S" });
+      expect(result[1]?.method).toBe("MANUAL");
+    });
+
+    it("gives a resolved row the tier above when its own tier no longer fits there", () => {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create(
+        [match(1, "S", "1"), unmatched(2, "A", "Nobody"), match(3, "A", "2")],
+        USER_ID,
+      );
+      // Player 2 moves to the end of S; the A row now sits between S players.
+      repository.movePlayer(rankingId, "2", 2, "S");
+
+      const result = repository.replaceUnmatchedRow(
+        rankingId,
+        2,
+        match(0, "A", "9"),
+      );
+
+      expect(result.map((m) => m.ranking.tier)).toEqual(["S", "S", "S"]);
+    });
+
+    it("removes an unmatched row and closes the gap", () => {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create(
+        [match(1, "S", "1"), unmatched(2, "S", "Nobody"), match(3, "S", "2")],
+        USER_ID,
+      );
+
+      const result = repository.replaceUnmatchedRow(rankingId, 2, undefined);
+
+      expect(result.map((m) => m.player?.sleeperId)).toEqual(["1", "2"]);
+      expect(result.map((m) => m.ranking.rank)).toEqual([1, 2]);
+    });
+
+    it("refuses a rank that holds a matched player", () => {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create([match(1, "S", "1")], USER_ID);
+
+      expect(() =>
+        repository.replaceUnmatchedRow(rankingId, 1, undefined),
+      ).toThrow("No unmatched row at this rank");
+    });
   });
 });

@@ -5,7 +5,7 @@ import { Player } from "../domain/player.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { RankingRepository } from "../repositories/ranking.repository.js";
 import { withLiveInjuryStatus } from "../utils/with-live-injury-status.js";
-import { NotFoundError } from "../utils/domain-errors.js";
+import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 import { PlayerService } from "./player.service.js";
 
@@ -32,32 +32,9 @@ export class RankingEditorService {
       throw new NotFoundError("Tier was not found", "TIER_NOT_FOUND");
     }
 
-    let newMatch: PlayerMatch | undefined;
-
-    if (!this.isRanked(rankingId, userId, sleeperId)) {
-      await this.playerService.ensurePlayersLoaded();
-      const player = this.playerService.getPlayerById(sleeperId);
-
-      if (!player) {
-        throw new NotFoundError("Player was not found", "PLAYER_NOT_FOUND");
-      }
-
-      newMatch = {
-        ranking: {
-          rank: targetRank,
-          playerName: player.fullName,
-          team: player.team,
-          position:
-            player.position && isFantasyPosition(player.position)
-              ? player.position
-              : undefined,
-          sleeperPlayerId: player.sleeperId,
-          tier: targetTier,
-        },
-        player,
-        method: "SLEEPER_ID",
-      };
-    }
+    const newMatch = this.isRanked(rankingId, userId, sleeperId)
+      ? undefined
+      : await this.matchForPlayer(sleeperId, targetTier, "SLEEPER_ID");
 
     return this.withLiveStatus(
       this.repository.movePlayer(
@@ -67,6 +44,56 @@ export class RankingEditorService {
         targetTier,
         newMatch,
       ),
+    );
+  }
+
+  /**
+   * Resolves an unmatched or ambiguous import row (at `rank`, counting
+   * every row) to the chosen player, at the same position. `playerName`
+   * is the row's name as the client last saw it, guarding against acting
+   * on a row that has moved since.
+   */
+  async resolveUnmatchedRow(
+    rankingId: string,
+    userId: string,
+    rank: number,
+    playerName: string,
+    sleeperId: string,
+  ): Promise<PlayerMatch[]> {
+    this.assertOwnership(rankingId, userId);
+    const row = this.findUnmatchedRow(rankingId, userId, rank, playerName);
+
+    if (this.isRanked(rankingId, userId, sleeperId)) {
+      throw new ConflictError(
+        "That player is already in this ranking",
+        "PLAYER_ALREADY_RANKED",
+      );
+    }
+
+    const resolved = await this.matchForPlayer(
+      sleeperId,
+      row.ranking.tier,
+      "MANUAL",
+    );
+
+    return this.withLiveStatus(
+      this.repository.replaceUnmatchedRow(rankingId, rank, resolved),
+    );
+  }
+
+  /** Deletes an unmatched or ambiguous import row; see
+   * `resolveUnmatchedRow` for `rank` and `playerName`. */
+  removeUnmatchedRow(
+    rankingId: string,
+    userId: string,
+    rank: number,
+    playerName: string,
+  ): PlayerMatch[] {
+    this.assertOwnership(rankingId, userId);
+    this.findUnmatchedRow(rankingId, userId, rank, playerName);
+
+    return this.withLiveStatus(
+      this.repository.replaceUnmatchedRow(rankingId, rank, undefined),
     );
   }
 
@@ -174,6 +201,62 @@ export class RankingEditorService {
     this.repository.setFlag(rankingId, sleeperId, flag);
 
     return this.repository.getFlags(rankingId);
+  }
+
+  /** A ranking entry for a player chosen in the editor, named after the
+   * Sleeper player. `rank` is a placeholder; the repository renumbers. */
+  private async matchForPlayer(
+    sleeperId: string,
+    tier: string | undefined,
+    method: PlayerMatch["method"],
+  ): Promise<PlayerMatch> {
+    await this.playerService.ensurePlayersLoaded();
+    const player = this.playerService.getPlayerById(sleeperId);
+
+    if (!player) {
+      throw new NotFoundError("Player was not found", "PLAYER_NOT_FOUND");
+    }
+
+    return {
+      ranking: {
+        rank: 0,
+        playerName: player.fullName,
+        team: player.team,
+        position:
+          player.position && isFantasyPosition(player.position)
+            ? player.position
+            : undefined,
+        sleeperPlayerId: player.sleeperId,
+        tier,
+      },
+      player,
+      method,
+    };
+  }
+
+  private findUnmatchedRow(
+    rankingId: string,
+    userId: string,
+    rank: number,
+    playerName: string,
+  ): PlayerMatch {
+    const row = this.repository.getMatches(rankingId, userId)[rank - 1];
+
+    if (!row || row.player) {
+      throw new NotFoundError(
+        "No unmatched row at this rank",
+        "UNMATCHED_ROW_NOT_FOUND",
+      );
+    }
+
+    if (row.ranking.playerName !== playerName) {
+      throw new ConflictError(
+        "The ranking changed since it was loaded. Reload and try again.",
+        "ROW_CHANGED",
+      );
+    }
+
+    return row;
   }
 
   private isRanked(

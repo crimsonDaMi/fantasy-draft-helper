@@ -8,7 +8,9 @@ type PlayerMatchMethod =
   | "NAME_TEAM"
   | "NAME"
   | "NONE"
-  | "AMBIGUOUS";
+  | "AMBIGUOUS"
+  /** Chosen by the user in the ranking editor for an unmatched row. */
+  | "MANUAL";
 
 type PlayerMatchWarning = "ID_METADATA_MISMATCH";
 

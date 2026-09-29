@@ -29,6 +29,51 @@ export interface RankingSummary {
   matchedCount: number;
 }
 
+/** Index in `ordered` of the `matchedRank`-th (1-based) matched row, or
+ * the end of the list when there are fewer matched rows. */
+function indexOfMatchedRank(
+  ordered: PlayerMatch[],
+  matchedRank: number,
+): number {
+  let seen = 0;
+
+  for (const [index, match] of ordered.entries()) {
+    if (match.player && ++seen === Math.max(1, matchedRank)) {
+      return index;
+    }
+  }
+
+  return ordered.length;
+}
+
+/** `preferred` if it sorts between the tiers of the nearest matched rows
+ * around `index`, else the tier of the matched row above (or below). */
+function fittingTier(
+  ordered: PlayerMatch[],
+  index: number,
+  preferred: string | undefined,
+): string | undefined {
+  const above = ordered
+    .slice(0, index)
+    .reverse()
+    .find((match) => match.player)?.ranking.tier;
+  const below = ordered.slice(index + 1).find((match) => match.player)
+    ?.ranking.tier;
+  const order = (tier: string | undefined) =>
+    tier === undefined ? undefined : labelTierToNumeric(tier);
+  const preferredOrder = order(preferred);
+
+  if (
+    preferredOrder !== undefined &&
+    preferredOrder >= (order(above) ?? 0) &&
+    preferredOrder <= (order(below) ?? Infinity)
+  ) {
+    return preferred;
+  }
+
+  return above ?? below ?? preferred;
+}
+
 interface TierPositionRow {
   position: number;
 }
@@ -257,6 +302,10 @@ export class RankingRepository {
    * player is not already part of the ranking, `newMatch` supplies the
    * ranking/player pair to insert instead. The whole list is renumbered
    * 1..N afterwards so rank stays a strict sequence.
+   *
+   * `targetRank` counts matched players only, as the editor shows them:
+   * unmatched rows aren't in the editor's tiers, so they keep their place
+   * between their neighbors instead of shifting the target position.
    */
   movePlayer(
     rankingId: string,
@@ -291,8 +340,48 @@ export class RankingRepository {
         ranking: { ...entry.ranking, tier: targetTier },
       };
 
-      const insertAt = Math.max(0, Math.min(targetRank - 1, ordered.length));
-      ordered.splice(insertAt, 0, entry);
+      ordered.splice(indexOfMatchedRank(ordered, targetRank), 0, entry);
+
+      this.replaceAllPlayers(rankingId, ordered);
+    });
+
+    return this.getOrderedMatches(rankingId);
+  }
+
+  /**
+   * Replaces the unmatched row at `rank` (1-based, counting every row)
+   * with `resolved` at the same position, or removes it when `resolved`
+   * is undefined. The row keeps its tier unless edits since the import
+   * left it between players of other tiers; it then joins the tier of
+   * the matched player above it, so every tier stays one contiguous block.
+   */
+  replaceUnmatchedRow(
+    rankingId: string,
+    rank: number,
+    resolved: PlayerMatch | undefined,
+  ): PlayerMatch[] {
+    this.transaction(() => {
+      const ordered = this.getOrderedMatches(rankingId);
+      const row = ordered[rank - 1];
+
+      if (!row || row.player) {
+        throw new NotFoundError(
+          "No unmatched row at this rank",
+          "UNMATCHED_ROW_NOT_FOUND",
+        );
+      }
+
+      if (resolved) {
+        ordered[rank - 1] = {
+          ...resolved,
+          ranking: {
+            ...resolved.ranking,
+            tier: fittingTier(ordered, rank - 1, row.ranking.tier),
+          },
+        };
+      } else {
+        ordered.splice(rank - 1, 1);
+      }
 
       this.replaceAllPlayers(rankingId, ordered);
     });

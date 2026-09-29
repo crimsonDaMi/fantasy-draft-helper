@@ -425,4 +425,88 @@ describe("RankingEditorService", () => {
       ).toThrow("Ranking was not found");
     });
   });
+
+  describe("unmatched rows", () => {
+    function createRankingWithUnmatchedRow() {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create(
+        [
+          match(1, "S", "1"),
+          {
+            ranking: { rank: 2, playerName: "Nobody", tier: "S" },
+            method: "NONE",
+          },
+          match(3, "A", "2"),
+        ],
+        USER_ID,
+      );
+      const newPlayer = createFantasyPlayer("9", "Player Nine");
+      const service = new RankingEditorService(
+        repository,
+        createFixturePlayerService({
+          getPlayerById: (id: string) => (id === "9" ? newPlayer : undefined),
+        }) as never,
+      );
+
+      return { rankingId, service };
+    }
+
+    it("resolves a row to the chosen player, named after that player", async () => {
+      const { rankingId, service } = createRankingWithUnmatchedRow();
+
+      const result = await service.resolveUnmatchedRow(
+        rankingId,
+        USER_ID,
+        2,
+        "Nobody",
+        "9",
+      );
+
+      expect(result[1]).toMatchObject({
+        ranking: { rank: 2, playerName: "Player Nine", tier: "S" },
+        player: { sleeperId: "9" },
+        method: "MANUAL",
+      });
+    });
+
+    it("refuses a player who is already ranked", async () => {
+      const { rankingId, service } = createRankingWithUnmatchedRow();
+
+      await expect(
+        service.resolveUnmatchedRow(rankingId, USER_ID, 2, "Nobody", "1"),
+      ).rejects.toMatchObject({ code: "PLAYER_ALREADY_RANKED" });
+    });
+
+    it("refuses a row whose name no longer matches", async () => {
+      const { rankingId, service } = createRankingWithUnmatchedRow();
+
+      await expect(
+        service.resolveUnmatchedRow(rankingId, USER_ID, 2, "Somebody", "9"),
+      ).rejects.toMatchObject({ code: "ROW_CHANGED" });
+      expect(() =>
+        service.removeUnmatchedRow(rankingId, USER_ID, 2, "Somebody"),
+      ).toThrow("The ranking changed");
+    });
+
+    it("removes a row", () => {
+      const { rankingId, service } = createRankingWithUnmatchedRow();
+
+      const result = service.removeUnmatchedRow(
+        rankingId,
+        USER_ID,
+        2,
+        "Nobody",
+      );
+
+      expect(result.map((m) => m.player?.sleeperId)).toEqual(["1", "2"]);
+    });
+
+    it("throws 404 when the ranking does not belong to the user", () => {
+      const { rankingId, service } = createRankingWithUnmatchedRow();
+
+      expect(() =>
+        service.removeUnmatchedRow(rankingId, OTHER_USER_ID, 2, "Nobody"),
+      ).toThrow("Ranking was not found");
+    });
+  });
 });

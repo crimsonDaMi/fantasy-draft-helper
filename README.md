@@ -325,7 +325,19 @@ POST   /rankings/:rankingId/tiers                 insert an empty tier
 DELETE /rankings/:rankingId/tiers/:position       remove a tier, merging its players
 GET    /rankings/:rankingId/unranked-players      fantasy-relevant players not ranked
 PATCH  /rankings/:rankingId/players/:sleeperId/flag   { "flag": "watch" | "avoid" | null }
+PATCH  /rankings/:rankingId/unmatched/:rank       { "playerName", "sleeperId" }: resolve a row
+DELETE /rankings/:rankingId/unmatched/:rank?playerName=<name>   delete an unmatched row
 ```
+
+Rows the import couldn't match (or matched ambiguously) stay in the ranking
+without a player: `GET /rankings/:rankingId` returns them with `player`
+unset, and ambiguous ones with their `candidates`. They are never
+recommended. The `unmatched/:rank` routes resolve such a row to a chosen
+player at the same position (`method: "MANUAL"`) or delete it; `:rank`
+counts every row, and `playerName` must still match the row (`409
+ROW_CHANGED` otherwise). The `rank` in `PATCH .../players/:sleeperId`
+counts matched players only, as the editor shows them, so unmatched rows
+keep their place.
 
 `GET /rankings/:rankingId` also returns `flags` (Sleeper ID → flag).
 Recommendations leave out `avoid`-flagged players unless

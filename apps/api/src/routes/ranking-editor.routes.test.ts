@@ -14,6 +14,8 @@ function createTestApp(rankingEditorService: {
   removeTier?: (...args: unknown[]) => unknown;
   getUnrankedPlayers?: (...args: unknown[]) => unknown;
   setFlag?: (...args: unknown[]) => unknown;
+  resolveUnmatchedRow?: (...args: unknown[]) => unknown;
+  removeUnmatchedRow?: (...args: unknown[]) => unknown;
 }) {
   const app = Fastify();
 
@@ -272,6 +274,49 @@ describe("ranking editor routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(setFlag).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it("resolves an unmatched row", async () => {
+    const resolveUnmatchedRow = vi.fn(async () => []);
+    const app = createTestApp({ resolveUnmatchedRow });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/unmatched/2",
+      payload: { playerName: "Nobody", sleeperId: "9" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ players: [] });
+    expect(resolveUnmatchedRow).toHaveBeenCalledWith(
+      "ranking-1",
+      TEST_USER.id,
+      2,
+      "Nobody",
+      "9",
+    );
+
+    await app.close();
+  });
+
+  it("removes an unmatched row", async () => {
+    const removeUnmatchedRow = vi.fn(() => []);
+    const app = createTestApp({ removeUnmatchedRow });
+
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/rankings/ranking-1/unmatched/2?playerName=Jos%C3%A9%20Nobody",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(removeUnmatchedRow).toHaveBeenCalledWith(
+      "ranking-1",
+      TEST_USER.id,
+      2,
+      "José Nobody",
+    );
 
     await app.close();
   });

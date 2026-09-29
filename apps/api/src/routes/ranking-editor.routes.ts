@@ -14,6 +14,18 @@ const tierParamsSchema = rankingParamsSchema.extend({
   position: z.coerce.number().int().min(1),
 });
 
+const unmatchedRowParamsSchema = rankingParamsSchema.extend({
+  rank: z.coerce.number().int().min(1),
+});
+
+const unmatchedRowQuerySchema = z.object({
+  playerName: z.string().min(1),
+});
+
+const resolveUnmatchedRowBodySchema = unmatchedRowQuerySchema.extend({
+  sleeperId: z.string().min(1),
+});
+
 const movePlayerBodySchema = z.object({
   rank: z.number().int().min(1),
   tier: z.string().trim().toUpperCase().min(1),
@@ -93,6 +105,50 @@ export function createRankingEditorRoutes(
         rankingId,
         userId,
         sleeperId,
+      );
+
+      return { players };
+    });
+
+    // Resolve an unmatched or ambiguous import row to the chosen player,
+    // at the same position. `rank` counts every row, matched or not.
+    app.patch("/rankings/:rankingId/unmatched/:rank", async (request) => {
+      const userId = requireUser(request).id;
+
+      const { rankingId, rank } = unmatchedRowParamsSchema.parse(
+        request.params,
+      );
+
+      const { playerName, sleeperId } = resolveUnmatchedRowBodySchema.parse(
+        request.body,
+      );
+
+      const players = await rankingEditorService.resolveUnmatchedRow(
+        rankingId,
+        userId,
+        rank,
+        playerName,
+        sleeperId,
+      );
+
+      return { players };
+    });
+
+    // Delete an unmatched or ambiguous import row.
+    app.delete("/rankings/:rankingId/unmatched/:rank", async (request) => {
+      const userId = requireUser(request).id;
+
+      const { rankingId, rank } = unmatchedRowParamsSchema.parse(
+        request.params,
+      );
+
+      const { playerName } = unmatchedRowQuerySchema.parse(request.query);
+
+      const players = rankingEditorService.removeUnmatchedRow(
+        rankingId,
+        userId,
+        rank,
+        playerName,
       );
 
       return { players };

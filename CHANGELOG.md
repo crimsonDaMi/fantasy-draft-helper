@@ -39,6 +39,9 @@ See `RELEASING.md`.
   silently undoing it (e.g. a lost connection, or a 27th tier).
 - Error messages look the same everywhere and are announced by screen
   readers, including on the login and CSV import forms.
+- In a ranking with players the import couldn't match, moving a player in
+  the ranking editor could put them one place off, sometimes inside the
+  next tier.
 - Cancelling a drag in the ranking editor (Escape, resizing the window, or
   switching tabs) no longer stops the editor from picking up saved
   changes until the next drag.
