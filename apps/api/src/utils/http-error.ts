@@ -8,7 +8,8 @@ export class HttpError extends Error {
     public readonly statusCode: number,
     message: string,
     public readonly code: string,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
   }
 }

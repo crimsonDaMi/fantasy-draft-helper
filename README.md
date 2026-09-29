@@ -166,6 +166,11 @@ The sample file is [test-data/example-rankings.csv](test-data/example-rankings.c
 
 ## API
 
+Every error response is `{ "error": "CODE", "message": "string" }`. When
+Sleeper fails, draft routes answer `502` — `SLEEPER_API_ERROR` for an error
+response, `SLEEPER_UNAVAILABLE` when Sleeper can't be reached — except that
+a Sleeper `404` (e.g. an unknown draft ID) stays `404`.
+
 ### Health
 
 ```text

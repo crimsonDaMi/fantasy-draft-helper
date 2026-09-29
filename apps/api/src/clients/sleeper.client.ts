@@ -44,12 +44,27 @@ export class SleeperClient {
     return this.get<SleeperPlayersResponse>("/players/nfl");
   }
 
+  /**
+   * Upstream failures become 502, which the web app retries; only a 404
+   * (e.g. an unknown draft ID) is passed through, as a permanent answer.
+   */
   private async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${SLEEPER_API_BASE_URL}${path}`);
+    let response: Response;
+
+    try {
+      response = await fetch(`${SLEEPER_API_BASE_URL}${path}`);
+    } catch (error) {
+      throw new HttpError(
+        502,
+        "Sleeper could not be reached. Try again in a moment.",
+        "SLEEPER_UNAVAILABLE",
+        { cause: error },
+      );
+    }
 
     if (!response.ok) {
       throw new HttpError(
-        response.status,
+        response.status === 404 ? 404 : 502,
         `Sleeper API request failed: ${response.status} ${response.statusText}`,
         "SLEEPER_API_ERROR",
       );
