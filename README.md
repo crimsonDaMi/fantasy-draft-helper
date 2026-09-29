@@ -186,7 +186,9 @@ Content-Type: multipart/form-data
 
 The multipart field is `file`; an optional `name` field, sent before the
 file, names the ranking (default: the file name without its extension).
-Each import adds a new saved ranking. The response includes a `rankingId`, an
+Each import adds a new saved ranking, unless the file has no valid ranking
+row: then nothing is saved and the answer is `422 NO_VALID_ROWS` with the row
+errors in `details`. The response includes a `rankingId`, an
 import summary, row-level validation errors (if any), and details on
 unmatched and ambiguous players:
 

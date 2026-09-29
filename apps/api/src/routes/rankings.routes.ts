@@ -74,6 +74,16 @@ export function createRankingsRoutes(
         csvContent.toString("utf-8"),
       );
 
+      // Nothing to save; an empty ranking would only take up a slot.
+      if (result.importResult.rankings.length === 0) {
+        throw new HttpError(
+          422,
+          "The CSV has no valid ranking rows.",
+          "NO_VALID_ROWS",
+          { details: result.importResult.errors },
+        );
+      }
+
       // Multipart fields sent before the file are available here.
       const rankingId = rankingStoreService.createRanking(
         result.matches,

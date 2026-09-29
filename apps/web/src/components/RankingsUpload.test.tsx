@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { ApiRequestError } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { RankingImportResponse } from "../types/api";
 import { RankingsUpload } from "./RankingsUpload";
@@ -16,7 +17,9 @@ const mocks = vi.hoisted(() => ({
   importRankings: vi.fn(),
 }));
 
-vi.mock("../api/fantasy-api", () => ({
+vi.mock("../api/fantasy-api", async (importOriginal) => ({
+  ApiRequestError: (await importOriginal<typeof import("../api/fantasy-api")>())
+    .ApiRequestError,
   importRankings: mocks.importRankings,
 }));
 
@@ -105,6 +108,31 @@ describe("RankingsUpload", () => {
       queryKey: queryKeys.rankingList(),
     });
     expect(screen.queryByText(/Import completed with CSV errors/)).toBeNull();
+  });
+
+  it("lists the row errors of a file the API rejected for having no valid rows", async () => {
+    mocks.importRankings.mockRejectedValue(
+      new ApiRequestError("The CSV has no valid ranking rows.", 422, [
+        {
+          row: 1,
+          message: "CSV must include required columns: rank and player",
+        },
+      ]),
+    );
+    const { onImported } = renderUpload();
+
+    chooseFile();
+    submit();
+
+    expect(
+      await screen.findByText(
+        "Row 1: CSV must include required columns: rank and player",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "The CSV has no valid ranking rows.",
+    );
+    expect(onImported).not.toHaveBeenCalled();
   });
 
   it("lists row-level validation errors from a partial import", async () => {

@@ -84,7 +84,9 @@ Canonical headers: `rank,player,position,team,tier,notes` (`rank` and
 `Tier`, and `player_id` are still accepted; new fixtures and docs use the
 canonical ones. The header row is validated first; missing required
 columns, empty files, malformed rows, and files without a valid row produce
-structured row-level errors — never silently dropped data. Tiers are
+structured row-level errors — never silently dropped data. A file with no
+valid row saves nothing (`422 NO_VALID_ROWS`, errors in `details`); a
+partially valid one saves the valid rows and reports the rest. Tiers are
 normalized at import to the internal `S`, `A`–`Z` scheme
 (`utils/tier.ts`, `normalize-ranking-tiers.ts`).
 

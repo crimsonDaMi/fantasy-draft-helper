@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { importRankings } from "../api/fantasy-api";
+import { ApiRequestError, importRankings } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { RankingImportResponse } from "../types/api";
 import { ErrorMessage } from "./ErrorMessage";
@@ -29,7 +29,9 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
     },
   });
 
-  const validationErrors = importMutation.data?.validationErrors ?? [];
+  const validationErrors =
+    importMutation.data?.validationErrors ??
+    rejectedRowErrors(importMutation.error);
   const error = isFileMissing
     ? "Please select a CSV file."
     : describeImportError(importMutation.error, validationErrors.length);
@@ -87,6 +89,15 @@ export function RankingsUpload({ onImported }: RankingsUploadProps) {
       )}
     </div>
   );
+}
+
+/** Row errors of an import the API rejected for having no valid rows. */
+function rejectedRowErrors(
+  error: Error | null,
+): RankingImportResponse["validationErrors"] {
+  return error instanceof ApiRequestError && Array.isArray(error.details)
+    ? error.details
+    : [];
 }
 
 function describeImportError(

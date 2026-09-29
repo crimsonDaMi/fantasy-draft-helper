@@ -15,11 +15,14 @@ const API_BASE_URL =
 
 export class ApiRequestError extends Error {
   readonly status?: number;
+  /** The error body's structured `details`, when the API sent any. */
+  readonly details?: unknown;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, details?: unknown) {
     super(message);
 
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -38,13 +41,17 @@ function notifyUnauthorized(): void {
   }
 }
 
-async function getErrorMessage(response: Response): Promise<string> {
+async function toApiRequestError(response: Response): Promise<ApiRequestError> {
   try {
     const error = await response.json();
 
-    return error.message ?? error.error ?? "Request failed";
+    return new ApiRequestError(
+      error.message ?? error.error ?? "Request failed",
+      response.status,
+      error.details,
+    );
   } catch {
-    return "Request failed";
+    return new ApiRequestError("Request failed", response.status);
   }
 }
 
@@ -71,7 +78,7 @@ async function request<T>(
     if (notifyOnUnauthorized && response.status === 401) {
       notifyUnauthorized();
     }
-    throw new ApiRequestError(await getErrorMessage(response), response.status);
+    throw await toApiRequestError(response);
   }
 
   if (response.status === 204) {

@@ -26,8 +26,9 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
     importCsv: async () => importResult,
   };
 
+  const createRanking = vi.fn(() => "ranking-1");
   const rankingStoreService = {
-    createRanking: () => "ranking-1",
+    createRanking,
     getRankingMatches: () => matches,
     hasRanking: () => matches.length > 0,
     getLatestRankingId: () => (matches.length > 0 ? "ranking-1" : undefined),
@@ -40,7 +41,7 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
     ),
   );
 
-  return app;
+  return Object.assign(app, { createRanking });
 }
 
 describe("rankings routes", () => {
@@ -54,6 +55,7 @@ describe("rankings routes", () => {
         errors: 0,
       },
       importResult: {
+        rankings: [{ rank: 1, playerName: "Player One" }],
         errors: [],
       },
       matches: [
@@ -117,6 +119,46 @@ describe("rankings routes", () => {
     ]);
     expect(body.ambiguousPlayers).toEqual([]);
     expect(body.playersImported).toBeUndefined();
+
+    await app.close();
+  });
+
+  it("saves no ranking when the CSV has no valid rows", async () => {
+    const errors = [
+      { row: 1, message: "CSV must include required columns: rank and player" },
+    ];
+    const app = createTestApp({
+      summary: {
+        imported: 0,
+        matched: 0,
+        unmatched: 0,
+        ambiguous: 0,
+        errors: 1,
+      },
+      importResult: { rankings: [], errors },
+      matches: [],
+    });
+
+    const boundary = "----testboundary123456";
+    const response = await app.inject({
+      method: "POST",
+      url: "/rankings",
+      headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+      payload:
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="bad.csv"\r\n` +
+        `Content-Type: text/csv\r\n\r\n` +
+        `name,team\nSomeone,BUF\r\n` +
+        `--${boundary}--\r\n`,
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(response.json()).toEqual({
+      error: "NO_VALID_ROWS",
+      message: "The CSV has no valid ranking rows.",
+      details: errors,
+    });
+    expect(app.createRanking).not.toHaveBeenCalled();
 
     await app.close();
   });
@@ -261,7 +303,10 @@ describe("rankings routes", () => {
         {
           importCsv: async () => ({
             summary: {},
-            importResult: { errors: [] },
+            importResult: {
+              rankings: [{ rank: 1, playerName: "Player One" }],
+              errors: [],
+            },
             matches: [],
           }),
         } as never,

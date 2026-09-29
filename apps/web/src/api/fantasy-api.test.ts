@@ -178,6 +178,24 @@ describe("request handling", () => {
     });
   });
 
+  it("carries the error body's details", async () => {
+    const details = [{ row: 1, message: "Missing columns" }];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        mockFetchResponse(422, {
+          error: "NO_VALID_ROWS",
+          message: "The CSV has no valid ranking rows.",
+          details,
+        }),
+      ),
+    );
+
+    await expect(
+      importRankings(new File(["x"], "bad.csv")),
+    ).rejects.toMatchObject({ status: 422, details });
+  });
+
   it("URL-encodes path parameters", async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockFetchResponse(200, {}));
     vi.stubGlobal("fetch", fetchMock);

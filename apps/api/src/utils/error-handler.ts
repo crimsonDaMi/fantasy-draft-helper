@@ -38,7 +38,11 @@ function toErrorResponse(error: FastifyError | Error): ErrorResponse {
   if (error instanceof HttpError) {
     return {
       status: error.statusCode,
-      body: { error: error.code, message: error.message },
+      body: {
+        error: error.code,
+        message: error.message,
+        ...(error.details === undefined ? {} : { details: error.details }),
+      },
     };
   }
 

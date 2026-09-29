@@ -8,8 +8,14 @@ export class HttpError extends Error {
     public readonly statusCode: number,
     message: string,
     public readonly code: string,
-    options?: ErrorOptions,
+    options?: ErrorOptions & {
+      /** Extra structured data, sent as the response's `details`. */
+      details?: unknown;
+    },
   ) {
     super(message, options);
+    this.details = options?.details;
   }
+
+  readonly details: unknown;
 }
