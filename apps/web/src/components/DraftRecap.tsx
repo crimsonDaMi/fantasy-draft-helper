@@ -3,7 +3,7 @@ import { formatPick } from "../utils/draft-order";
 import { toRecapCsv } from "../utils/recap-csv";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
-import { RosterNeeds } from "./MyTeamPanel";
+import { RosterNeeds } from "./RosterNeeds";
 import { PositionBadge } from "./PositionBadge";
 
 function downloadCsv(csv: string) {
