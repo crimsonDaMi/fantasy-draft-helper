@@ -61,7 +61,12 @@ apps/web/src/
 6. **Recommendations are deterministic:** the same ranking and the same
    drafted IDs always give the same result.
 7. **Routes are authenticated** except `/health` and `/auth/*`; ranking
-   data is always scoped to the requesting user.
+   data is always scoped to the requesting user. In `RankingRepository`,
+   ranking-level methods (`getMatches`, `hasRanking`, `rename`, `delete`,
+   `listRankings`) take a `userId` and scope their SQL by owner;
+   editor-level methods (players, tiers, flags) take only a `rankingId`
+   that the calling service has already checked with `assertOwnership` or
+   `hasRanking`.
 
 ### Import vs. poll — the central design decision
 

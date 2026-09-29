@@ -53,6 +53,10 @@ function parseMatchRows(rows: RankingPlayerRow[]): PlayerMatch[] {
   });
 }
 
+// ranking_players.name/position/team/match_status are denormalized copies
+// of what match_json holds. Nothing reads them; they keep the table
+// readable when inspecting the database with sqlite3. Dropping them is a
+// schema change (major release), so they stay.
 const RANKING_SCHEMA = `
   PRAGMA foreign_keys = ON;
 
