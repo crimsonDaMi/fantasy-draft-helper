@@ -76,5 +76,8 @@ risk or cost at the time; worth re-evaluating when the area is touched.
   could move to its own module.
 - **Shared error display** — errors are rendered ad hoc; a small
   `ErrorMessage` component would unify `role="alert"` and styling.
+- **ADP/rank diff styling** — `DraftRecap`, `RecommendationsList`, and
+  `RecentPicks` each pick the value/reach class with their own threshold
+  and comparison; a shared helper would need both as parameters.
 - **`getFlags` scoping** — `RankingRepository.getFlags(rankingId)` isn't
   user-scoped; callers check ownership first.
