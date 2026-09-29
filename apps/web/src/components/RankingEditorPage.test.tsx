@@ -319,6 +319,92 @@ describe("RankingEditorPage", () => {
     expect(await screen.findByText("Player One")).toBeInTheDocument();
   });
 
+  describe("with the keyboard", () => {
+    const row = (name: string) => screen.getByText(name).closest("li")!;
+
+    beforeEach(() => {
+      mockTwoTierRanking();
+      mocks.moveRankingPlayer.mockResolvedValue({});
+    });
+
+    it("makes one row per container a tab stop", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      expect(row("Player One")).toHaveAttribute("tabindex", "0");
+      expect(row("Player Two")).toHaveAttribute("tabindex", "-1");
+      expect(row("Player Three")).toHaveAttribute("tabindex", "0");
+      expect(
+        screen.getByRole("button", { name: "Watch Player Two" }),
+      ).toHaveAttribute("tabindex", "-1");
+    });
+
+    it("moves focus between rows with the arrow keys", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+      row("Player One").focus();
+
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown" });
+
+      await waitFor(() => expect(row("Player Two")).toHaveFocus());
+      expect(row("Player Two")).toHaveAttribute("tabindex", "0");
+      expect(row("Player One")).toHaveAttribute("tabindex", "-1");
+    });
+
+    it("moves a player into the next tier with Alt+ArrowDown and keeps focus on it", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+      row("Player Two").focus();
+
+      fireEvent.keyDown(row("Player Two"), { key: "ArrowDown", altKey: true });
+
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledWith(
+          "ranking-1",
+          "2",
+          2,
+          "A",
+        ),
+      );
+      await waitFor(() => expect(row("Player Two")).toHaveFocus());
+      expect(
+        screen.getByText("Player Two moved to Tier A, rank 2"),
+      ).toBeInTheDocument();
+    });
+
+    it("doesn't move the first player of the ranking up", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      fireEvent.keyDown(row("Player One"), { key: "ArrowUp", altKey: true });
+
+      expect(mocks.moveRankingPlayer).not.toHaveBeenCalled();
+    });
+
+    it("opens the move menu with Enter", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      fireEvent.keyDown(row("Player Three"), { key: "Enter" });
+
+      expect(
+        screen.getByRole("dialog", { name: "Move Player Three" }),
+      ).toBeInTheDocument();
+    });
+
+    it("leaves Enter on a watch button to the button", async () => {
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      fireEvent.keyDown(
+        screen.getByRole("button", { name: "Watch Player One" }),
+        { key: "Enter" },
+      );
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
   describe("on phones", () => {
     beforeEach(() => {
       vi.stubGlobal(

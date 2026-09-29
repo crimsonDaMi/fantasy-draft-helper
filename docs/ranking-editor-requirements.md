@@ -115,7 +115,8 @@ UI escape hatch.
 
 - Tiers shown as groupings; each player shown by name and current rank.
 
-## Deferred
+## Later additions
 
-Keyboard-operable drag-and-drop and touch support are tracked in
-[`DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#deferred-ideas).
+Keyboard operation and touch support have shipped since; see
+[`ranking-editor-history.md`](ranking-editor-history.md) (Keyboard, Touch,
+Phone layout).

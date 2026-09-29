@@ -30,12 +30,12 @@ scale (~360 players, 12 tiers) that made dragging unusable. Every tier and
 the unranked panel is therefore virtualized with `@tanstack/react-virtual`,
 so only visible rows plus overscan are mounted.
 
-- The dragged row is force-kept-mounted (`withForcedActiveRow`) when it
+- The dragged row is force-kept-mounted (`withForcedRows`) when it
   scrolls out of the virtualized window, because dnd-kit moves the row's
   own DOM node rather than an overlay.
 - Rows have a fixed height (`PLAYER_ROW_HEIGHT`); long names are truncated
   with an ellipsis and a `title` tooltip. Dynamic row heights would break
-  `withForcedActiveRow`'s assumptions.
+  `withForcedRows`'s assumptions.
 - The filter helpers (name search, global position filter) return the
   original array reference when no filter is active, to avoid per-dragover
   work.
@@ -97,6 +97,39 @@ column, and dragging between far-apart containers stops being practical.
 - Rows keep their fixed `PLAYER_ROW_HEIGHT` on phones — virtualization
   depends on it — so the whole row is the tap target rather than a larger
   button.
+
+## Keyboard
+
+There is no keyboard _drag_. dnd-kit's `KeyboardSensor` was evaluated and
+rejected: `sortableKeyboardCoordinates` only sees mounted (virtualized)
+rows, `useContainerCollisionDetection` starts with `pointerWithin`, which
+has no pointer coordinates during a keyboard drag, and at ~360 players
+moving someone far would take one keypress per slot. Instead the focused
+row has commands that reuse the existing move path (`stepPlayer` /
+`appendPlayerToTier` → `computeGlobalRank` → `moveMutation`):
+
+- ↑/↓/Home/End move focus within a container; Enter/Space opens
+  `PlayerMoveMenu` (a centered dialog on desktop); Alt+↑/↓ moves the
+  player one slot, crossing into the end of the tier above or the start
+  of the tier below; Alt+Home/End moves to the top/bottom of the tier.
+- Under a position or name filter a slot is a _visible_ row, like a mouse
+  drop; `stepPlayer` steps over hidden rows.
+- Roving tabindex: one tab stop per container (plus that row's ★/⊘).
+  `useSortable` spreads `tabIndex=0` on every row, so `SortablePlayer`
+  overrides it after the spread.
+- Focus survives virtualization and moves: the container's tab-stop row
+  and the page's `focusRequestId` are force-mounted by `withForcedRows`,
+  and `SortablePlayer` focuses itself once mounted. A player moved into
+  another tier remounts in a different container, so the page, not the
+  container, holds the request. Native `focus()` scrolls the inner
+  container, and the virtualizer fills in around it.
+- The row's key handler ignores keys from its ★/⊘ buttons
+  (`event.target !== event.currentTarget`), so Enter on ★ doesn't also
+  open the menu.
+- dnd-kit's default screen-reader text ("press space to pick up") is
+  replaced via `DndContext accessibility`, and its announcements name
+  players rather than sleeperIds. Keyboard moves are announced in a
+  polite live region.
 
 ## Ranks and tiers
 

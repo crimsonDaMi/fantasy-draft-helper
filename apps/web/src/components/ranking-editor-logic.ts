@@ -202,40 +202,126 @@ export interface VirtualRow {
 }
 
 /**
- * Merges the virtualizer's visible-range rows with the currently
- * dragged item's row, if that item belongs to this container but has
- * scrolled outside the visible window. Without this, a long drag (top
- * of a 180-player tier to the bottom) would unmount the dragged node
- * mid-drag once it scrolls out of view, breaking the drag — dnd-kit
- * moves the dragged node via a CSS transform on its own mounted DOM
- * node, not a floating overlay, so that node must stay mounted for the
- * whole drag.
+ * Merges the virtualizer's visible-range rows with the rows of
+ * `keepIds` — the dragged player and the keyboard-focused one — when
+ * they belong to this container but have scrolled outside the visible
+ * window. Without this, a long drag (top of a 180-player tier to the
+ * bottom) would unmount the dragged node mid-drag once it scrolls out
+ * of view, breaking the drag — dnd-kit moves the dragged node via a CSS
+ * transform on its own mounted DOM node, not a floating overlay, so
+ * that node must stay mounted for the whole drag. Likewise a focused
+ * row that unmounts drops keyboard focus to the page.
  */
-export function withForcedActiveRow(
+export function withForcedRows(
   visibleRows: VirtualRow[],
   players: { sleeperId: string }[],
-  activeId: string | undefined,
+  keepIds: (string | undefined)[],
 ): VirtualRow[] {
-  if (!activeId) {
-    return visibleRows;
+  let rows = visibleRows;
+
+  for (const keepId of keepIds) {
+    if (
+      !keepId ||
+      rows.some((row) => players[row.index]?.sleeperId === keepId)
+    ) {
+      continue;
+    }
+
+    const keepIndex = players.findIndex(
+      (player) => player.sleeperId === keepId,
+    );
+
+    if (keepIndex === -1) {
+      continue;
+    }
+
+    rows = [
+      ...rows,
+      { index: keepIndex, start: keepIndex * PLAYER_ROW_HEIGHT },
+    ].sort((a, b) => a.index - b.index);
   }
 
-  if (visibleRows.some((row) => players[row.index]?.sleeperId === activeId)) {
-    return visibleRows;
-  }
+  return rows;
+}
 
-  const activeIndex = players.findIndex(
-    (player) => player.sleeperId === activeId,
+export type KeyboardMove = "up" | "down" | "top" | "bottom";
+
+export interface KeyboardMoveResult {
+  containers: Containers;
+  tier: string;
+  index: number;
+}
+
+/** The keyboard alternative to dragging a ranked player: one visible slot
+ * up or down — crossing into the end of the tier above or the start of
+ * the tier below at a tier edge — or to the top or bottom of their tier.
+ * `isVisible` is the active filter: under a filter a slot is a *visible*
+ * row, as with a mouse drop, so hidden rows are stepped over. Returns
+ * `null` when the player isn't ranked or can't move any further. */
+export function stepPlayer(
+  containers: Containers,
+  tierOrder: string[],
+  sleeperId: string,
+  direction: KeyboardMove,
+  isVisible: (player: EditorPlayer) => boolean = () => true,
+): KeyboardMoveResult | null {
+  const tierIndex = tierOrder.findIndex((label) =>
+    containers[label]?.some((player) => player.sleeperId === sleeperId),
   );
-
-  if (activeIndex === -1) {
-    return visibleRows;
+  if (tierIndex === -1) {
+    return null;
   }
 
-  return [
-    ...visibleRows,
-    { index: activeIndex, start: activeIndex * PLAYER_ROW_HEIGHT },
-  ].sort((a, b) => a.index - b.index);
+  const tier = tierOrder[tierIndex];
+  const source = containers[tier];
+  const fromIndex = source.findIndex(
+    (player) => player.sleeperId === sleeperId,
+  );
+  const moving = source[fromIndex];
+  const rest = source.filter((player) => player !== moving);
+
+  const placeIn = (targetTier: string, index: number): KeyboardMoveResult => {
+    const target =
+      targetTier === tier ? rest : [...(containers[targetTier] ?? [])];
+    const updated = [...target];
+    updated.splice(index, 0, moving);
+    return {
+      containers: {
+        ...containers,
+        [tier]: rest,
+        [targetTier]: updated,
+      },
+      tier: targetTier,
+      index,
+    };
+  };
+
+  switch (direction) {
+    case "top":
+      return fromIndex === 0 ? null : placeIn(tier, 0);
+    case "bottom":
+      return fromIndex === source.length - 1
+        ? null
+        : placeIn(tier, rest.length);
+    case "up": {
+      const above = source.slice(0, fromIndex).findLast(isVisible);
+      if (above) {
+        return placeIn(tier, rest.indexOf(above));
+      }
+      const previousTier = tierOrder[tierIndex - 1];
+      return previousTier === undefined
+        ? null
+        : placeIn(previousTier, containers[previousTier]?.length ?? 0);
+    }
+    case "down": {
+      const below = source.slice(fromIndex + 1).find(isVisible);
+      if (below) {
+        return placeIn(tier, rest.indexOf(below) + 1);
+      }
+      const nextTier = tierOrder[tierIndex + 1];
+      return nextTier === undefined ? null : placeIn(nextTier, 0);
+    }
+  }
 }
 
 /** Position allow-list filter, usable on any container (tiers or

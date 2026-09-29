@@ -12,6 +12,10 @@ See `RELEASING.md`.
 - Phone layout for the ranking editor: switch between the tiers and the
   unranked players, and tap a player to move them to the end of a tier or
   remove them from the ranking.
+- The ranking editor works with the keyboard: arrow keys move between
+  players, Enter moves a player to a tier or out of the ranking, and
+  Alt+↑/↓ moves them one place (Alt+Home/End to the top or bottom of the
+  tier). Moves are announced to screen readers.
 - "You pick in N" follows traded picks: picks your team traded away are
   skipped, and a pick it acquired is marked, e.g. "You pick in 4 (2.03,
   traded)". Players drafted with a traded pick also count toward My team

@@ -8,7 +8,8 @@ import {
   filterPlayersByQuery,
   formatTierHeading,
   movePlayerToContainer,
-  withForcedActiveRow,
+  stepPlayer,
+  withForcedRows,
   type Containers,
 } from "./ranking-editor-logic";
 
@@ -222,7 +223,7 @@ describe("formatTierHeading", () => {
   });
 });
 
-describe("withForcedActiveRow", () => {
+describe("withForcedRows", () => {
   const players = [
     { sleeperId: "1", fullName: "One" },
     { sleeperId: "2", fullName: "Two" },
@@ -231,7 +232,7 @@ describe("withForcedActiveRow", () => {
 
   it("returns the visible rows unchanged when there is no active drag", () => {
     const visible = [{ index: 0, start: 0 }];
-    expect(withForcedActiveRow(visible, players, undefined)).toEqual(visible);
+    expect(withForcedRows(visible, players, [undefined])).toEqual(visible);
   });
 
   it("returns the visible rows unchanged when the active item is already visible", () => {
@@ -239,12 +240,12 @@ describe("withForcedActiveRow", () => {
       { index: 0, start: 0 },
       { index: 1, start: 36 },
     ];
-    expect(withForcedActiveRow(visible, players, "2")).toEqual(visible);
+    expect(withForcedRows(visible, players, ["2"])).toEqual(visible);
   });
 
   it("adds the active item's row when it has scrolled out of the visible window", () => {
     const visible = [{ index: 0, start: 0 }];
-    const result = withForcedActiveRow(visible, players, "3");
+    const result = withForcedRows(visible, players, ["3"]);
     expect(result).toEqual([
       { index: 0, start: 0 },
       { index: 2, start: 72 },
@@ -253,9 +254,89 @@ describe("withForcedActiveRow", () => {
 
   it("ignores an active id that does not belong to this container", () => {
     const visible = [{ index: 0, start: 0 }];
-    expect(withForcedActiveRow(visible, players, "not-in-this-tier")).toEqual(
+    expect(withForcedRows(visible, players, ["not-in-this-tier"])).toEqual(
       visible,
     );
+  });
+  it("adds every kept row that has scrolled out, in index order", () => {
+    const players4 = [...players, { sleeperId: "4", fullName: "Four" }];
+    const visible = [{ index: 1, start: 36 }];
+    expect(withForcedRows(visible, players4, ["4", "1"])).toEqual([
+      { index: 0, start: 0 },
+      { index: 1, start: 36 },
+      { index: 3, start: 108 },
+    ]);
+  });
+});
+
+describe("stepPlayer", () => {
+  const tierOrder = ["S", "A"];
+  const player = (sleeperId: string, position = "RB") => ({
+    sleeperId,
+    fullName: `Player ${sleeperId}`,
+    position,
+  });
+  const containers: Containers = {
+    S: [player("1"), player("2", "WR"), player("3")],
+    A: [player("4"), player("5")],
+    unranked: [player("6")],
+  };
+  const ids = (result: Containers, tier: string) =>
+    result[tier].map((p) => p.sleeperId);
+
+  it("moves a player one slot up or down within their tier", () => {
+    const up = stepPlayer(containers, tierOrder, "2", "up");
+    expect(up && ids(up.containers, "S")).toEqual(["2", "1", "3"]);
+    expect(up).toMatchObject({ tier: "S", index: 0 });
+
+    const down = stepPlayer(containers, tierOrder, "2", "down");
+    expect(down && ids(down.containers, "S")).toEqual(["1", "3", "2"]);
+    expect(down).toMatchObject({ tier: "S", index: 2 });
+  });
+
+  it("crosses into the start of the next tier from the bottom of a tier", () => {
+    const result = stepPlayer(containers, tierOrder, "3", "down");
+    expect(result && ids(result.containers, "S")).toEqual(["1", "2"]);
+    expect(result && ids(result.containers, "A")).toEqual(["3", "4", "5"]);
+    expect(result).toMatchObject({ tier: "A", index: 0 });
+  });
+
+  it("crosses into the end of the previous tier from the top of a tier", () => {
+    const result = stepPlayer(containers, tierOrder, "4", "up");
+    expect(result && ids(result.containers, "S")).toEqual(["1", "2", "3", "4"]);
+    expect(result && ids(result.containers, "A")).toEqual(["5"]);
+    expect(result).toMatchObject({ tier: "S", index: 3 });
+  });
+
+  it("returns null at either end of the ranking", () => {
+    expect(stepPlayer(containers, tierOrder, "1", "up")).toBeNull();
+    expect(stepPlayer(containers, tierOrder, "5", "down")).toBeNull();
+  });
+
+  it("moves a player to the top or bottom of their tier", () => {
+    const top = stepPlayer(containers, tierOrder, "3", "top");
+    expect(top && ids(top.containers, "S")).toEqual(["3", "1", "2"]);
+    expect(top).toMatchObject({ tier: "S", index: 0 });
+
+    const bottom = stepPlayer(containers, tierOrder, "1", "bottom");
+    expect(bottom && ids(bottom.containers, "S")).toEqual(["2", "3", "1"]);
+    expect(bottom).toMatchObject({ tier: "S", index: 2 });
+
+    expect(stepPlayer(containers, tierOrder, "1", "top")).toBeNull();
+    expect(stepPlayer(containers, tierOrder, "3", "bottom")).toBeNull();
+  });
+
+  it("steps over rows hidden by a filter", () => {
+    const onlyRbs = (p: { position?: string }) => p.position === "RB";
+    const down = stepPlayer(containers, tierOrder, "1", "down", onlyRbs);
+    expect(down && ids(down.containers, "S")).toEqual(["2", "3", "1"]);
+
+    const up = stepPlayer(containers, tierOrder, "3", "up", onlyRbs);
+    expect(up && ids(up.containers, "S")).toEqual(["3", "1", "2"]);
+  });
+
+  it("returns null for an unranked player", () => {
+    expect(stepPlayer(containers, tierOrder, "6", "up")).toBeNull();
   });
 });
 

@@ -19,9 +19,10 @@ interface PlayerMoveMenuProps {
   onClose: () => void;
 }
 
-/** Phone replacement for dragging between far-apart containers: a bottom
- * sheet that moves the tapped player to the end of a tier, or out of the
- * ranking. A native modal <dialog> gives focus trapping and Escape. */
+/** Replacement for dragging between far-apart containers — opened by a tap
+ * on phones (as a bottom sheet) or Enter on a focused row: moves the player
+ * to the end of a tier, or out of the ranking. A native modal <dialog>
+ * gives focus trapping and Escape. */
 export function PlayerMoveMenu({
   player,
   currentContainer,

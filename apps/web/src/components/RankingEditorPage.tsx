@@ -6,9 +6,11 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type ScreenReaderInstructions,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
@@ -40,10 +42,22 @@ import {
   filterPlayersByQuery,
   formatTierHeading,
   movePlayerToContainer,
+  stepPlayer,
   type Containers,
   type EditorPlayer,
+  type KeyboardMove,
   type TierDisplayMode,
 } from "./ranking-editor-logic";
+
+// Replaces dnd-kit's default "press space to pick up" text: there's no
+// keyboard drag, rows have keyboard commands instead.
+const SCREEN_READER_INSTRUCTIONS: ScreenReaderInstructions = {
+  draggable:
+    "Up and down arrows move between players. Enter moves the player to " +
+    "another tier or out of the ranking. In a tier, Alt with the up or " +
+    "down arrow moves the player one place, Alt with Home or End to the " +
+    "top or bottom of the tier.",
+};
 
 export function RankingEditorPage() {
   const {
@@ -128,6 +142,12 @@ export function RankingEditorPage() {
   // Phones show the tiers or the unranked panel, not both.
   const [phoneView, setPhoneView] = useState<"tiers" | "unranked">("tiers");
   const [menuPlayerId, setMenuPlayerId] = useState<string>();
+  // Focus returns to the row after a menu opened from the keyboard.
+  const menuOpenedByKeyboard = useRef(false);
+  // The row to focus once it's (re)mounted, e.g. in the tier it moved to.
+  const [focusRequestId, setFocusRequestId] = useState<string>();
+  const clearFocusRequest = useCallback(() => setFocusRequestId(undefined), []);
+  const [announcement, setAnnouncement] = useState("");
   // A touch drag's release can still fire a click on the row; ignore it.
   const lastDragEndAt = useRef(0);
 
@@ -206,15 +226,87 @@ export function RankingEditorPage() {
     setConfirmingRemoveTierPosition(tier.position);
   }
 
+  function tierHeading(label: string): string {
+    const tier = tiers.find((t) => t.label === label);
+    return tier
+      ? formatTierHeading(tier.label, tier.position, tierDisplayMode)
+      : label;
+  }
+
+  function findPlayer(sleeperId: string): EditorPlayer | undefined {
+    const container = resolveContainer(sleeperId);
+    return container
+      ? containers[container]?.find((p) => p.sleeperId === sleeperId)
+      : undefined;
+  }
+
+  // Whether a player passes the position filter and a name search.
+  function matchesFilters(player: EditorPlayer, search: string): boolean {
+    return (
+      filterPlayersByQuery(
+        filterPlayersByPosition([player], positionFilter),
+        search,
+      ).length > 0
+    );
+  }
+
   function handleSelectPlayer(sleeperId: string) {
     if (Date.now() - lastDragEndAt.current < 400) {
       return;
     }
+    menuOpenedByKeyboard.current = false;
     setMenuPlayerId(sleeperId);
   }
 
-  function handleMoveToTier(sleeperId: string, tier: string) {
+  function handleOpenMenuFromKeyboard(sleeperId: string) {
+    menuOpenedByKeyboard.current = true;
+    setMenuPlayerId(sleeperId);
+  }
+
+  function closeMenu(container: string) {
+    const player = menuPlayerId ? findPlayer(menuPlayerId) : undefined;
     setMenuPlayerId(undefined);
+    const search =
+      container === UNRANKED_CONTAINER ? unrankedSearch : rankedSearch;
+    if (
+      menuOpenedByKeyboard.current &&
+      player &&
+      matchesFilters(player, search)
+    ) {
+      setFocusRequestId(player.sleeperId);
+    }
+  }
+
+  function handleKeyboardMove(sleeperId: string, direction: KeyboardMove) {
+    const tierOrder = tiers.map((t) => t.label);
+    const result = stepPlayer(
+      containers,
+      tierOrder,
+      sleeperId,
+      direction,
+      (player) => matchesFilters(player, rankedSearch),
+    );
+    if (!result) {
+      return;
+    }
+
+    setContainers(result.containers);
+    const rank = computeGlobalRank(
+      result.containers,
+      tierOrder,
+      result.tier,
+      result.index,
+    );
+    moveMutation.mutate({ sleeperId, rank, tier: result.tier });
+    setFocusRequestId(sleeperId);
+    const player = findPlayer(sleeperId);
+    setAnnouncement(
+      `${player?.fullName ?? "Player"} moved to ${tierHeading(result.tier)}, rank ${rank}`,
+    );
+  }
+
+  function handleMoveToTier(sleeperId: string, tier: string) {
+    closeMenu(tier);
     const fromContainer = resolveContainer(sleeperId);
     if (!fromContainer) {
       return;
@@ -234,10 +326,13 @@ export function RankingEditorPage() {
       working[tier].length - 1,
     );
     moveMutation.mutate({ sleeperId, rank, tier });
+    setAnnouncement(
+      `${findPlayer(sleeperId)?.fullName ?? "Player"} moved to ${tierHeading(tier)}, rank ${rank}`,
+    );
   }
 
   function handleRemoveFromRanking(sleeperId: string) {
-    setMenuPlayerId(undefined);
+    closeMenu(UNRANKED_CONTAINER);
     const fromContainer = resolveContainer(sleeperId);
     if (!fromContainer) {
       return;
@@ -252,7 +347,34 @@ export function RankingEditorPage() {
       ),
     );
     removeMutation.mutate({ sleeperId });
+    setAnnouncement(
+      `${findPlayer(sleeperId)?.fullName ?? "Player"} removed from the ranking`,
+    );
   }
+
+  function containerName(id: string): string {
+    const container = resolveContainer(id);
+    if (!container) {
+      return "nowhere";
+    }
+    return container === UNRANKED_CONTAINER
+      ? "Unranked"
+      : tierHeading(container);
+  }
+
+  // Mouse/touch drag announcements by player name, not sleeperId.
+  const announcements: Announcements = {
+    onDragStart: ({ active }) =>
+      `Picked up ${findPlayer(String(active.id))?.fullName ?? "player"}.`,
+    onDragOver: ({ over }) =>
+      over ? `Over ${containerName(String(over.id))}.` : undefined,
+    onDragEnd: ({ active, over }) =>
+      `Dropped ${findPlayer(String(active.id))?.fullName ?? "player"}${
+        over ? ` in ${containerName(String(over.id))}` : ""
+      }.`,
+    onDragCancel: ({ active }) =>
+      `Cancelled dragging ${findPlayer(String(active.id))?.fullName ?? "player"}.`,
+  };
 
   function handleDragStart(event: DragStartEvent) {
     setIsDragging(true);
@@ -474,7 +596,7 @@ export function RankingEditorPage() {
         />
       </div>
 
-      {(!hasAnyRankedPlayers || hasOnlyOneTier) && (
+      {(!hasAnyRankedPlayers || hasOnlyOneTier || !isPhone) && (
         <div className="ranking-editor__hints">
           {!hasAnyRankedPlayers && (
             <p className="ranking-editor__hint">
@@ -486,6 +608,12 @@ export function RankingEditorPage() {
           {hasOnlyOneTier && (
             <p className="ranking-editor__hint">
               Use "+ Add tier here" to create more tiers.
+            </p>
+          )}
+          {!isPhone && (
+            <p className="ranking-editor__hint">
+              Keyboard: ↑/↓ to pick a player, Enter to move them to a tier,
+              Alt+↑/↓ to move them one place.
             </p>
           )}
         </div>
@@ -526,6 +654,10 @@ export function RankingEditorPage() {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        accessibility={{
+          announcements,
+          screenReaderInstructions: SCREEN_READER_INSTRUCTIONS,
+        }}
         // Built-in autoscroll only for the page itself; the containers
         // are scrolled by useEdgeAutoscroll (see there for why).
         autoScroll={{
@@ -569,6 +701,11 @@ export function RankingEditorPage() {
                       flagMutation.mutate({ sleeperId, flag })
                     }
                     onSelectPlayer={isPhone ? handleSelectPlayer : undefined}
+                    focusRequestId={focusRequestId}
+                    onRequestFocus={setFocusRequestId}
+                    onFocusHandled={clearFocusRequest}
+                    onOpenMenu={handleOpenMenuFromKeyboard}
+                    onKeyboardMove={handleKeyboardMove}
                     removeControl={{
                       canRemove: tiers.length > 1,
                       playerCount: containers[tier.label]?.length ?? 0,
@@ -625,6 +762,10 @@ export function RankingEditorPage() {
                 activeId={draggingPlayerId}
                 registerScrollElement={registerScrollElement}
                 onSelectPlayer={isPhone ? handleSelectPlayer : undefined}
+                focusRequestId={focusRequestId}
+                onRequestFocus={setFocusRequestId}
+                onFocusHandled={clearFocusRequest}
+                onOpenMenu={handleOpenMenuFromKeyboard}
               />
             </aside>
           )}
@@ -647,9 +788,13 @@ export function RankingEditorPage() {
           tierDisplayMode={tierDisplayMode}
           onMoveToTier={(tier) => handleMoveToTier(menuPlayer.sleeperId, tier)}
           onRemove={() => handleRemoveFromRanking(menuPlayer.sleeperId)}
-          onClose={() => setMenuPlayerId(undefined)}
+          onClose={() => closeMenu(menuContainer)}
         />
       )}
+
+      <p className="visually-hidden" aria-live="polite">
+        {announcement}
+      </p>
     </section>
   );
 }

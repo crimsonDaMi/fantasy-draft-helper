@@ -28,6 +28,7 @@ item needs its scope confirmed with the user before work starts.
 | Multiple saved rankings, watch/avoid flags                  | v1.2.0  |
 | Wide-screen draft layout                                    | Unrel.  |
 | Phone draft layout                                          | Unrel.  |
+| Keyboard-operable ranking editor                            | Unrel.  |
 | Ranking editor touch support and phone layout               | Unrel.  |
 | Traded picks in "you pick in N", auction budget             | Unrel.  |
 
@@ -47,6 +48,5 @@ rankings and roster optimization stay out of scope.
 
 ## Deferred ideas
 
-- **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
 - **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
   pick propagation delay and team defense (`DEF`) matching.

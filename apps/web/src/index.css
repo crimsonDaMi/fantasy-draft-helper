@@ -761,6 +761,11 @@ button {
   width: 100%;
 }
 
+.ranking-editor__player-list-inner li:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
 .ranking-editor__rank {
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
@@ -1446,7 +1451,8 @@ button {
   margin-top: 12px;
 }
 
-/* Phone move menu: a bottom sheet. */
+/* Move menu: a bottom sheet on phones, a centered dialog (opened from the
+   keyboard) on wider screens. */
 .ranking-editor__move-menu {
   margin: auto auto 0;
   width: 100%;
@@ -1458,6 +1464,13 @@ button {
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+@media (min-width: 600px) {
+  .ranking-editor__move-menu {
+    margin: auto;
+    border-radius: var(--radius-md);
+  }
 }
 
 .ranking-editor__move-menu::backdrop {

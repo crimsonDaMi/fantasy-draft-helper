@@ -4,13 +4,20 @@ interface FlagButtonsProps {
   playerName: string;
   flag?: PlayerFlag;
   onChange: (flag: PlayerFlag | null) => void;
+  /** -1 keeps the buttons out of the tab order (roving-focus rows). */
+  tabIndex?: number;
 }
 
 /** Watch (★) and avoid (⊘) toggles for a player. Pressing the active one
  * clears it. Pointer-down and touch-start don't propagate, so inside a
  * draggable row the buttons click instead of starting a drag; clicks don't
  * either, so they don't also count as a tap on the row. */
-export function FlagButtons({ playerName, flag, onChange }: FlagButtonsProps) {
+export function FlagButtons({
+  playerName,
+  flag,
+  onChange,
+  tabIndex,
+}: FlagButtonsProps) {
   const toggle = (target: PlayerFlag) =>
     onChange(flag === target ? null : target);
 
@@ -24,6 +31,7 @@ export function FlagButtons({ playerName, flag, onChange }: FlagButtonsProps) {
       <button
         type="button"
         className="flag-buttons__button flag-buttons__button--watch"
+        tabIndex={tabIndex}
         aria-pressed={flag === "watch"}
         aria-label={`Watch ${playerName}`}
         title="Watch"
@@ -34,6 +42,7 @@ export function FlagButtons({ playerName, flag, onChange }: FlagButtonsProps) {
       <button
         type="button"
         className="flag-buttons__button flag-buttons__button--avoid"
+        tabIndex={tabIndex}
         aria-pressed={flag === "avoid"}
         aria-label={`Avoid ${playerName}`}
         title="Avoid (hide from recommendations)"

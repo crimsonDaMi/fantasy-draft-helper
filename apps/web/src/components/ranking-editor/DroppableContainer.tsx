@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -9,8 +9,9 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import type { PlayerFlag } from "../../types/api";
 import {
   PLAYER_ROW_HEIGHT,
-  withForcedActiveRow,
+  withForcedRows,
   type EditorPlayer,
+  type KeyboardMove,
 } from "../ranking-editor-logic";
 import { SortablePlayer } from "./SortablePlayer";
 
@@ -38,7 +39,22 @@ interface DroppableContainerProps {
   registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
   onSelectPlayer?: (sleeperId: string) => void;
+  /** The row the page wants focused next (keyboard navigation or a move). */
+  focusRequestId?: string;
+  onRequestFocus: (sleeperId: string) => void;
+  onFocusHandled: () => void;
+  /** Enter/Space on a row. */
+  onOpenMenu: (sleeperId: string) => void;
+  /** Alt+arrow/Home/End on a row (ranked tiers only). */
+  onKeyboardMove?: (sleeperId: string, direction: KeyboardMove) => void;
 }
+
+const MOVE_KEYS: Record<string, KeyboardMove> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  Home: "top",
+  End: "bottom",
+};
 
 export function DroppableContainer({
   id,
@@ -51,6 +67,11 @@ export function DroppableContainer({
   registerScrollElement,
   onFlagChange,
   onSelectPlayer,
+  focusRequestId,
+  onRequestFocus,
+  onFocusHandled,
+  onOpenMenu,
+  onKeyboardMove,
 }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const scrollElementRef = useRef<HTMLDivElement>(null);
@@ -72,11 +93,61 @@ export function DroppableContainer({
     overscan: 8,
   });
 
-  const virtualRows = withForcedActiveRow(
-    virtualizer.getVirtualItems(),
-    players,
+  // Roving tabindex: one tab stop per container, falling back to the
+  // first row when the current one is filtered out or moved away.
+  const [currentId, setCurrentId] = useState<string>();
+  const tabStopId = players.some((player) => player.sleeperId === currentId)
+    ? currentId
+    : players[0]?.sleeperId;
+
+  // Keeps the dragged and the focused rows mounted when they scroll out.
+  const virtualRows = withForcedRows(virtualizer.getVirtualItems(), players, [
     activeId,
-  );
+    tabStopId,
+    focusRequestId,
+  ]);
+
+  function handleRowKeyDown(
+    event: React.KeyboardEvent<HTMLLIElement>,
+    index: number,
+  ) {
+    // Keys on the row's own ★/⊘ buttons are theirs.
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    const sleeperId = players[index].sleeperId;
+    const move = MOVE_KEYS[event.key];
+
+    if (move && event.altKey) {
+      if (onKeyboardMove) {
+        event.preventDefault();
+        onKeyboardMove(sleeperId, move);
+      }
+      return;
+    }
+    if (event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    let targetIndex: number | undefined;
+    if (move === "up") {
+      targetIndex = Math.max(index - 1, 0);
+    } else if (move === "down") {
+      targetIndex = Math.min(index + 1, players.length - 1);
+    } else if (move === "top") {
+      targetIndex = 0;
+    } else if (move === "bottom") {
+      targetIndex = players.length - 1;
+    }
+
+    if (targetIndex !== undefined) {
+      event.preventDefault();
+      onRequestFocus(players[targetIndex].sleeperId);
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpenMenu(sleeperId);
+    }
+  }
 
   return (
     <div className={className}>
@@ -133,6 +204,13 @@ export function DroppableContainer({
                   player={player}
                   rank={showRank ? player.globalRank : undefined}
                   offsetTop={virtualRow.start}
+                  isTabStop={player.sleeperId === tabStopId}
+                  shouldFocus={player.sleeperId === focusRequestId}
+                  onFocused={onFocusHandled}
+                  onFocus={() => setCurrentId(player.sleeperId)}
+                  onKeyDown={(event) =>
+                    handleRowKeyDown(event, virtualRow.index)
+                  }
                   onFlagChange={onFlagChange}
                   onSelect={onSelectPlayer}
                 />
