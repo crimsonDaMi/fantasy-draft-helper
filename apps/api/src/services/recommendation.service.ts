@@ -112,7 +112,10 @@ export class RecommendationService {
 
     const draftedPlayerIds = draftState.draftedPlayerIds;
 
-    const matches = this.rankingStoreService.getMatches(userId, rankingId);
+    const matches = this.rankingStoreService.getRankingMatches(
+      rankingId,
+      userId,
+    );
 
     const adpBySleeperId = await this.adpService.getSnapshot();
 

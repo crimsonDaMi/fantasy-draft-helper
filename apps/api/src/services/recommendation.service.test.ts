@@ -27,7 +27,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 1,
@@ -98,7 +98,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 20,
@@ -163,7 +163,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 1,
@@ -245,7 +245,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 1,
@@ -313,7 +313,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 1,
@@ -379,7 +379,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 5,
@@ -433,7 +433,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: {
             rank: 1,
@@ -490,7 +490,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () =>
+      getRankingMatches: () =>
         players.map((player, index) => ({
           ranking: { rank: index + 1, playerName: player.fullName },
           player,
@@ -542,7 +542,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         {
           ranking: { rank: 1, playerName: "Player One" },
           player: {
@@ -609,7 +609,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({}),
-      getMatches: () => [
+      getRankingMatches: () => [
         rankedPlayer("1", 1, "QB", "S"),
         rankedPlayer("2", 2, "QB", "S"),
         rankedPlayer("3", 3, "WR", "S"),
@@ -688,7 +688,7 @@ describe("RecommendationService", () => {
 
     const rankingStoreService = {
       getFlags: () => ({ "1": "avoid", "2": "watch" }),
-      getMatches: () =>
+      getRankingMatches: () =>
         ["1", "2", "3"].map((sleeperId, index) => ({
           ranking: { rank: index + 1, playerName: `Player ${sleeperId}` },
           player: { sleeperId, fullName: `Player ${sleeperId}` },

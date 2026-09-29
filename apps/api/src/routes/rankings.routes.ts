@@ -128,18 +128,16 @@ export function createRankingsRoutes(
     app.get("/rankings/export", async (request, reply) => {
       const userId = requireUser(request).id;
 
-      const { rankingId } = exportQuerySchema.parse(request.query);
+      const { rankingId: requestedId } = exportQuerySchema.parse(request.query);
+      const rankingId =
+        requestedId ?? rankingStoreService.getLatestRankingId(userId);
 
-      const exists = rankingId
-        ? rankingStoreService.hasRanking(rankingId, userId)
-        : rankingStoreService.hasRankings(userId);
-
-      if (!exists) {
+      if (!rankingId || !rankingStoreService.hasRanking(rankingId, userId)) {
         throw new NotFoundError("No ranking to export", "RANKING_NOT_FOUND");
       }
 
       const csv = toRankingCsv(
-        rankingStoreService.getMatches(userId, rankingId),
+        rankingStoreService.getRankingMatches(rankingId, userId),
       );
 
       return reply
@@ -151,11 +149,14 @@ export function createRankingsRoutes(
     app.get("/rankings/status", async (request) => {
       const userId = requireUser(request).id;
 
-      const matches = rankingStoreService.getMatches(userId);
+      const rankingId = rankingStoreService.getLatestRankingId(userId);
+      const matches = rankingId
+        ? rankingStoreService.getRankingMatches(rankingId, userId)
+        : [];
 
       return {
-        loaded: rankingStoreService.hasRankings(userId),
-        rankingId: rankingStoreService.getLatestRankingId(userId),
+        loaded: rankingId !== undefined,
+        rankingId,
         rankingCount: matches.length,
         matchedCount: matches.filter((match) => match.player !== undefined)
           .length,

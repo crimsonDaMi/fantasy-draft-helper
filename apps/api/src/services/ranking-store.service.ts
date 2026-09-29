@@ -33,15 +33,8 @@ export class RankingStoreService {
     return this.repository.getLatestRankingId(userId);
   }
 
-  getMatches(userId: string, rankingId?: string): PlayerMatch[] {
-    const selectedRankingId =
-      rankingId ?? this.repository.getLatestRankingId(userId);
-
-    if (!selectedRankingId) {
-      return [];
-    }
-
-    return this.repository.getMatches(selectedRankingId, userId);
+  getRankingMatches(rankingId: string, userId: string): PlayerMatch[] {
+    return this.repository.getMatches(rankingId, userId);
   }
 
   hasRanking(rankingId: string, userId: string): boolean {

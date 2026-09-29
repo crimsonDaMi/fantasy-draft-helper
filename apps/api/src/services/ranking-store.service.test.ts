@@ -31,7 +31,12 @@ describe("RankingStoreService", () => {
 
     expect(store.hasRankings(TEST_USER_ID)).toBe(true);
 
-    expect(store.getMatches(TEST_USER_ID)).toHaveLength(1);
+    expect(
+      store.getRankingMatches(
+        store.getLatestRankingId(TEST_USER_ID)!,
+        TEST_USER_ID,
+      ),
+    ).toHaveLength(1);
   });
 
   it("loads imported matches after the store is recreated", () => {
@@ -66,7 +71,9 @@ describe("RankingStoreService", () => {
 
     expect(recreatedStore.hasRanking(rankingId, TEST_USER_ID)).toBe(true);
 
-    expect(recreatedStore.getMatches(TEST_USER_ID, rankingId)).toHaveLength(1);
+    expect(
+      recreatedStore.getRankingMatches(rankingId, TEST_USER_ID),
+    ).toHaveLength(1);
 
     recreatedStore.close();
     rmSync(directory, {

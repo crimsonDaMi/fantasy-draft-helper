@@ -28,8 +28,8 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
 
   const rankingStoreService = {
     createRanking: () => "ranking-1",
-    getMatches: () => matches,
-    hasRankings: () => matches.length > 0,
+    getRankingMatches: () => matches,
+    hasRanking: () => matches.length > 0,
     getLatestRankingId: () => (matches.length > 0 ? "ranking-1" : undefined),
   };
 
@@ -225,8 +225,7 @@ describe("rankings routes", () => {
         { importCsv: async () => ({}) } as never,
         {
           createRanking,
-          getMatches: () => [],
-          hasRankings: () => false,
+          getRankingMatches: () => [],
           getLatestRankingId: () => undefined,
         } as never,
       ),
