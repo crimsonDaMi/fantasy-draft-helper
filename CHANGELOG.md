@@ -48,6 +48,9 @@ See `RELEASING.md`.
   readers, including on the login and CSV import forms.
 - Importing a CSV with no valid rows (e.g. missing the rank or player
   column) no longer saves an empty ranking; the errors are listed instead.
+- After an import with some invalid rows, the message now says to delete
+  the incomplete ranking once the corrected file is re-imported, since a
+  re-import adds a new ranking.
 - In a ranking with players the import couldn't match, moving a player in
   the ranking editor could put them one place off, sometimes inside the
   next tier.

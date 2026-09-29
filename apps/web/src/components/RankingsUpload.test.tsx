@@ -151,7 +151,7 @@ describe("RankingsUpload", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Import completed with CSV errors. Correct the listed rows and re-import the file.",
+        "Import completed with CSV errors. Correct the listed rows and re-import the file, then delete this incomplete ranking.",
       ),
     ).toBeInTheDocument();
     expect(onImported).toHaveBeenCalled();

@@ -109,7 +109,7 @@ function describeImportError(
   }
 
   if (validationErrorCount > 0) {
-    return "Import completed with CSV errors. Correct the listed rows and re-import the file.";
+    return "Import completed with CSV errors. Correct the listed rows and re-import the file, then delete this incomplete ranking.";
   }
 
   return undefined;
