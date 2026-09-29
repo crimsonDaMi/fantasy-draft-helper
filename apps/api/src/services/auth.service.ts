@@ -1,9 +1,10 @@
 import { User, UserRepository } from "../repositories/user.repository.js";
-
-export class AllowlistError extends Error {}
-export class DuplicateUsernameError extends Error {}
-export class InvalidCredentialsError extends Error {}
-export class TooManyLoginAttemptsError extends Error {}
+import {
+  ConflictError,
+  ForbiddenError,
+  TooManyRequestsError,
+  UnauthorizedError,
+} from "../utils/domain-errors.js";
 
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
@@ -41,12 +42,16 @@ export class AuthService {
     const normalizedUsername = normalizeUsername(username);
 
     if (!this.allowedUsernames.has(normalizedUsername)) {
-      throw new AllowlistError("This username is not on the league allowlist.");
+      throw new ForbiddenError(
+        "This username is not on the league allowlist.",
+        "NOT_ALLOWLISTED",
+      );
     }
 
     if (this.repository.usernameExists(normalizedUsername)) {
-      throw new DuplicateUsernameError(
+      throw new ConflictError(
         "An account with this username already exists.",
+        "USERNAME_TAKEN",
       );
     }
 
@@ -59,8 +64,9 @@ export class AuthService {
     const normalizedUsername = normalizeUsername(username);
 
     if (this.isLockedOut(normalizedUsername)) {
-      throw new TooManyLoginAttemptsError(
+      throw new TooManyRequestsError(
         `Too many failed login attempts. Try again in ${LOCKOUT_WINDOW_MS / 60_000} minutes.`,
+        "TOO_MANY_LOGIN_ATTEMPTS",
       );
     }
 
@@ -71,7 +77,10 @@ export class AuthService {
 
     if (!user) {
       this.recordFailedLogin(normalizedUsername);
-      throw new InvalidCredentialsError("Incorrect username or password.");
+      throw new UnauthorizedError(
+        "Incorrect username or password.",
+        "INVALID_CREDENTIALS",
+      );
     }
 
     this.failedLogins.delete(normalizedUsername);

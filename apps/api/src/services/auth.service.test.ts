@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  AuthService,
-  InvalidCredentialsError,
-  TooManyLoginAttemptsError,
-} from "./auth.service.js";
+import { AuthService } from "./auth.service.js";
 import { UserRepository } from "../repositories/user.repository.js";
 
 const PASSWORD = "correct horse battery";
@@ -19,9 +15,9 @@ async function createServiceWithUser() {
 
 async function failLogins(service: AuthService, times: number) {
   for (let attempt = 0; attempt < times; attempt += 1) {
-    await expect(service.login("testuser", "wrong password")).rejects.toThrow(
-      InvalidCredentialsError,
-    );
+    await expect(
+      service.login("testuser", "wrong password"),
+    ).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
   }
 }
 
@@ -35,9 +31,9 @@ describe("AuthService login lockout", () => {
 
     await failLogins(service, 5);
 
-    await expect(service.login("testuser", PASSWORD)).rejects.toThrow(
-      TooManyLoginAttemptsError,
-    );
+    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
+      code: "TOO_MANY_LOGIN_ATTEMPTS",
+    });
   });
 
   it("treats usernames case-insensitively when counting failures", async () => {
@@ -45,9 +41,9 @@ describe("AuthService login lockout", () => {
 
     await failLogins(service, 5);
 
-    await expect(service.login(" TestUser ", PASSWORD)).rejects.toThrow(
-      TooManyLoginAttemptsError,
-    );
+    await expect(service.login(" TestUser ", PASSWORD)).rejects.toMatchObject({
+      code: "TOO_MANY_LOGIN_ATTEMPTS",
+    });
   });
 
   it("lifts the lockout once the 15-minute window has passed", async () => {
@@ -80,5 +76,25 @@ describe("AuthService login lockout", () => {
     const session = await service.login("testuser", PASSWORD);
 
     expect(new Date(session.expiresAt).getTime()).toBeGreaterThan(Date.now());
+  });
+});
+
+describe("AuthService register", () => {
+  it("rejects a username that isn't on the allowlist", async () => {
+    const service = new AuthService(new UserRepository(":memory:"), [
+      "testuser",
+    ]);
+
+    await expect(service.register("someone", PASSWORD)).rejects.toMatchObject({
+      code: "NOT_ALLOWLISTED",
+    });
+  });
+
+  it("rejects a username that is already registered", async () => {
+    const service = await createServiceWithUser();
+
+    await expect(
+      service.register(" TestUser ", PASSWORD),
+    ).rejects.toMatchObject({ code: "USERNAME_TAKEN" });
   });
 });

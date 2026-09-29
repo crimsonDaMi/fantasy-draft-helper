@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
 import { createAuthRoutes } from "./auth.routes.js";
 import { errorHandler } from "../utils/error-handler.js";
 import {
-  AllowlistError,
-  DuplicateUsernameError,
-  InvalidCredentialsError,
-  TooManyLoginAttemptsError,
-} from "../services/auth.service.js";
+  ConflictError,
+  ForbiddenError,
+  TooManyRequestsError,
+  UnauthorizedError,
+} from "../utils/domain-errors.js";
 
 function createTestApp(authService: {
   register: (username: string, password: string) => unknown;
@@ -70,7 +70,7 @@ describe("auth routes", () => {
   it("returns 403 when the username is not allowlisted", async () => {
     const authService = {
       register: () => {
-        throw new AllowlistError("not allowed");
+        throw new ForbiddenError("not allowed", "NOT_ALLOWLISTED");
       },
       login: () => {
         throw new Error("not used");
@@ -102,7 +102,7 @@ describe("auth routes", () => {
   it("returns 409 when the username is already taken", async () => {
     const authService = {
       register: () => {
-        throw new DuplicateUsernameError("taken");
+        throw new ConflictError("taken", "USERNAME_TAKEN");
       },
       login: () => {
         throw new Error("not used");
@@ -174,7 +174,7 @@ describe("auth routes", () => {
         throw new Error("not used");
       },
       login: () => {
-        throw new TooManyLoginAttemptsError("locked out");
+        throw new TooManyRequestsError("locked out", "TOO_MANY_LOGIN_ATTEMPTS");
       },
       logout: () => {},
       getUserForSession: () => undefined,
@@ -206,7 +206,7 @@ describe("auth routes", () => {
         throw new Error("not used");
       },
       login: () => {
-        throw new InvalidCredentialsError("bad credentials");
+        throw new UnauthorizedError("bad credentials", "INVALID_CREDENTIALS");
       },
       logout: () => {},
       getUserForSession: () => undefined,

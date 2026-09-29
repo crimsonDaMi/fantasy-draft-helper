@@ -3,9 +3,7 @@
  * free of HTTP details. `utils/error-handler.ts` maps each onto its status
  * code; `code` becomes the response's machine-readable `error` field.
  */
-export class NotFoundError extends Error {
-  override readonly name = "NotFoundError";
-
+abstract class DomainError extends Error {
   constructor(
     message: string,
     public readonly code: string,
@@ -14,13 +12,24 @@ export class NotFoundError extends Error {
   }
 }
 
-export class ConflictError extends Error {
-  override readonly name = "ConflictError";
+export class NotFoundError extends DomainError {
+  override readonly name = "NotFoundError";
+}
 
-  constructor(
-    message: string,
-    public readonly code: string,
-  ) {
-    super(message);
-  }
+export class ConflictError extends DomainError {
+  override readonly name = "ConflictError";
+}
+
+/** Missing or wrong credentials. */
+export class UnauthorizedError extends DomainError {
+  override readonly name = "UnauthorizedError";
+}
+
+/** Authenticated or not, the action isn't allowed. */
+export class ForbiddenError extends DomainError {
+  override readonly name = "ForbiddenError";
+}
+
+export class TooManyRequestsError extends DomainError {
+  override readonly name = "TooManyRequestsError";
 }

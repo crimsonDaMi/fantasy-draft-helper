@@ -1,14 +1,8 @@
 import { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 
-import {
-  AllowlistError,
-  AuthService,
-  DuplicateUsernameError,
-  InvalidCredentialsError,
-  TooManyLoginAttemptsError,
-} from "../services/auth.service.js";
-import { LOGIN_REQUIRED, SESSION_COOKIE } from "../utils/require-user.js";
+import { AuthService } from "../services/auth.service.js";
+import { loginRequired, SESSION_COOKIE } from "../utils/require-user.js";
 
 const credentialsSchema = z.object({
   username: z.string().min(1),
@@ -38,63 +32,27 @@ export function createAuthRoutes(authService: AuthService) {
     app.post("/auth/register", async (request, reply) => {
       const { username, password } = credentialsSchema.parse(request.body);
 
-      try {
-        const { user, token, expiresAt } = await authService.register(
-          username,
-          password,
-        );
+      const { user, token, expiresAt } = await authService.register(
+        username,
+        password,
+      );
 
-        setSessionCookie(reply, token, expiresAt);
+      setSessionCookie(reply, token, expiresAt);
 
-        return { user };
-      } catch (error) {
-        if (error instanceof AllowlistError) {
-          return reply.status(403).send({
-            error: "NOT_ALLOWLISTED",
-            message: error.message,
-          });
-        }
-
-        if (error instanceof DuplicateUsernameError) {
-          return reply.status(409).send({
-            error: "USERNAME_TAKEN",
-            message: error.message,
-          });
-        }
-
-        throw error;
-      }
+      return { user };
     });
 
     app.post("/auth/login", async (request, reply) => {
       const { username, password } = credentialsSchema.parse(request.body);
 
-      try {
-        const { user, token, expiresAt } = await authService.login(
-          username,
-          password,
-        );
+      const { user, token, expiresAt } = await authService.login(
+        username,
+        password,
+      );
 
-        setSessionCookie(reply, token, expiresAt);
+      setSessionCookie(reply, token, expiresAt);
 
-        return { user };
-      } catch (error) {
-        if (error instanceof InvalidCredentialsError) {
-          return reply.status(401).send({
-            error: "INVALID_CREDENTIALS",
-            message: error.message,
-          });
-        }
-
-        if (error instanceof TooManyLoginAttemptsError) {
-          return reply.status(429).send({
-            error: "TOO_MANY_LOGIN_ATTEMPTS",
-            message: error.message,
-          });
-        }
-
-        throw error;
-      }
+      return { user };
     });
 
     app.post("/auth/logout", async (request, reply) => {
@@ -109,12 +67,12 @@ export function createAuthRoutes(authService: AuthService) {
       return { loggedOut: true };
     });
 
-    app.get("/auth/me", async (request, reply) => {
+    app.get("/auth/me", async (request) => {
       const token = request.cookies[SESSION_COOKIE];
       const user = token ? authService.getUserForSession(token) : undefined;
 
       if (!user) {
-        return reply.status(401).send(LOGIN_REQUIRED);
+        throw loginRequired();
       }
 
       return { user };

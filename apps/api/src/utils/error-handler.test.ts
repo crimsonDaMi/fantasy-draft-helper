@@ -1,7 +1,13 @@
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 
-import { ConflictError, NotFoundError } from "./domain-errors.js";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  TooManyRequestsError,
+  UnauthorizedError,
+} from "./domain-errors.js";
 import { errorHandler } from "./error-handler.js";
 
 async function respondWith(error: Error) {
@@ -42,6 +48,20 @@ describe("errorHandler", () => {
     expect(response.json()).toEqual({
       error: "TIER_LIMIT_REACHED",
       message: "Cannot add more than 26 tiers",
+    });
+  });
+
+  it.each([
+    [new UnauthorizedError("Wrong password", "INVALID_CREDENTIALS"), 401],
+    [new ForbiddenError("Not allowed", "NOT_ALLOWLISTED"), 403],
+    [new TooManyRequestsError("Slow down", "TOO_MANY_LOGIN_ATTEMPTS"), 429],
+  ])("maps %o to its status with its code", async (error, status) => {
+    const response = await respondWith(error);
+
+    expect(response.statusCode).toBe(status);
+    expect(response.json()).toEqual({
+      error: error.code,
+      message: error.message,
     });
   });
 

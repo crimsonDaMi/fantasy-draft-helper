@@ -5,13 +5,10 @@ import { HttpError } from "./http-error.js";
 
 export const SESSION_COOKIE = "session";
 
-/** The 401 body for a missing or expired session. The auth guard and
- * `/auth/me` send it directly rather than throwing, so routine logged-out
- * requests don't go through the error handler's error log. */
-export const LOGIN_REQUIRED = {
-  error: "UNAUTHENTICATED",
-  message: "Login required",
-} as const;
+/** The 401 for a request without a valid session. */
+export function loginRequired(): HttpError {
+  return new HttpError(401, "Login required", "UNAUTHENTICATED");
+}
 
 /**
  * The logged-in user for a route behind the auth guard in app.ts. Throws
@@ -20,7 +17,7 @@ export const LOGIN_REQUIRED = {
  */
 export function requireUser(request: FastifyRequest): User {
   if (!request.user) {
-    throw new HttpError(401, LOGIN_REQUIRED.message, LOGIN_REQUIRED.error);
+    throw loginRequired();
   }
 
   return request.user;

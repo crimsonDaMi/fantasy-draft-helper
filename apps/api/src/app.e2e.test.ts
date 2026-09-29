@@ -281,6 +281,10 @@ describe("multi-user isolation (end to end)", () => {
     });
 
     expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      error: "UNAUTHENTICATED",
+      message: "Login required",
+    });
 
     dependencies.rankingStoreService.close();
   });

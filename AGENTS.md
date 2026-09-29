@@ -104,10 +104,13 @@ merging a Dependabot PR. Details in `RELEASING.md`.
   handler in effect when it loads, so one set later silently never applies
   (ZodErrors then become 500s). Every error body is `{ error: CODE,
 message }`. For expected failures, services and repositories throw
-  `NotFoundError`/`ConflictError(message, CODE)` (`utils/domain-errors.ts`,
-  mapped to 404/409 by the handler); `HttpError(status, message, CODE)` is
-  for the HTTP-facing layers (routes, `require-user`, and clients passing
-  through an upstream status). Guarded by `app.e2e.test.ts`.
+  the domain errors in `utils/domain-errors.ts` — `UnauthorizedError`,
+  `ForbiddenError`, `NotFoundError`, `ConflictError`, `TooManyRequestsError`
+  (message, CODE), mapped to 401/403/404/409/429 by the handler;
+  `HttpError(status, message, CODE)` is for the HTTP-facing layers (routes,
+  the auth guard, `require-user`, and clients reporting upstream failures).
+  The handler logs 4xx at `info` and 5xx at `error`. Guarded by
+  `app.e2e.test.ts`.
 - **New client-side routes** must be added to the SPA-route allowlist
   (`apps/api/src/utils/spa-client-routes.ts`), or a direct load hits the
   API instead of the app.

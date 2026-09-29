@@ -15,7 +15,7 @@ import { errorHandler } from "./utils/error-handler.js";
 import { createRankingEditorRoutes } from "./routes/ranking-editor.routes.js";
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
-import { LOGIN_REQUIRED, SESSION_COOKIE } from "./utils/require-user.js";
+import { loginRequired, SESSION_COOKIE } from "./utils/require-user.js";
 import { isSpaClientRoute } from "./utils/spa-client-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -95,7 +95,7 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
       : undefined;
 
     if (!user) {
-      return reply.status(401).send(LOGIN_REQUIRED);
+      throw loginRequired();
     }
 
     request.user = user;
