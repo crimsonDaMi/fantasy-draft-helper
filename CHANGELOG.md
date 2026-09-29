@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.3.0 — 2026-09-29
+
 ### Changed
 
 - Wide-screen draft layout: on screens at least 1200px wide, My team and
