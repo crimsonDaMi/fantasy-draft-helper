@@ -188,5 +188,5 @@ that mock, or the component import throws inside the test.
 
 ## Backlog
 
-Empty. Confirm scope with the user before starting any new item — several
-past items that looked simple needed real design discussion first.
+Empty. Several past items that looked simple needed real design work
+before implementation.

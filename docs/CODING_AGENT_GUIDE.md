@@ -154,5 +154,5 @@ failures before broadening. Before reporting completion, run `pnpm verify`
 (and `pnpm smoke` for production-build, auth, or Docker changes), and report
 what was run and any gaps.
 
-Don't commit, create branches, reset the worktree, or revert user changes
-unless explicitly asked.
+Commit rules are in [`AGENTS.md`](../AGENTS.md). Don't create branches,
+reset the worktree, or revert user changes unless explicitly asked.

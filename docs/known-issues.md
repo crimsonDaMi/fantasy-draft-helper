@@ -26,7 +26,7 @@ The application uses the state returned by Sleeper and does not infer picks or a
 - Determine whether propagation differs between human and automated picks.
 - Validate whether the current polling intervals are appropriate.
 
-Do not add WebSockets, prediction, or server-side workarounds for this issue without an explicit request.
+WebSockets, pick prediction, and server-side workarounds for this issue are out of scope.
 
 Status: open, as a documented upstream limitation. The live draft test (1-minute pick clock) did not show it as a practical problem.
 
