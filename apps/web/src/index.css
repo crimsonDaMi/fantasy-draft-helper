@@ -1251,10 +1251,17 @@ button {
   opacity: 0.45;
 }
 
-.flag-buttons__button:hover,
 .flag-buttons__button:focus-visible,
 .flag-buttons__button[aria-pressed="true"] {
   opacity: 1;
+}
+
+/* Touch screens keep :hover on a tapped button until the next tap
+   elsewhere, so an untoggled button would still look active. */
+@media (hover: hover) {
+  .flag-buttons__button:hover {
+    opacity: 1;
+  }
 }
 
 .flag-buttons__button--watch[aria-pressed="true"] {
@@ -1334,9 +1341,15 @@ button {
   cursor: pointer;
 }
 
-.info-tip__button:hover,
 .info-tip__button[aria-expanded="true"] {
   color: var(--color-accent);
+}
+
+/* Hover only where it's real: see .flag-buttons__button:hover. */
+@media (hover: hover) {
+  .info-tip__button:hover {
+    color: var(--color-accent);
+  }
 }
 
 .info-tip__button:focus-visible {

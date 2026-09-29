@@ -7,6 +7,11 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Fixed
+
+- On phones, the ⓘ and watch/avoid buttons no longer stay highlighted
+  after tapping them off.
+
 ## v1.3.0 — 2026-09-29
 
 ### Changed
