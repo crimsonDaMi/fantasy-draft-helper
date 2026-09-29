@@ -30,6 +30,8 @@ function createFixtureClient() {
         season: "2026",
       }) satisfies SleeperDraft,
     getDraftPicks: async () => [] as SleeperDraftPick[],
+    // What Sleeper answers for drafts without a league, e.g. mocks.
+    getDraftTradedPicks: async () => null,
     getUser: async (username: string) =>
       username === "sleeperuser"
         ? ({ user_id: "sleeper-user-1" } satisfies SleeperUser)

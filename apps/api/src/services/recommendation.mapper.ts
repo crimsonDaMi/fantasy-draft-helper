@@ -25,6 +25,9 @@ export function mapRecommendationsResponse(
       rounds: result.draft.rounds,
       reversalRound: result.draft.reversalRound,
       draftOrder: result.draft.draftOrder,
+      slotToRosterId: result.draft.slotToRosterId,
+      tradedPicks: result.draft.tradedPicks,
+      budget: result.draft.budget,
       rosterSlots: result.draft.rosterSlots,
     },
     picks: result.picks.map(mapPick),
@@ -54,6 +57,7 @@ function mapPick(pick: RankedDraftPick) {
     pickNo: pick.pickNo,
     round: pick.round,
     draftSlot: pick.draftSlot,
+    rosterId: pick.rosterId,
     pickedBy: pick.pickedBy,
     playerId: pick.playerId,
     playerName: pick.playerName,
@@ -62,5 +66,6 @@ function mapPick(pick: RankedDraftPick) {
     rank: pick.rank,
     tier: pick.tier,
     adp: pick.adp,
+    amount: pick.amount,
   };
 }

@@ -12,6 +12,13 @@ See `RELEASING.md`.
 - Phone layout for the ranking editor: switch between the tiers and the
   unranked players, and tap a player to move them to the end of a tier or
   remove them from the ranking.
+- "You pick in N" follows traded picks: picks your team traded away are
+  skipped, and a pick it acquired is marked, e.g. "You pick in 4 (2.03,
+  traded)". Players drafted with a traded pick also count toward My team
+  when you chose your slot by hand.
+- Auction drafts show your budget in My team instead of a next pick, e.g.
+  "$142 of $200 left · max bid $130" (the max bid keeps $1 for every
+  other open roster spot).
 
 ### Fixed
 

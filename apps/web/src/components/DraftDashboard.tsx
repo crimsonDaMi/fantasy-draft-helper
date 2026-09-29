@@ -85,7 +85,12 @@ export function DraftDashboard() {
   const mySlot = sleeperSlot ?? storedDraft?.draftSlot;
   const myPicks =
     data && mySlot !== undefined
-      ? picksForSlot(data.picks, mySlot, sleeperUserId)
+      ? picksForSlot(
+          data.picks,
+          mySlot,
+          sleeperUserId,
+          data.draft.slotToRosterId?.[mySlot],
+        )
       : [];
 
   // Side columns only fit on wide screens (see .draft-board in

@@ -11,6 +11,17 @@ export interface SleeperDraft {
   settings?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   draft_order?: Record<string, number> | null;
+  slot_to_roster_id?: Record<string, number> | null;
+}
+
+/** A draft pick that changed hands: `roster_id` is the roster the pick
+ * originally belonged to, `owner_id` the roster that holds it now. */
+export interface SleeperTradedPick {
+  season?: string;
+  round: number;
+  roster_id: number;
+  previous_owner_id?: number;
+  owner_id: number;
 }
 
 export interface SleeperUser {
@@ -34,6 +45,8 @@ export interface SleeperDraftPick {
     team?: string;
     position?: string;
     player_id?: string;
+    /** Winning bid in auctions, as a string (e.g. `"25"`). */
+    amount?: string;
   };
 }
 

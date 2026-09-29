@@ -4,8 +4,13 @@ import {
   DraftStatus,
   ROSTER_SLOTS,
   RosterSlot,
+  TradedPick,
 } from "../domain/draft.js";
-import { SleeperDraft, SleeperDraftPick } from "../types/sleeper.js";
+import {
+  SleeperDraft,
+  SleeperDraftPick,
+  SleeperTradedPick,
+} from "../types/sleeper.js";
 
 export function mapDraftStatus(status: string): DraftStatus {
   switch (status) {
@@ -47,21 +52,42 @@ function mapRosterSlots(
   return slots;
 }
 
-function mapDraftOrder(
-  draftOrder: SleeperDraft["draft_order"],
+/** Sleeper's `draft_order` and `slot_to_roster_id`, keeping only
+ * positive integer values. */
+function mapNumberRecord(
+  record: Record<string, number> | null | undefined,
 ): Record<string, number> | undefined {
-  if (!draftOrder) {
+  if (!record) {
     return undefined;
   }
 
-  const entries = Object.entries(draftOrder).filter(
+  const entries = Object.entries(record).filter(
     ([, slot]) => positiveInteger(slot) !== undefined,
   );
 
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
-export function mapSleeperDraft(draft: SleeperDraft): Draft {
+function mapTradedPicks(tradedPicks: SleeperTradedPick[]): TradedPick[] {
+  return tradedPicks.flatMap((pick) => {
+    const round = positiveInteger(pick.round);
+    const rosterId = positiveInteger(pick.roster_id);
+    const ownerId = positiveInteger(pick.owner_id);
+
+    return round !== undefined &&
+      rosterId !== undefined &&
+      ownerId !== undefined
+      ? [{ round, rosterId, ownerId }]
+      : [];
+  });
+}
+
+/** Maps a Sleeper draft; `tradedPicks` comes from a separate request, so
+ * it's only passed when that request was made. */
+export function mapSleeperDraft(
+  draft: SleeperDraft,
+  tradedPicks?: SleeperTradedPick[] | null,
+): Draft {
   const settings = draft.settings ?? {};
   const name = draft.metadata?.name;
 
@@ -77,7 +103,11 @@ export function mapSleeperDraft(draft: SleeperDraft): Draft {
     teams: positiveInteger(settings.teams),
     rounds: positiveInteger(settings.rounds),
     reversalRound: positiveInteger(settings.reversal_round),
-    draftOrder: mapDraftOrder(draft.draft_order),
+    draftOrder: mapNumberRecord(draft.draft_order),
+    slotToRosterId: mapNumberRecord(draft.slot_to_roster_id),
+    tradedPicks:
+      tradedPicks === undefined ? undefined : mapTradedPicks(tradedPicks ?? []),
+    budget: positiveInteger(settings.budget),
     rosterSlots: mapRosterSlots(settings),
   };
 }
@@ -86,6 +116,8 @@ export function mapSleeperDraftPick(pick: SleeperDraftPick): DraftPick | null {
   if (!pick.player_id) {
     return null;
   }
+
+  const amount = pick.metadata?.amount;
 
   return {
     playerId: pick.player_id,
@@ -100,5 +132,7 @@ export function mapSleeperDraftPick(pick: SleeperDraftPick): DraftPick | null {
         .join(" ") || undefined,
     position: pick.metadata?.position,
     team: pick.metadata?.team,
+    amount:
+      amount !== undefined && /^\d+$/.test(amount) ? Number(amount) : undefined,
   };
 }

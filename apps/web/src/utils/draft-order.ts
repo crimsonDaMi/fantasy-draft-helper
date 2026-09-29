@@ -3,7 +3,8 @@ import type { ApiDraftInfo, ApiDraftPick } from "../types/api";
 /** Draft slot (1-based) that owns a given overall pick. Linear drafts
  * repeat the same order every round; snake drafts reverse every other
  * round, and with a reversal round (third-round reversal) the direction
- * flips once more from that round on. Traded picks aren't reflected. */
+ * flips once more from that round on. Traded picks aren't reflected
+ * here — see `nextPickFor`. */
 export function slotForPick(
   pickNo: number,
   teams: number,
@@ -32,10 +33,30 @@ export interface NextPick {
   pickInRound: number;
   /** 0 when the slot is on the clock. */
   picksUntil: number;
+  /** The pick originally belonged to another slot. */
+  traded: boolean;
+}
+
+/** League roster that holds the given pick: the slot's own roster unless
+ * the pick was traded. */
+function pickOwner(
+  pickNo: number,
+  pickSlot: number,
+  draft: ApiDraftInfo,
+): number | undefined {
+  const round = Math.ceil(pickNo / (draft.teams ?? 1));
+  const originalRoster = draft.slotToRosterId?.[pickSlot];
+  const trade = draft.tradedPicks?.find(
+    (pick) => pick.round === round && pick.rosterId === originalRoster,
+  );
+
+  return trade?.ownerId ?? originalRoster;
 }
 
 /** The slot's next pick at or after `currentPickNo`, or undefined when
- * it has none left (or the draft has no pick order, e.g. auctions). */
+ * it has none left (or the draft has no pick order, e.g. auctions).
+ * Follows traded picks when Sleeper maps slots to league rosters; mock
+ * drafts have no rosters, and no trades. */
 export function nextPickFor(
   slot: number,
   currentPickNo: number,
@@ -48,14 +69,22 @@ export function nextPickFor(
   }
 
   const lastPickNo = rounds ? teams * rounds : currentPickNo + 2 * teams;
+  const rosterId = draft.slotToRosterId?.[slot];
 
   for (let pickNo = currentPickNo; pickNo <= lastPickNo; pickNo++) {
-    if (slotForPick(pickNo, teams, type, reversalRound) === slot) {
+    const pickSlot = slotForPick(pickNo, teams, type, reversalRound);
+    const isMine =
+      rosterId === undefined
+        ? pickSlot === slot
+        : pickOwner(pickNo, pickSlot, draft) === rosterId;
+
+    if (isMine) {
       return {
         pickNo,
         round: Math.ceil(pickNo / teams),
         pickInRound: ((pickNo - 1) % teams) + 1,
         picksUntil: pickNo - currentPickNo,
+        traded: pickSlot !== slot,
       };
     }
   }
@@ -68,18 +97,55 @@ export function currentPickNo(picks: ApiDraftPick[]): number {
   return picks.reduce((highest, pick) => Math.max(highest, pick.pickNo), 0) + 1;
 }
 
-/** The picks made by the given slot — by Sleeper user when known, so a
- * pick made on a traded draft position still counts as the user's. */
+/** The picks made by the given slot — by Sleeper user or league roster
+ * when known, so a pick made on a traded draft position still counts as
+ * the user's. */
 export function picksForSlot(
   picks: ApiDraftPick[],
   slot: number,
   sleeperUserId?: string,
+  rosterId?: number,
 ): ApiDraftPick[] {
-  return picks.filter((pick) =>
-    sleeperUserId !== undefined && pick.pickedBy !== undefined
-      ? pick.pickedBy === sleeperUserId
-      : pick.draftSlot === slot,
-  );
+  return picks.filter((pick) => {
+    if (sleeperUserId !== undefined && pick.pickedBy !== undefined) {
+      return pick.pickedBy === sleeperUserId;
+    }
+
+    if (rosterId !== undefined && pick.rosterId !== undefined) {
+      return pick.rosterId === String(rosterId);
+    }
+
+    return pick.draftSlot === slot;
+  });
+}
+
+export interface AuctionBudget {
+  budget: number;
+  left: number;
+  /** Highest bid that still leaves $1 for every other open roster spot;
+   * undefined when the roster size is unknown or the roster is full. */
+  maxBid?: number;
+}
+
+/** What's left of the user's auction budget after their winning bids. */
+export function auctionBudget(
+  draft: ApiDraftInfo,
+  myPicks: ApiDraftPick[],
+): AuctionBudget | undefined {
+  if (draft.type !== "auction" || !draft.budget) {
+    return undefined;
+  }
+
+  const spent = myPicks.reduce((total, pick) => total + (pick.amount ?? 0), 0);
+  const left = draft.budget - spent;
+  const openSpots =
+    draft.rounds !== undefined ? draft.rounds - myPicks.length : 0;
+
+  return {
+    budget: draft.budget,
+    left,
+    maxBid: openSpots > 0 ? Math.max(left - (openSpots - 1), 0) : undefined,
+  };
 }
 
 const FLEX_SLOTS: { slot: string; positions: string[] }[] = [

@@ -33,7 +33,21 @@ export interface Draft {
   reversalRound?: number;
   /** Sleeper user ID → draft slot (1-based). */
   draftOrder?: Record<string, number>;
+  /** Draft slot (1-based) → the league roster that owns its picks. */
+  slotToRosterId?: Record<string, number>;
+  /** Picks that changed hands; only filled for a single draft lookup. */
+  tradedPicks?: TradedPick[];
+  /** Auction budget per team. */
+  budget?: number;
   rosterSlots: Partial<Record<RosterSlot, number>>;
+}
+
+export interface TradedPick {
+  round: number;
+  /** Roster the pick originally belonged to. */
+  rosterId: number;
+  /** Roster that holds the pick now. */
+  ownerId: number;
 }
 
 export interface DraftPick {
@@ -46,4 +60,6 @@ export interface DraftPick {
   playerName?: string;
   position?: string;
   team?: string;
+  /** Winning bid in auctions. */
+  amount?: number;
 }

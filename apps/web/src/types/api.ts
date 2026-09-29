@@ -59,14 +59,30 @@ export interface ApiDraftInfo {
   reversalRound?: number;
   /** Sleeper user ID → draft slot (1-based). */
   draftOrder?: Record<string, number>;
+  /** Draft slot (1-based) → the league roster that owns its picks;
+   * missing for drafts without a league (e.g. mocks). */
+  slotToRosterId?: Record<string, number>;
+  tradedPicks?: ApiTradedPick[];
+  /** Auction budget per team. */
+  budget?: number;
   /** Lineup slot → count, e.g. `{ QB: 1, SUPER_FLEX: 1, BN: 6 }`. */
   rosterSlots: Record<string, number>;
+}
+
+/** A pick that changed hands, by league roster ID. */
+interface ApiTradedPick {
+  round: number;
+  /** Roster the pick originally belonged to. */
+  rosterId: number;
+  /** Roster that holds the pick now. */
+  ownerId: number;
 }
 
 export interface ApiDraftPick {
   pickNo: number;
   round?: number;
   draftSlot?: number;
+  rosterId?: string;
   pickedBy?: string;
   playerId: string;
   playerName?: string;
@@ -76,6 +92,8 @@ export interface ApiDraftPick {
   rank?: number;
   tier?: string;
   adp?: number;
+  /** Winning bid in auctions. */
+  amount?: number;
 }
 
 export interface ApiPositionTierCounts {

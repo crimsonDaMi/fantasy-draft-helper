@@ -2,6 +2,7 @@ import {
   SleeperDraft,
   SleeperDraftPick,
   SleeperPlayersResponse,
+  SleeperTradedPick,
   SleeperUser,
 } from "../types/sleeper.js";
 import { HttpError } from "../utils/http-error.js";
@@ -15,6 +16,15 @@ export class SleeperClient {
 
   async getDraftPicks(draftId: string): Promise<SleeperDraftPick[]> {
     return this.get<SleeperDraftPick[]>(`/draft/${draftId}/picks`);
+  }
+
+  /** Resolves to `null` for an unknown draft (Sleeper answers 200). */
+  async getDraftTradedPicks(
+    draftId: string,
+  ): Promise<SleeperTradedPick[] | null> {
+    return this.get<SleeperTradedPick[] | null>(
+      `/draft/${draftId}/traded_picks`,
+    );
   }
 
   /** Resolves to `null` for an unknown username (Sleeper answers 200). */

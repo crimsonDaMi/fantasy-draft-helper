@@ -107,6 +107,79 @@ describe("mapSleeperDraft", () => {
     expect(result.reversalRound).toBeUndefined();
     expect(result.draftOrder).toBeUndefined();
     expect(result.rosterSlots).toEqual({});
+    expect(result.tradedPicks).toBeUndefined();
+  });
+
+  it("maps the slot-to-roster mapping and traded picks", () => {
+    const result = mapSleeperDraft(
+      {
+        draft_id: "draft-1",
+        status: "drafting",
+        sport: "nfl",
+        season: "2026",
+        slot_to_roster_id: { "1": 3, "2": 1 },
+      },
+      [
+        {
+          season: "2026",
+          round: 2,
+          roster_id: 3,
+          previous_owner_id: 3,
+          owner_id: 1,
+        },
+        { round: 0, roster_id: 3, owner_id: 1 },
+      ],
+    );
+
+    expect(result.slotToRosterId).toEqual({ "1": 3, "2": 1 });
+    expect(result.tradedPicks).toEqual([{ round: 2, rosterId: 3, ownerId: 1 }]);
+  });
+
+  it("treats Sleeper's null traded picks as none", () => {
+    const result = mapSleeperDraft(
+      { draft_id: "draft-1", status: "drafting", sport: "nfl", season: "2026" },
+      null,
+    );
+
+    expect(result.tradedPicks).toEqual([]);
+  });
+
+  it("maps the auction budget", () => {
+    const result = mapSleeperDraft({
+      draft_id: "draft-1",
+      status: "drafting",
+      sport: "nfl",
+      season: "2026",
+      type: "auction",
+      settings: { budget: 200 },
+    });
+
+    expect(result.budget).toBe(200);
+  });
+});
+
+describe("mapSleeperDraftPick auction amount", () => {
+  it("parses the winning bid", () => {
+    const result = mapSleeperDraftPick({
+      player_id: "123",
+      pick_no: 1,
+      metadata: { amount: "25" },
+    });
+
+    expect(result?.amount).toBe(25);
+  });
+
+  it("ignores a missing or malformed bid", () => {
+    expect(
+      mapSleeperDraftPick({ player_id: "123", pick_no: 1 })?.amount,
+    ).toBeUndefined();
+    expect(
+      mapSleeperDraftPick({
+        player_id: "123",
+        pick_no: 1,
+        metadata: { amount: "" },
+      })?.amount,
+    ).toBeUndefined();
   });
 });
 

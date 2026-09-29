@@ -25,6 +25,7 @@ function createFixtureClient(fixture: DraftFixture) {
   return {
     getDraft: async () => fixture.draft,
     getDraftPicks: async () => fixture.picks,
+    getDraftTradedPicks: async () => [],
     getNFLPlayers: async () =>
       ({
         "1": {

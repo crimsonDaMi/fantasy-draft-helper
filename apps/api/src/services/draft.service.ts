@@ -12,9 +12,12 @@ export class DraftService {
   constructor(private readonly sleeperClient: SleeperClient) {}
 
   async getDraft(draftId: string): Promise<Draft> {
-    const sleeperDraft = await this.sleeperClient.getDraft(draftId);
+    const [sleeperDraft, tradedPicks] = await Promise.all([
+      this.sleeperClient.getDraft(draftId),
+      this.sleeperClient.getDraftTradedPicks(draftId),
+    ]);
 
-    return mapSleeperDraft(sleeperDraft);
+    return mapSleeperDraft(sleeperDraft, tradedPicks);
   }
 
   /** A Sleeper user's NFL drafts for a season, newest first. */
@@ -33,7 +36,7 @@ export class DraftService {
     return {
       sleeperUserId: user.user_id,
       drafts: drafts
-        .map(mapSleeperDraft)
+        .map((draft) => mapSleeperDraft(draft))
         .sort((a, b) => (b.startTime ?? 0) - (a.startTime ?? 0)),
     };
   }

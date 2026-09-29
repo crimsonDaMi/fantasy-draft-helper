@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ApiDraftPick } from "../types/api";
 import {
+  auctionBudget,
   currentPickNo,
   fillRoster,
   formatPick,
@@ -65,6 +66,7 @@ describe("nextPickFor", () => {
       round: 1,
       pickInRound: 1,
       picksUntil: 0,
+      traded: false,
     });
   });
 
@@ -75,6 +77,7 @@ describe("nextPickFor", () => {
       round: 2,
       pickInRound: 12,
       picksUntil: 22,
+      traded: false,
     });
   });
 
@@ -82,6 +85,97 @@ describe("nextPickFor", () => {
     expect(nextPickFor(1, 181, draft)).toBeUndefined();
     expect(nextPickFor(1, 1, { ...draft, type: "auction" })).toBeUndefined();
     expect(nextPickFor(1, 1, { ...draft, teams: undefined })).toBeUndefined();
+  });
+
+  describe("with traded picks", () => {
+    // 4-team snake; slot N belongs to roster 10 + N.
+    const league = {
+      type: "snake",
+      teams: 4,
+      rounds: 3,
+      rosterSlots: {},
+      slotToRosterId: { "1": 11, "2": 12, "3": 13, "4": 14 },
+    };
+
+    it("skips a pick traded away", () => {
+      // Slot 1 picks 1st and 8th; its round-2 pick went to roster 13.
+      const next = nextPickFor(1, 2, {
+        ...league,
+        tradedPicks: [{ round: 2, rosterId: 11, ownerId: 13 }],
+      });
+
+      expect(next).toMatchObject({ pickNo: 9, picksUntil: 7, traded: false });
+    });
+
+    it("includes and marks a pick acquired by trade", () => {
+      // Slot 1 holds slot 3's round-2 pick (6th overall).
+      const next = nextPickFor(1, 2, {
+        ...league,
+        tradedPicks: [{ round: 2, rosterId: 13, ownerId: 11 }],
+      });
+
+      expect(next).toMatchObject({
+        pickNo: 6,
+        round: 2,
+        pickInRound: 2,
+        picksUntil: 4,
+        traded: true,
+      });
+    });
+
+    it("has no next pick when the remaining ones were all traded away", () => {
+      const next = nextPickFor(1, 2, {
+        ...league,
+        tradedPicks: [
+          { round: 2, rosterId: 11, ownerId: 12 },
+          { round: 3, rosterId: 11, ownerId: 12 },
+        ],
+      });
+
+      expect(next).toBeUndefined();
+    });
+  });
+});
+
+describe("auctionBudget", () => {
+  const draft = {
+    type: "auction",
+    teams: 12,
+    rounds: 15,
+    budget: 200,
+    rosterSlots: {},
+  };
+
+  it("subtracts winning bids and keeps $1 per other open spot", () => {
+    const picks: ApiDraftPick[] = [
+      { pickNo: 1, playerId: "1", amount: 50 },
+      { pickNo: 2, playerId: "2", amount: 8 },
+    ];
+
+    // 13 open spots: 12 of them need at least $1.
+    expect(auctionBudget(draft, picks)).toEqual({
+      budget: 200,
+      left: 142,
+      maxBid: 130,
+    });
+  });
+
+  it("has no max bid without a roster size or with a full roster", () => {
+    expect(auctionBudget({ ...draft, rounds: undefined }, [])).toEqual({
+      budget: 200,
+      left: 200,
+      maxBid: undefined,
+    });
+    expect(
+      auctionBudget({ ...draft, rounds: 1 }, [
+        { pickNo: 1, playerId: "1", amount: 1 },
+      ])?.maxBid,
+    ).toBeUndefined();
+  });
+
+  it("is undefined outside auctions or without a budget", () => {
+    expect(auctionBudget({ ...draft, type: "snake" }, [])).toBeUndefined();
+    expect(auctionBudget({ ...draft, budget: undefined }, [])).toBeUndefined();
   });
 });
 
@@ -109,6 +203,18 @@ describe("picksForSlot", () => {
       "1",
       "3",
     ]);
+  });
+
+  it("matches by league roster without a Sleeper user", () => {
+    const rosterPicks: ApiDraftPick[] = [
+      { pickNo: 1, playerId: "1", draftSlot: 1, rosterId: "7" },
+      { pickNo: 2, playerId: "2", draftSlot: 2, rosterId: "8" },
+      { pickNo: 3, playerId: "3", draftSlot: 2, rosterId: "7" },
+    ];
+
+    expect(
+      picksForSlot(rosterPicks, 1, undefined, 7).map((p) => p.playerId),
+    ).toEqual(["1", "3"]);
   });
 
   it("matches by draft slot otherwise", () => {

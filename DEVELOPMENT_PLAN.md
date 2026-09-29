@@ -29,6 +29,7 @@ item needs its scope confirmed with the user before work starts.
 | Wide-screen draft layout                                    | Unrel.  |
 | Phone draft layout                                          | Unrel.  |
 | Ranking editor touch support and phone layout               | Unrel.  |
+| Traded picks in "you pick in N", auction budget             | Unrel.  |
 
 ## Out of scope
 
@@ -47,9 +48,5 @@ rankings and roster optimization stay out of scope.
 ## Deferred ideas
 
 - **Keyboard-operable drag-and-drop** in the ranking editor (accessibility).
-- **Traded picks and auctions** for "you pick in N": the pick order is
-  computed from the draft type and slot, so traded picks aren't reflected
-  and auctions show no next pick. Sleeper exposes traded picks at
-  `/draft/{draft_id}/traded_picks` if this is ever needed.
 - **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
   pick propagation delay and team defense (`DEF`) matching.

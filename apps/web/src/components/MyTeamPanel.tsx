@@ -1,5 +1,6 @@
 import type { ApiDraftInfo, ApiDraftPick, DraftStatus } from "../types/api";
 import {
+  auctionBudget,
   fillRoster,
   formatPick,
   nextPickFor,
@@ -37,7 +38,7 @@ function NextPickLine({
     return null;
   }
 
-  const label = formatPick(next.pickNo, draft.teams);
+  const label = `${formatPick(next.pickNo, draft.teams)}${next.traded ? ", traded" : ""}`;
 
   return (
     <p
@@ -46,6 +47,27 @@ function NextPickLine({
       {next.picksUntil === 0
         ? `You're on the clock (${label})`
         : `You pick in ${next.picksUntil} (${label})`}
+    </p>
+  );
+}
+
+function BudgetLine({
+  draft,
+  myPicks,
+}: {
+  draft: ApiDraftInfo;
+  myPicks: ApiDraftPick[];
+}) {
+  const budget = auctionBudget(draft, myPicks);
+
+  if (!budget) {
+    return null;
+  }
+
+  return (
+    <p className="my-team__next">
+      ${budget.left} of ${budget.budget} left
+      {budget.maxBid !== undefined && ` · max bid $${budget.maxBid}`}
     </p>
   );
 }
@@ -100,10 +122,7 @@ export function MyTeamPanel({
 }: MyTeamPanelProps) {
   const teams = draft.teams ?? 0;
   const canPickSlot = !slotFromSleeper && teams > 0;
-  const showNextPick =
-    slot !== undefined &&
-    draftStatus !== "COMPLETE" &&
-    draft.type !== "auction";
+  const showNextPick = slot !== undefined && draftStatus !== "COMPLETE";
 
   const heading = <h2 id="my-team-heading">My team</h2>;
   const slotSelect = canPickSlot && (
@@ -122,9 +141,14 @@ export function MyTeamPanel({
       </select>
     </label>
   );
-  const nextPick = showNextPick && (
-    <NextPickLine draft={draft} slot={slot} currentPickNo={currentPickNo} />
-  );
+  // Auctions have no pick order; their headline is the budget instead.
+  const nextPick =
+    showNextPick &&
+    (draft.type === "auction" ? (
+      <BudgetLine draft={draft} myPicks={myPicks} />
+    ) : (
+      <NextPickLine draft={draft} slot={slot} currentPickNo={currentPickNo} />
+    ));
   const body =
     slot === undefined ? (
       <p className="side-panel__empty">
