@@ -59,6 +59,10 @@ Any change to how containers render must preserve all of this.
   dnd-kit's id registry and makes the player ungrabbable.
 - An empty tier's virtualized height is 0px, so the scroll wrapper has a
   `min-height` and shows a "Drop players here" placeholder.
+- The render-time server sync is skipped while dragging, so a cancelled
+  drag (Escape, window resize, tab switch — dnd-kit's pointer sensors
+  cancel on all three) must clear the drag state and force a resync in
+  `onDragCancel`; otherwise the editor stops picking up server changes.
 - `useContainerCollisionDetection` owns `lastOverId` and exposes
   `resetLastOverId()`, because the React Compiler lint rules forbid
   mutating a hook's return value or argument.

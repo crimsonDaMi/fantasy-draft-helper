@@ -416,11 +416,22 @@ export function RankingEditorPage() {
     );
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  function clearDragState() {
     lastDragEndAt.current = Date.now();
     setIsDragging(false);
     setDraggingPlayerId(undefined);
     setDraggingPlayer(undefined);
+  }
+
+  // A drag cancelled by Escape, a window resize, or switching tabs. Undo
+  // any cross-container moves it made by resyncing from the server data.
+  function handleDragCancel() {
+    clearDragState();
+    setSyncedDetail(undefined);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    clearDragState();
 
     const { active, over } = event;
     if (!over || !rankingId) {
@@ -645,6 +656,7 @@ export function RankingEditorPage() {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
         accessibility={{
           announcements,
           screenReaderInstructions: SCREEN_READER_INSTRUCTIONS,

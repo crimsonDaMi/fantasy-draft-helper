@@ -32,6 +32,9 @@ See `RELEASING.md`.
   it, and press and hold a player to drag them.
 - The app no longer fails to load when the browser blocks site data
   (storage); the theme and remembered choices just aren't kept.
+- Cancelling a drag in the ranking editor (Escape, resizing the window, or
+  switching tabs) no longer stops the editor from picking up saved
+  changes until the next drag.
 
 ## v1.3.0 — 2026-09-29
 

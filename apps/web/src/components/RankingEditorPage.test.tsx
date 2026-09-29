@@ -303,6 +303,38 @@ describe("RankingEditorPage", () => {
     expect(mocks.listRankings).toHaveBeenCalledTimes(2);
   });
 
+  it("resyncs with the server after a cancelled drag", async () => {
+    mockTwoTierRanking();
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    renderWithClient(queryClient);
+    const playerTwo = (await screen.findByText("Player Two")).closest("li")!;
+
+    fireEvent.mouseDown(playerTwo, { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(document, { clientX: 0, clientY: 20 });
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+
+    mocks.getRanking.mockResolvedValue({
+      players: [
+        rankedPlayer(1, "S", "1", "Player One", "QB"),
+        rankedPlayer(2, "A", "2", "Player Two", "RB"),
+        rankedPlayer(3, "A", "3", "Player Three", "WR"),
+      ],
+      tiers: [
+        { label: "S", position: 1, playerCount: 1 },
+        { label: "A", position: 2, playerCount: 2 },
+      ],
+    });
+    await queryClient.invalidateQueries();
+
+    const tierA = screen.getByRole("heading", { name: "Tier A" }).parentElement!
+      .parentElement!;
+    await waitFor(() =>
+      expect(within(tierA).getByText("Player Two")).toBeInTheDocument(),
+    );
+  });
+
   it("shows the ranking again when returning to the editor", async () => {
     mockTwoTierRanking();
     const queryClient = new QueryClient({
