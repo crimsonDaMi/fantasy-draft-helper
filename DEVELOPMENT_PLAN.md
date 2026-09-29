@@ -48,36 +48,22 @@ rankings and roster optimization stay out of scope.
 
 - **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
   pick propagation delay and team defense (`DEF`) matching.
+- **Unmatched/ambiguous players after import.** `POST /rankings` already
+  returns which rows were unmatched or ambiguous (with the candidate
+  players for ambiguous ones), but the UI only shows the counts. Listing
+  them would show which CSV rows to fix.
 
-### Code-quality candidates
+## Declined refactors
 
-Left out of the clean-code pass because the benefit didn't justify the
-risk or cost at the time; worth re-evaluating when the area is touched.
+Reviewed and decided against; listed so they aren't re-raised without new
+reasons.
 
-- **Split `RankingRepository`** — tier management (`insertTier`,
-  `removeTier`, tier relabeling/seeding) into its own repository sharing
-  the `DatabaseSync`. The file is long but no single method is.
-- **Ranking editor hooks** — moving the page's drag handlers or render-time
-  server sync out of `RankingEditorPage` conflicts with the constraints in
-  [`ranking-editor-history.md`](docs/ranking-editor-history.md).
-- **Upstream status mapping** — `SleeperClient`/`AdpClient` pass Sleeper's
-  HTTP status straight through (`HttpError`), so an upstream 500 becomes
-  our 500; mapping to 502 is arguably more accurate.
-- **Auth error classes** — `AuthService` has its own error classes mapped
-  per route instead of the shared domain errors and error handler.
-- **Argument order** — `RankingStoreService.getMatches(userId, rankingId?)`
-  is the reverse of every other `(rankingId, userId)` method; swapping two
-  string parameters risks silent breakage.
-- **Write-only columns** — `ranking_players.name/position/team/match_status`
-  are written but never read; dropping them is a schema change (major).
-- **Unread response fields** — several fields in `apps/web/src/types/api.ts`
-  are never read by the web app.
-- **Split `draft-order.ts`** — roster fill (`fillRoster`, slot constants)
-  could move to its own module.
-- **Shared error display** — errors are rendered ad hoc; a small
-  `ErrorMessage` component would unify `role="alert"` and styling.
-- **ADP/rank diff styling** — `DraftRecap`, `RecommendationsList`, and
-  `RecentPicks` each pick the value/reach class with their own threshold
-  and comparison; a shared helper would need both as parameters.
-- **`getFlags` scoping** — `RankingRepository.getFlags(rankingId)` isn't
-  user-scoped; callers check ownership first.
+- **Splitting `RankingRepository`** by tiers vs. players: a ranking, its
+  players, and its tiers are one aggregate — tier changes relabel player
+  rows and share one transaction — so a split adds seams, not clarity.
+- **Trimming unread fields from `apps/web/src/types/api.ts`**: the types
+  mirror the documented API contract; unread fields cost nothing at
+  runtime.
+- **One helper for the value/reach styling** in `DraftRecap`,
+  `RecommendationsList`, and `RecentPicks`: each uses its own threshold
+  and comparison on purpose, and they answer different questions.
