@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.4.0 — 2026-09-30
+
 ### Added
 
 - Phone layout for the ranking editor: switch between the tiers and the
