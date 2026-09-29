@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   adjustLightness,
   contrastTextColor,
   relativeLuminance,
 } from "../utils/color";
+import { readStoredJson, writeStorage } from "../utils/storage";
 import { DEFAULT_THEME_ID, findTheme } from "../themes";
 
 const STORAGE_KEY = "draft-helper-theme";
@@ -57,18 +58,14 @@ function applyTokens(tokens: ThemeTokens) {
 }
 
 function readStoredThemeId(): string {
-  try {
-    const stored = JSON.parse(
-      window.localStorage.getItem(STORAGE_KEY) ?? "null",
-    );
-    return typeof stored?.id === "string" ? stored.id : DEFAULT_THEME_ID;
-  } catch {
-    return DEFAULT_THEME_ID;
-  }
+  const stored = readStoredJson(STORAGE_KEY) as
+    { id?: unknown } | null | undefined;
+
+  return typeof stored?.id === "string" ? stored.id : DEFAULT_THEME_ID;
 }
 
 export function useTheme(): [string, (id: string) => void] {
-  const [themeId, setThemeIdState] = useState<string>(readStoredThemeId);
+  const [themeId, setThemeId] = useState<string>(readStoredThemeId);
 
   useEffect(() => {
     const theme = findTheme(themeId);
@@ -76,13 +73,8 @@ export function useTheme(): [string, (id: string) => void] {
 
     applyTokens(tokens);
 
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ id: themeId, tokens }),
-    );
+    writeStorage(STORAGE_KEY, JSON.stringify({ id: themeId, tokens }));
   }, [themeId]);
-
-  const setThemeId = useCallback((id: string) => setThemeIdState(id), []);
 
   return [themeId, setThemeId];
 }

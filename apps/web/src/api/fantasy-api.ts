@@ -226,6 +226,8 @@ export function login(username: string, password: string): Promise<AuthUser> {
   return postCredentials("/auth/login", username, password);
 }
 
+/** Best effort: the response status is ignored, since the user is logged
+ * out locally either way and an expired session is already gone. */
 export async function logout(): Promise<void> {
   await fetch(`${API_BASE_URL}/auth/logout`, {
     method: "POST",

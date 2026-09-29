@@ -30,6 +30,8 @@ See `RELEASING.md`.
   after tapping them off.
 - The ranking editor works on touch screens: swipe a player list to scroll
   it, and press and hold a player to drag them.
+- The app no longer fails to load when the browser blocks site data
+  (storage); the theme and remembered choices just aren't kept.
 
 ## v1.3.0 — 2026-09-29
 
