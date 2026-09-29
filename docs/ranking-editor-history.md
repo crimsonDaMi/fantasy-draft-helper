@@ -15,7 +15,10 @@ complexity until you remove one.
   drag handlers.
 - `components/ranking-editor/` — `DroppableContainer` (virtualized list,
   plus `TierRemoveControl`), `SortablePlayer`, `PlayerLabel` (rows and
-  drag overlay; renders the shared `components/PositionBadge`), `TierModeToggle`.
+  drag overlay; renders the shared `components/PositionBadge`),
+  `PlayerMoveMenu`, and presentational pieces with no drag state:
+  `EditorToolbar`, `EditorHints`, `StartRankingPrompt`, `AddTierButton`,
+  `SegmentedToggle` (used by `TierModeToggle` and the phone view switch).
 - `components/ranking-editor-logic.ts` — pure, drag-library-agnostic,
   unit-tested helpers (`computeGlobalRank`, `movePlayerToContainer`,
   `buildContainers`, filters, `formatTierHeading`).

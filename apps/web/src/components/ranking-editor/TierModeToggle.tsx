@@ -1,9 +1,10 @@
 import type { TierDisplayMode } from "../ranking-editor-logic";
+import { SegmentedToggle } from "./SegmentedToggle";
 
-const MODES: { mode: TierDisplayMode; label: string }[] = [
-  { mode: "alpha", label: "Letters" },
-  { mode: "numeric", label: "Numbers" },
-];
+const MODES = [
+  { value: "alpha", label: "Letters" },
+  { value: "numeric", label: "Numbers" },
+] as const;
 
 export function TierModeToggle({
   value,
@@ -13,25 +14,12 @@ export function TierModeToggle({
   onChange: (mode: TierDisplayMode) => void;
 }) {
   return (
-    <div
+    <SegmentedToggle
+      label="Tier label format"
       className="ranking-editor__tier-mode-toggle"
-      role="group"
-      aria-label="Tier label format"
-    >
-      {MODES.map(({ mode, label }) => (
-        <button
-          key={mode}
-          type="button"
-          className={
-            mode === value
-              ? "ranking-editor__mode-button ranking-editor__mode-button--active"
-              : "ranking-editor__mode-button"
-          }
-          onClick={() => onChange(mode)}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+      options={MODES}
+      value={value}
+      onChange={onChange}
+    />
   );
 }

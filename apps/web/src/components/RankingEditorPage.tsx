@@ -15,11 +15,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 
-import {
-  getRanking,
-  getUnrankedPlayers,
-  rankingExportUrl,
-} from "../api/fantasy-api";
+import { getRanking, getUnrankedPlayers } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import { useContainerCollisionDetection } from "../hooks/useContainerCollisionDetection";
 import { useEdgeAutoscroll } from "../hooks/useEdgeAutoscroll";
@@ -29,10 +25,14 @@ import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { RankingSelector } from "./RankingSelector";
+import { AddTierButton } from "./ranking-editor/AddTierButton";
 import { DroppableContainer } from "./ranking-editor/DroppableContainer";
+import { EditorHints } from "./ranking-editor/EditorHints";
+import { EditorToolbar } from "./ranking-editor/EditorToolbar";
 import { PlayerLabel } from "./ranking-editor/PlayerLabel";
 import { PlayerMoveMenu } from "./ranking-editor/PlayerMoveMenu";
-import { TierModeToggle } from "./ranking-editor/TierModeToggle";
+import { SegmentedToggle } from "./ranking-editor/SegmentedToggle";
+import { StartRankingPrompt } from "./ranking-editor/StartRankingPrompt";
 import {
   UNRANKED_CONTAINER,
   appendPlayerToTier,
@@ -59,6 +59,11 @@ const POST_DRAG_CLICK_GUARD_MS = 400;
 
 // Replaces dnd-kit's default "press space to pick up" text: there's no
 // keyboard drag, rows have keyboard commands instead.
+const PHONE_VIEWS = [
+  { value: "tiers", label: "Tiers" },
+  { value: "unranked", label: "Unranked" },
+] as const;
+
 const SCREEN_READER_INSTRUCTIONS: ScreenReaderInstructions = {
   draggable:
     "Up and down arrows move between players. Enter moves the player to " +
@@ -148,7 +153,8 @@ export function RankingEditorPage() {
   const [rankedSearch, setRankedSearch] = useState("");
   const isPhone = useMediaQuery(PHONE_QUERY);
   // Phones show the tiers or the unranked panel, not both.
-  const [phoneView, setPhoneView] = useState<"tiers" | "unranked">("tiers");
+  const [phoneView, setPhoneView] =
+    useState<(typeof PHONE_VIEWS)[number]["value"]>("tiers");
   const [menuPlayerId, setMenuPlayerId] = useState<string>();
   // Focus returns to the row after a menu opened from the keyboard.
   const menuOpenedByKeyboard = useRef(false);
@@ -502,28 +508,11 @@ export function RankingEditorPage() {
 
   if (!rankingId) {
     return (
-      <section className="ranking-editor">
-        <h2>Edit rankings</h2>
-        <p>
-          Import a ranking on the Draft tab, or start a new one here and build
-          it from scratch.
-        </p>
-        <button
-          type="button"
-          className="ranking-editor__start-new"
-          onClick={() => createEmptyRankingMutation.mutate()}
-          disabled={createEmptyRankingMutation.isPending}
-        >
-          {createEmptyRankingMutation.isPending
-            ? "Starting…"
-            : "Start a new ranking"}
-        </button>
-        {createEmptyRankingMutation.isError && (
-          <p className="status-bar status-bar__error">
-            Failed to start a new ranking. Try again.
-          </p>
-        )}
-      </section>
+      <StartRankingPrompt
+        isStarting={createEmptyRankingMutation.isPending}
+        hasFailed={createEmptyRankingMutation.isError}
+        onStart={() => createEmptyRankingMutation.mutate()}
+      />
     );
   }
 
@@ -541,22 +530,11 @@ export function RankingEditorPage() {
 
   return (
     <section className="ranking-editor">
-      <div className="ranking-editor__toolbar">
-        <h2>Edit rankings</h2>
-        <div className="ranking-editor__toolbar-actions">
-          <a
-            className="ranking-editor__mode-button ranking-editor__export-link"
-            href={rankingExportUrl(rankingId)}
-            download
-          >
-            Export CSV
-          </a>
-          <TierModeToggle
-            value={tierDisplayMode}
-            onChange={setTierDisplayMode}
-          />
-        </div>
-      </div>
+      <EditorToolbar
+        rankingId={rankingId}
+        tierDisplayMode={tierDisplayMode}
+        onTierDisplayModeChange={setTierDisplayMode}
+      />
 
       {rankings && selectedRanking && (
         <div className="ranking-editor__rankings">
@@ -598,56 +576,20 @@ export function RankingEditorPage() {
         />
       </div>
 
-      {(!hasAnyRankedPlayers || hasOnlyOneTier || !isPhone) && (
-        <div className="ranking-editor__hints">
-          {!hasAnyRankedPlayers && (
-            <p className="ranking-editor__hint">
-              {isPhone
-                ? "Tap a player in Unranked to add them to a tier."
-                : "Drag players from the Unranked panel into a tier to start ranking them."}
-            </p>
-          )}
-          {hasOnlyOneTier && (
-            <p className="ranking-editor__hint">
-              Use "+ Add tier here" to create more tiers.
-            </p>
-          )}
-          {!isPhone && (
-            <p className="ranking-editor__hint">
-              Keyboard: ↑/↓ to pick a player, Enter to move them to a tier,
-              Alt+↑/↓ to move them one place.
-            </p>
-          )}
-        </div>
-      )}
+      <EditorHints
+        isPhone={isPhone}
+        hasAnyRankedPlayers={hasAnyRankedPlayers}
+        hasOnlyOneTier={hasOnlyOneTier}
+      />
 
       {isPhone && (
-        <div
+        <SegmentedToggle
+          label="Show"
           className="ranking-editor__view-toggle"
-          role="group"
-          aria-label="Show"
-        >
-          {(
-            [
-              ["tiers", "Tiers"],
-              ["unranked", "Unranked"],
-            ] as const
-          ).map(([view, label]) => (
-            <button
-              key={view}
-              type="button"
-              className={
-                view === phoneView
-                  ? "ranking-editor__mode-button ranking-editor__mode-button--active"
-                  : "ranking-editor__mode-button"
-              }
-              aria-pressed={view === phoneView}
-              onClick={() => setPhoneView(view)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          options={PHONE_VIEWS}
+          value={phoneView}
+          onChange={setPhoneView}
+        />
       )}
 
       <DndContext
@@ -672,14 +614,10 @@ export function RankingEditorPage() {
         <div className="ranking-editor__layout">
           {(!isPhone || phoneView === "tiers") && (
             <div className="ranking-editor__tiers">
-              <button
-                type="button"
-                className="ranking-editor__tier-add"
-                onClick={() => insertTierMutation.mutate({ position: 1 })}
+              <AddTierButton
                 disabled={insertTierMutation.isPending}
-              >
-                + Add tier here
-              </button>
+                onClick={() => insertTierMutation.mutate({ position: 1 })}
+              />
               {tiers.map((tier, index) => (
                 <div key={tier.label}>
                   <DroppableContainer
@@ -721,16 +659,12 @@ export function RankingEditorPage() {
                         setConfirmingRemoveTierPosition(undefined),
                     }}
                   />
-                  <button
-                    type="button"
-                    className="ranking-editor__tier-add"
+                  <AddTierButton
+                    disabled={insertTierMutation.isPending}
                     onClick={() =>
                       insertTierMutation.mutate({ position: tier.position + 1 })
                     }
-                    disabled={insertTierMutation.isPending}
-                  >
-                    + Add tier here
-                  </button>
+                  />
                 </div>
               ))}
             </div>
