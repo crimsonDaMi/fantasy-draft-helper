@@ -62,6 +62,22 @@ Any change to how containers render must preserve all of this.
   `resetLastOverId()`, because the React Compiler lint rules forbid
   mutating a hook's return value or argument.
 
+## Touch
+
+- Two sensors instead of one `PointerSensor`: `MouseSensor` starts after
+  4px, `TouchSensor` after a 200ms long press. With a distance-only
+  pointer sensor every swipe on a row started a drag, and rows fill the
+  lists, so nothing could be scrolled by touch.
+- Rows use `touch-action: manipulation`, not `none`, so the browser can
+  scroll on a swipe; `TouchSensor` blocks scrolling once a drag starts.
+  `-webkit-touch-callout: none` stops iOS from opening its long-press
+  callout.
+- `FlagButtons` stops `touchstart` as well as `pointerdown` propagation —
+  `TouchSensor` listens to touch events, so a long press on ★/⊘ would
+  otherwise start a drag.
+- `useEdgeAutoscroll` also listens to `touchmove`: not every browser keeps
+  firing `pointermove` during a touch drag that has blocked scrolling.
+
 ## Ranks and tiers
 
 - `#N` is the backend's persisted global rank, carried as a static field

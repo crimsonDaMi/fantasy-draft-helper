@@ -11,7 +11,9 @@ const MAX_SPEED = 18;
  * crosses into a different container's independently-scrolled
  * (virtualized) viewport — it keeps scrolling the original container.
  * This tracks the pointer directly and always scrolls whichever
- * container is currently under it.
+ * container is currently under it. Touch moves are tracked too: once a
+ * touch drag has stopped the browser from scrolling, not every browser
+ * keeps firing pointermove.
  */
 export function useEdgeAutoscroll(
   isDragging: boolean,
@@ -29,6 +31,13 @@ export function useEdgeAutoscroll(
 
     const onPointerMove = (event: PointerEvent) => {
       pointerY = event.clientY;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (touch) {
+        pointerY = touch.clientY;
+      }
     };
 
     const tick = () => {
@@ -57,10 +66,12 @@ export function useEdgeAutoscroll(
     };
 
     window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
     frame = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onTouchMove);
       cancelAnimationFrame(frame);
     };
   }, [isDragging, lastOverId, resolveContainer, scrollElements]);

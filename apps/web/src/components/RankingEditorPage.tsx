@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -162,9 +163,14 @@ export function RankingEditorPage() {
 
   const hasOnlyOneTier = tiers.length <= 1;
 
+  // Mouse drags start after a few pixels; touch drags need a long press,
+  // so a swipe on a row scrolls the list instead of grabbing the player.
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 4 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
     }),
   );
 

@@ -11,6 +11,8 @@ See `RELEASING.md`.
 
 - On phones, the ⓘ and watch/avoid buttons no longer stay highlighted
   after tapping them off.
+- The ranking editor works on touch screens: swipe a player list to scroll
+  it, and press and hold a player to drag them.
 
 ## v1.3.0 — 2026-09-29
 

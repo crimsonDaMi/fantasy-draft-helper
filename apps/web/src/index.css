@@ -755,7 +755,8 @@ button {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
   box-sizing: border-box;
   width: 100%;
 }
