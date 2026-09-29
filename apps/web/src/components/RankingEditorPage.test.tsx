@@ -372,6 +372,53 @@ describe("RankingEditorPage", () => {
       ).toBeInTheDocument();
     });
 
+    it("scrolls a keyboard-moved player into view", async () => {
+      const scrollIntoView = vi.spyOn(
+        window.HTMLElement.prototype,
+        "scrollIntoView",
+      );
+      renderWithClient();
+      await screen.findByText("Player One");
+      row("Player One").focus();
+
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+
+      await waitFor(() =>
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" }),
+      );
+      expect(scrollIntoView.mock.contexts).toContain(row("Player One"));
+      scrollIntoView.mockRestore();
+    });
+
+    it("keeps focus on a player that a server resync moves to another tier", async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      renderWithClient(queryClient);
+      await screen.findByText("Player One");
+      row("Player Two").focus();
+
+      mocks.getRanking.mockResolvedValue({
+        players: [
+          rankedPlayer(1, "S", "1", "Player One", "QB"),
+          rankedPlayer(2, "A", "2", "Player Two", "RB"),
+          rankedPlayer(3, "A", "3", "Player Three", "WR"),
+        ],
+        tiers: [
+          { label: "S", position: 1, playerCount: 2 },
+          { label: "A", position: 2, playerCount: 1 },
+        ],
+      });
+      await queryClient.invalidateQueries();
+
+      const tierA = screen.getByRole("heading", { name: "Tier A" })
+        .parentElement!.parentElement!;
+      await waitFor(() =>
+        expect(within(tierA).getByText("Player Two")).toBeInTheDocument(),
+      );
+      expect(row("Player Two")).toHaveFocus();
+    });
+
     it("doesn't move the first player of the ranking up", async () => {
       renderWithClient();
       await screen.findByText("Player One");

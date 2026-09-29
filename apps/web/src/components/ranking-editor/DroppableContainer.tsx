@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -100,11 +100,43 @@ export function DroppableContainer({
     ? currentId
     : players[0]?.sleeperId;
 
+  // React restores focus to a row it merely moves, but not to one it
+  // re-creates: a server resync that lands mid-way through several quick
+  // keyboard moves can put the focused player back in the tier it just
+  // left, remounting the row there and dropping focus to <body>. Note which
+  // player has focus before the commit (read during render, so before the
+  // DOM changes) and, if they're in this container, focus their row again.
+  const focusedRowId = (
+    document.activeElement?.closest("[data-sleeper-id]") as HTMLElement | null
+  )?.dataset.sleeperId;
+  const restoreFocusId = players.some(
+    (player) => player.sleeperId === focusedRowId,
+  )
+    ? focusedRowId
+    : undefined;
+
+  useLayoutEffect(() => {
+    if (!restoreFocusId || document.activeElement !== document.body) {
+      return;
+    }
+    const rows =
+      scrollElementRef.current?.querySelectorAll<HTMLElement>(
+        "[data-sleeper-id]",
+      ) ?? [];
+    for (const row of rows) {
+      if (row.dataset.sleeperId === restoreFocusId) {
+        row.focus({ preventScroll: true });
+        return;
+      }
+    }
+  });
+
   // Keeps the dragged and the focused rows mounted when they scroll out.
   const virtualRows = withForcedRows(virtualizer.getVirtualItems(), players, [
     activeId,
     tabStopId,
     focusRequestId,
+    restoreFocusId,
   ]);
 
   function handleRowKeyDown(

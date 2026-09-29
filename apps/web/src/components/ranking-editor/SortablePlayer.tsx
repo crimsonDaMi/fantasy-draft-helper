@@ -56,7 +56,10 @@ export function SortablePlayer({
 
   useEffect(() => {
     if (shouldFocus) {
-      nodeRef.current?.focus();
+      // A row moved within its tier is often still focused, and focus()
+      // on the focused element doesn't scroll — so scroll explicitly.
+      nodeRef.current?.focus({ preventScroll: true });
+      nodeRef.current?.scrollIntoView({ block: "nearest" });
       onFocused();
     }
   }, [shouldFocus, onFocused]);
@@ -80,6 +83,7 @@ export function SortablePlayer({
       {...attributes}
       {...listeners}
       tabIndex={isTabStop ? 0 : -1}
+      data-sleeper-id={player.sleeperId}
       aria-label={[
         rank === undefined ? player.fullName : `#${rank} ${player.fullName}`,
         player.position,

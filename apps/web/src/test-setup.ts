@@ -13,3 +13,7 @@ Object.defineProperty(window.HTMLElement.prototype, "clientHeight", {
   configurable: true,
   value: 600,
 });
+
+// jsdom doesn't implement scrollIntoView; the ranking editor calls it to
+// keep a keyboard-moved row in view.
+window.HTMLElement.prototype.scrollIntoView = () => {};

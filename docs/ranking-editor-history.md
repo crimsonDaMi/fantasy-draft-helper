@@ -121,8 +121,15 @@ row has commands that reuse the existing move path (`stepPlayer` /
   and the page's `focusRequestId` are force-mounted by `withForcedRows`,
   and `SortablePlayer` focuses itself once mounted. A player moved into
   another tier remounts in a different container, so the page, not the
-  container, holds the request. Native `focus()` scrolls the inner
-  container, and the virtualizer fills in around it.
+  container, holds the request. The row calls `scrollIntoView` itself:
+  a row moved within its tier usually still has focus, and `focus()` on
+  the focused element doesn't scroll.
+- React restores focus to a row it only _moves_ in the DOM, but not to one
+  it re-creates. A server resync landing mid-way through quick keyboard
+  moves can put the player back in the tier they just left, remounting
+  the row. `DroppableContainer` therefore notes the focused player during
+  render (before the commit) and refocuses their row in a layout effect if
+  focus ended up on `<body>`, keeping that row mounted too.
 - The row's key handler ignores keys from its ★/⊘ buttons
   (`event.target !== event.currentTarget`), so Enter on ★ doesn't also
   open the menu.
