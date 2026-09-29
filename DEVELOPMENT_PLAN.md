@@ -30,6 +30,7 @@ readiness work are complete. No next feature is planned.
 | Keyboard-operable ranking editor                            | Unrel.  |
 | Ranking editor touch support and phone layout               | Unrel.  |
 | Traded picks in "you pick in N", auction budget             | Unrel.  |
+| Unmatched import rows: listed, resolvable in the editor     | Unrel.  |
 
 ## Out of scope
 
@@ -48,10 +49,6 @@ rankings and roster optimization stay out of scope.
 
 - **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
   pick propagation delay and team defense (`DEF`) matching.
-- **Unmatched/ambiguous players after import.** `POST /rankings` already
-  returns which rows were unmatched or ambiguous (with the candidate
-  players for ambiguous ones), but the UI only shows the counts. Listing
-  them would show which CSV rows to fix.
 
 ## Declined refactors
 

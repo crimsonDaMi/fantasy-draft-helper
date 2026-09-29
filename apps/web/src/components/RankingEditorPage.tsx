@@ -33,6 +33,7 @@ import { PlayerLabel } from "./ranking-editor/PlayerLabel";
 import { PlayerMoveMenu } from "./ranking-editor/PlayerMoveMenu";
 import { SegmentedToggle } from "./ranking-editor/SegmentedToggle";
 import { StartRankingPrompt } from "./ranking-editor/StartRankingPrompt";
+import { UnmatchedRows } from "./ranking-editor/UnmatchedRows";
 import {
   UNRANKED_CONTAINER,
   appendPlayerToTier,
@@ -199,6 +200,9 @@ export function RankingEditorPage() {
   }
 
   const tiers = detailQuery.data?.tiers ?? [];
+  // Import rows without a player; they aren't part of any tier container.
+  const unmatchedRows =
+    detailQuery.data?.players.filter((entry) => !entry.player) ?? [];
   const tierOrder = tiers.map((tier) => tier.label);
 
   const hasAnyRankedPlayers = Object.entries(containers).some(
@@ -223,6 +227,8 @@ export function RankingEditorPage() {
   const {
     moveMutation,
     removeMutation,
+    resolveRowMutation,
+    removeRowMutation,
     insertTierMutation,
     removeTierMutation,
     createEmptyRankingMutation,
@@ -581,6 +587,30 @@ export function RankingEditorPage() {
       </div>
 
       {saveError && <ErrorMessage>{saveError}</ErrorMessage>}
+
+      <UnmatchedRows
+        rows={unmatchedRows}
+        unrankedPlayers={containers[UNRANKED_CONTAINER] ?? []}
+        isRanked={(sleeperId) => {
+          const container = playerContainerMap.get(sleeperId);
+          return container !== undefined && container !== UNRANKED_CONTAINER;
+        }}
+        tierHeading={tierHeading}
+        isSaving={resolveRowMutation.isPending || removeRowMutation.isPending}
+        onResolve={(row, sleeperId) =>
+          resolveRowMutation.mutate({
+            rank: row.ranking.rank,
+            playerName: row.ranking.playerName,
+            sleeperId,
+          })
+        }
+        onRemove={(row) =>
+          removeRowMutation.mutate({
+            rank: row.ranking.rank,
+            playerName: row.ranking.playerName,
+          })
+        }
+      />
 
       <EditorHints
         isPhone={isPhone}

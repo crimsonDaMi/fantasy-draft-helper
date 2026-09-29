@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   insertTier: vi.fn(),
   removeTier: vi.fn(),
   createEmptyRanking: vi.fn(),
+  resolveUnmatchedRow: vi.fn(),
+  removeUnmatchedRow: vi.fn(),
 }));
 
 vi.mock("../api/fantasy-api", () => ({
@@ -37,6 +39,8 @@ vi.mock("../api/fantasy-api", () => ({
   insertTier: mocks.insertTier,
   removeTier: mocks.removeTier,
   createEmptyRanking: mocks.createEmptyRanking,
+  resolveUnmatchedRow: mocks.resolveUnmatchedRow,
+  removeUnmatchedRow: mocks.removeUnmatchedRow,
   rankingExportUrl: (rankingId: string) =>
     `http://api.test/rankings/export?rankingId=${rankingId}`,
 }));
@@ -333,6 +337,112 @@ describe("RankingEditorPage", () => {
     await waitFor(() =>
       expect(within(tierA).getByText("Player Two")).toBeInTheDocument(),
     );
+  });
+
+  describe("unmatched import rows", () => {
+    beforeEach(() => {
+      mocks.listRankings.mockResolvedValue({
+        rankings: [
+          {
+            id: "ranking-1",
+            name: "Test ranking",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            playerCount: 3,
+            matchedCount: 1,
+          },
+        ],
+      });
+      mocks.getRanking.mockResolvedValue({
+        players: [
+          rankedPlayer(1, "S", "1", "Player One", "QB"),
+          {
+            ranking: { rank: 2, playerName: "Test Twin", tier: "S" },
+            method: "AMBIGUOUS",
+            candidates: [
+              { sleeperId: "1", fullName: "Player One", position: "QB" },
+              { sleeperId: "7", fullName: "Test Twin", team: "BUF" },
+            ],
+          },
+          {
+            ranking: { rank: 3, playerName: "Test Nobody", tier: "S" },
+            method: "NONE",
+          },
+        ],
+        tiers: [{ label: "S", position: 1, playerCount: 3 }],
+      });
+      mocks.getUnrankedPlayers.mockResolvedValue({
+        players: [
+          { sleeperId: "8", fullName: "Test Somebody", team: "KC" },
+          { sleeperId: "9", fullName: "Other Player", team: "GB" },
+        ],
+      });
+      mocks.resolveUnmatchedRow.mockResolvedValue({ players: [] });
+      mocks.removeUnmatchedRow.mockResolvedValue({ players: [] });
+    });
+
+    it("resolves an ambiguous row to one of its candidates", async () => {
+      renderWithClient();
+
+      expect(await screen.findByText("Not matched (2)")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Use Player One (QB)" }),
+      ).toBeDisabled();
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Use Test Twin (BUF)" }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.resolveUnmatchedRow).toHaveBeenCalledWith(
+          "ranking-1",
+          2,
+          "Test Twin",
+          "7",
+        ),
+      );
+    });
+
+    it("resolves a row to a player found by search", async () => {
+      renderWithClient();
+      await screen.findByText("Not matched (2)");
+
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Choose player…" })[1],
+      );
+      fireEvent.change(
+        screen.getByRole("searchbox", {
+          name: "Search a player for Test Nobody",
+        }),
+        { target: { value: "somebody" } },
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Test Somebody (KC)" }),
+      );
+
+      await waitFor(() =>
+        expect(mocks.resolveUnmatchedRow).toHaveBeenCalledWith(
+          "ranking-1",
+          3,
+          "Test Nobody",
+          "8",
+        ),
+      );
+    });
+
+    it("removes a row", async () => {
+      renderWithClient();
+      await screen.findByText("Not matched (2)");
+
+      fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[1]);
+
+      await waitFor(() =>
+        expect(mocks.removeUnmatchedRow).toHaveBeenCalledWith(
+          "ranking-1",
+          3,
+          "Test Nobody",
+        ),
+      );
+    });
   });
 
   it("shows the ranking again when returning to the editor", async () => {

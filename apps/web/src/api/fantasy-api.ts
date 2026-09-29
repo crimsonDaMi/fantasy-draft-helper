@@ -288,6 +288,32 @@ export function removeRankingPlayer(
   });
 }
 
+/** Resolves an unmatched import row (at `rank`, counting every row) to
+ * the chosen player. `playerName` is the row's name, so the server can
+ * refuse if the row has moved since. */
+export function resolveUnmatchedRow(
+  rankingId: string,
+  rank: number,
+  playerName: string,
+  sleeperId: string,
+): Promise<{ players: RankingPlayerDto[] }> {
+  return request(path`/rankings/${rankingId}/unmatched/${rank}`, {
+    method: "PATCH",
+    ...jsonBody({ playerName, sleeperId }),
+  });
+}
+
+export function removeUnmatchedRow(
+  rankingId: string,
+  rank: number,
+  playerName: string,
+): Promise<{ players: RankingPlayerDto[] }> {
+  return request(
+    path`/rankings/${rankingId}/unmatched/${rank}?playerName=${playerName}`,
+    { method: "DELETE" },
+  );
+}
+
 export function insertTier(
   rankingId: string,
   position: number,

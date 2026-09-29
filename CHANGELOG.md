@@ -27,6 +27,9 @@ See `RELEASING.md`.
   Sleeper player are listed (with rank and why), with a link to fix them
   in the ranking editor; a saved ranking with unmatched players links
   there too.
+- The ranking editor has a "Not matched" section: pick one of the
+  possible players for an ambiguous row, search for the right player, or
+  remove the row. A fixed row keeps its place in the ranking.
 
 ### Fixed
 

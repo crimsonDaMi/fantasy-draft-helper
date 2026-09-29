@@ -18,6 +18,7 @@ complexity until you remove one.
   drag overlay; renders the shared `components/PositionBadge`),
   `PlayerMoveMenu`, and presentational pieces with no drag state:
   `EditorToolbar`, `EditorHints`, `StartRankingPrompt`, `AddTierButton`,
+  `UnmatchedRows`,
   `SegmentedToggle` (used by `TierModeToggle` and the phone view switch).
 - `components/ranking-editor-logic.ts` — pure, drag-library-agnostic,
   unit-tested helpers (`computeGlobalRank`, `movePlayerToContainer`,
@@ -156,6 +157,25 @@ row has commands that reuse the existing move path (`stepPlayer` /
   confirmation prompt reflects that and counts all of the tier's players,
   not just the filtered ones.
 - The Letters/Numbers toggle is local, unpersisted state.
+
+## Unmatched import rows
+
+Rows the import couldn't match (no candidate, or several) stay in the
+ranking without a player. They're never recommended and aren't part of
+any tier container; `UnmatchedRows` lists them above the tiers, from the
+same ranking-detail query.
+
+- The rank sent by a move counts matched players only (what
+  `computeGlobalRank` sees), and `RankingRepository.movePlayer` inserts
+  before that matched row, so unmatched rows keep their place. Before this
+  rule, a move in a ranking with unmatched rows landed off by their count.
+- Resolving or removing a row goes through `unmatched/:rank`, where `rank`
+  counts every row and `playerName` guards against a row that has moved.
+  A resolved row keeps its tier unless moves since the import left it
+  between players of other tiers; it then takes the tier of the matched
+  player above, so tiers stay contiguous.
+- "Choose player…" searches the Unranked container; candidates already
+  in the ranking are disabled.
 
 ## Rankings and routing
 

@@ -7,6 +7,8 @@ import {
   moveRankingPlayer,
   removeRankingPlayer,
   removeTier,
+  removeUnmatchedRow,
+  resolveUnmatchedRow,
   setPlayerFlag,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
@@ -79,6 +81,29 @@ export function useRankingEditorMutations(
     onSettled: settleQueries,
   });
 
+  // Unmatched import rows are identified by their rank (counting every
+  // row) plus the name the editor last saw, which the server re-checks.
+  const resolveRowMutation = useMutation({
+    mutationFn: ({
+      rank,
+      playerName,
+      sleeperId,
+    }: {
+      rank: number;
+      playerName: string;
+      sleeperId: string;
+    }) => resolveUnmatchedRow(rankingId!, rank, playerName, sleeperId),
+    ...saveCallbacks,
+    onSettled: settleQueries,
+  });
+
+  const removeRowMutation = useMutation({
+    mutationFn: ({ rank, playerName }: { rank: number; playerName: string }) =>
+      removeUnmatchedRow(rankingId!, rank, playerName),
+    ...saveCallbacks,
+    onSettled: settleQueries,
+  });
+
   const insertTierMutation = useMutation({
     mutationFn: ({ position }: { position: number }) =>
       insertTier(rankingId!, position),
@@ -142,6 +167,8 @@ export function useRankingEditorMutations(
   return {
     moveMutation,
     removeMutation,
+    resolveRowMutation,
+    removeRowMutation,
     insertTierMutation,
     removeTierMutation,
     createEmptyRankingMutation,

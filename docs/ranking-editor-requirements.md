@@ -117,6 +117,7 @@ UI escape hatch.
 
 ## Later additions
 
-Keyboard operation and touch support have shipped since; see
+Keyboard operation, touch support, and resolving unmatched import rows
+have shipped since; see
 [`ranking-editor-history.md`](ranking-editor-history.md) (Keyboard, Touch,
-Phone layout).
+Phone layout, Unmatched import rows).
