@@ -6,8 +6,9 @@ versioning and distribution (a single Docker image on GHCR,
 
 ## Status
 
-v1.0.0 is released. The MVP, every planned feature below, and the v1.0.0
-readiness work are complete. No next feature is planned.
+Released; the current version is the latest entry in `CHANGELOG.md`. The
+MVP, every planned feature below, and the v1.0.0 readiness work are
+complete. No next feature is planned.
 
 ## Shipped
 
@@ -25,12 +26,12 @@ readiness work are complete. No next feature is planned.
 | v1.0 hardening (schema guardrail, CSV export, auth lockout) | v1.0.0  |
 | Draft-day panels, search, injuries, draft lookup, recap     | v1.2.0  |
 | Multiple saved rankings, watch/avoid flags                  | v1.2.0  |
-| Wide-screen draft layout                                    | Unrel.  |
-| Phone draft layout                                          | Unrel.  |
-| Keyboard-operable ranking editor                            | Unrel.  |
-| Ranking editor touch support and phone layout               | Unrel.  |
-| Traded picks in "you pick in N", auction budget             | Unrel.  |
-| Unmatched import rows: listed, resolvable in the editor     | Unrel.  |
+| Wide-screen draft layout                                    | v1.3.0  |
+| Phone draft layout                                          | v1.3.0  |
+| Keyboard-operable ranking editor                            | v1.4.0  |
+| Ranking editor touch support and phone layout               | v1.4.0  |
+| Traded picks in "you pick in N", auction budget             | v1.4.0  |
+| Unmatched import rows: listed, resolvable in the editor     | v1.4.0  |
 
 ## Out of scope
 
