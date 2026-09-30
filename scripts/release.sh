@@ -10,6 +10,8 @@ VERSION="${1:-}"
 IMAGE="ghcr.io/crimsondami/fantasy-draft-helper"
 SKIP_AUDIT="${SKIP_AUDIT:-0}"
 CHANGELOG="CHANGELOG.md"
+# Its Shipped table lists features not yet released as "Unrel.".
+PLAN="DEVELOPMENT_PLAN.md"
 # Compose files pinning the released image — bumped to the new version so
 # a `git pull` on a deployment picks up exactly this release.
 COMPOSE_FILES=(docker-compose.yml deploy/server/docker-compose.yml)
@@ -75,7 +77,13 @@ awk -v heading="## $VERSION — $(date +%Y-%m-%d)" \
   "$CHANGELOG" >"$CHANGELOG.tmp"
 mv "$CHANGELOG.tmp" "$CHANGELOG"
 
-git add package.json "$CHANGELOG" "${COMPOSE_FILES[@]}"
+echo "==> Marking 'Unrel.' rows in $PLAN as $VERSION"
+sed -i.bak -E "s/^(\|.*\| )Unrel\. +\|$/\1$VERSION |/" "$PLAN"
+rm "$PLAN.bak"
+# Re-aligns the table when the version is wider than the column.
+pnpm exec prettier --write "$PLAN" >/dev/null
+
+git add package.json "$CHANGELOG" "$PLAN" "${COMPOSE_FILES[@]}"
 git commit -m "chore: bump version to $VERSION"
 git push
 

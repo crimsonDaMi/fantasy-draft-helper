@@ -44,7 +44,9 @@ This runs `scripts/release.sh`, which:
    `v`), pins the new image tag in both `docker-compose.yml` and
    `deploy/server/docker-compose.yml`, renames `## Unreleased` in
    `CHANGELOG.md` to `## vX.Y.Z — <date>` (with a fresh, empty
-   `## Unreleased` above it), commits all of that, and pushes the commit.
+   `## Unreleased` above it), sets the version of every `Unrel.` row in
+   `DEVELOPMENT_PLAN.md`'s Shipped table to `vX.Y.Z`, commits all of that,
+   and pushes the commit.
 7. Tags the resulting commit and pushes the tag.
 
 Pushing the tag is where the script's job ends. From there, the
@@ -79,7 +81,8 @@ single-arch build.
 ### Releasing by hand
 
 If the script is unavailable: do step 6 above by hand (root `package.json`
-version, both compose pins, the `CHANGELOG.md` heading), commit and push
+version, both compose pins, the `CHANGELOG.md` heading, the
+`DEVELOPMENT_PLAN.md` `Unrel.` rows), commit and push
 it, then tag and push the tag. The release workflow builds and publishes
 from there. Only if GitHub Actions itself is unavailable, build and push
 the image locally:
