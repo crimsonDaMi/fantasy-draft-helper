@@ -228,5 +228,7 @@ that mock, or the component import throws inside the test.
 
 ## Backlog
 
-Empty. Several past items that looked simple needed real design work
-before implementation.
+Tracked as
+[GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues).
+Several past items that looked simple needed real design work before
+implementation.

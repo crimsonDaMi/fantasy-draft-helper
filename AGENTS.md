@@ -8,7 +8,7 @@ are deployed with `deploy/server/`.
 ## Read these first
 
 - `docs/CODING_AGENT_GUIDE.md` — architecture rules and coding workflow
-- `DEVELOPMENT_PLAN.md` — current scope, out-of-scope list, deferred ideas
+- `DEVELOPMENT_PLAN.md` — current scope, out-of-scope list, shipped features
 - `RELEASING.md` — versioning and release process
 - `docs/ranking-editor-history.md` — design constraints of the ranking
   editor; read it before touching `apps/web/src/components/RankingEditorPage.tsx`,
@@ -18,6 +18,17 @@ are deployed with `deploy/server/`.
   `/rankings/edit` route
 
 New feature work needs its scope confirmed with the user before starting.
+
+## Issue tracking
+
+Features and bugs are tracked as GitHub issues
+(<https://github.com/crimsonDaMi/fantasy-draft-helper/issues>, via the
+`gh` CLI), never copied into `DEVELOPMENT_PLAN.md` or other docs. New ideas and found bugs become an
+issue, labelled `enhancement` or `bug` plus `priority: high|medium|low`;
+one that conflicts with the out-of-scope list also gets
+`needs-scope-decision`. A commit that implements an issue references it
+(`Closes #N`). `docs/known-issues.md` lists only accepted external
+limitations, not open bugs.
 
 ## Working conventions
 

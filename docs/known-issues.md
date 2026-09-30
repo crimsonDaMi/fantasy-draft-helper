@@ -2,7 +2,8 @@
 
 Accepted external limitations. Nothing here is under evaluation; an item is
 removed if it is ever resolved — git history and `CHANGELOG.md` keep the
-record.
+record. Bugs to fix are tracked as
+[GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues).
 
 ## Sleeper Pick Propagation Delay
 

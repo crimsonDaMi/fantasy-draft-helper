@@ -507,6 +507,11 @@ test-data/      Sample ranking CSV
 
 The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/CODING_AGENT_GUIDE.md).
 
+## Issues
+
+Bug reports and feature requests go to
+[GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues).
+
 ## Support
 
 If the app helps your drafts, you can support its development via

@@ -1,14 +1,18 @@
 # Development Plan
 
-Current scope and roadmap. Per-release details are in `CHANGELOG.md`;
-versioning and distribution (a single Docker image on GHCR,
+Current scope and shipped features. Planned features and bugs are tracked
+as [GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues),
+not in this file. Per-release details are in `CHANGELOG.md`; versioning
+and distribution (a single Docker image on GHCR,
 `ghcr.io/crimsondami/fantasy-draft-helper`) are in `RELEASING.md`.
 
 ## Status
 
 Released; the current version is the latest entry in `CHANGELOG.md`. The
-MVP, every planned feature below, and the v1.0.0 readiness work are
-complete. No next feature is planned.
+MVP, the features below, and the v1.0.0 readiness work are complete. Next
+work is chosen from the
+[open issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues),
+prioritized by their `priority: high|medium|low` labels.
 
 ## Shipped
 
@@ -46,9 +50,11 @@ of the user's own ranking plus a recent-picks positional run, and
 weight, or filter recommendations or suggest a pick — scarcity-weighted
 rankings and roster optimization stay out of scope.
 
-## Deferred ideas
+An issue that conflicts with this list is labelled `needs-scope-decision`;
+a decision to take it on changes this section in the same commit as the
+feature.
 
-None. Accepted external limitations (Sleeper's pick propagation delay,
+Accepted external limitations (Sleeper's pick propagation delay,
 once-a-day injury data) are listed in
 [`docs/known-issues.md`](docs/known-issues.md).
 
