@@ -14,6 +14,8 @@ See `RELEASING.md`.
 
 ### Fixed
 
+- Quick moves in the ranking editor no longer briefly show a player's
+  earlier position, and are saved in the order they were made.
 - Injury statuses stay current on a long-running instance: the player data
   now refreshes once a day instead of only when the API restarts.
 - Team defenses listed by a short name, e.g. "Chiefs D/ST", now match

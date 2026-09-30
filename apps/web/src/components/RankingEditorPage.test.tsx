@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -578,6 +579,77 @@ describe("RankingEditorPage", () => {
         expect(within(tierA).getByText("Player Two")).toBeInTheDocument(),
       );
       expect(row("Player Two")).toHaveFocus();
+    });
+
+    it("saves quick moves in order without showing an earlier position", async () => {
+      const saves: (() => void)[] = [];
+      mocks.moveRankingPlayer.mockImplementation(
+        () => new Promise((resolve) => saves.push(() => resolve({}))),
+      );
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      renderWithClient(queryClient);
+      await screen.findByText("Player One");
+      row("Player One").focus();
+      const tierA = () =>
+        screen.getByRole("heading", { name: "Tier A" }).parentElement!
+          .parentElement!;
+
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+
+      expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
+      // The second move waits for the first to be saved.
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1),
+      );
+      const fetchesBeforeSave = mocks.getRanking.mock.calls.length;
+
+      // The server's order after only the first move.
+      mocks.getRanking.mockResolvedValue({
+        players: [
+          rankedPlayer(1, "S", "2", "Player Two", "RB"),
+          rankedPlayer(2, "S", "1", "Player One", "QB"),
+          rankedPlayer(3, "A", "3", "Player Three", "WR"),
+        ],
+        tiers: [
+          { label: "S", position: 1, playerCount: 2 },
+          { label: "A", position: 2, playerCount: 1 },
+        ],
+      });
+      saves[0]();
+
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(2),
+      );
+      expect(mocks.getRanking).toHaveBeenCalledTimes(fetchesBeforeSave);
+      expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
+
+      // Another refetch (e.g. on window focus) returns that order while the
+      // second move is still being saved.
+      await queryClient.invalidateQueries();
+      // Query results reach React on a timeout.
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+      expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
+
+      mocks.getRanking.mockResolvedValue({
+        players: [
+          rankedPlayer(1, "S", "2", "Player Two", "RB"),
+          rankedPlayer(2, "A", "1", "Player One", "QB"),
+          rankedPlayer(3, "A", "3", "Player Three", "WR"),
+        ],
+        tiers: [
+          { label: "S", position: 1, playerCount: 1 },
+          { label: "A", position: 2, playerCount: 2 },
+        ],
+      });
+      saves[1]();
+
+      await waitFor(() =>
+        expect(mocks.getRanking).toHaveBeenCalledTimes(fetchesBeforeSave + 2),
+      );
+      expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
     });
 
     it("doesn't move the first player of the ranking up", async () => {

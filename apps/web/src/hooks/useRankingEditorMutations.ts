@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import {
   createEmptyRanking,
@@ -51,6 +55,25 @@ export function useRankingEditorMutations(
     });
   }
 
+  // Player moves and removals share a scope, so they're sent one at a time
+  // in the order made, and refetch only once the last pending one settles.
+  // A refetch between two quick moves would return an order from before
+  // the later one, and the page would briefly show it.
+  const playerEditKey = ["ranking-player-edit", rankingId];
+  const playerEditOptions = {
+    mutationKey: playerEditKey,
+    scope: { id: `ranking-player-edit:${rankingId}` },
+    ...saveCallbacks,
+    onSettled: () => {
+      // The settling edit still counts as pending.
+      if (queryClient.isMutating({ mutationKey: playerEditKey }) <= 1) {
+        settleQueries();
+      }
+    },
+  };
+  const hasPendingPlayerEdits =
+    useIsMutating({ mutationKey: playerEditKey }) > 0;
+
   function settleDetailQuery() {
     // Tier boundary and flag changes stay within the ranking — the
     // unranked pool is untouched, so only ranking-detail needs to
@@ -70,15 +93,13 @@ export function useRankingEditorMutations(
       rank: number;
       tier: string;
     }) => moveRankingPlayer(rankingId!, sleeperId, rank, tier),
-    ...saveCallbacks,
-    onSettled: settleQueries,
+    ...playerEditOptions,
   });
 
   const removeMutation = useMutation({
     mutationFn: ({ sleeperId }: { sleeperId: string }) =>
       removeRankingPlayer(rankingId!, sleeperId),
-    ...saveCallbacks,
-    onSettled: settleQueries,
+    ...playerEditOptions,
   });
 
   // Unmatched import rows are identified by their rank (counting every
@@ -174,5 +195,6 @@ export function useRankingEditorMutations(
     createEmptyRankingMutation,
     flagMutation,
     saveError,
+    hasPendingPlayerEdits,
   };
 }

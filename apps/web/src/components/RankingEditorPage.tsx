@@ -167,13 +167,30 @@ export function RankingEditorPage() {
   // A touch drag's release can still fire a click on the row; ignore it.
   const lastDragEndAt = useRef(0);
 
+  const {
+    moveMutation,
+    removeMutation,
+    resolveRowMutation,
+    removeRowMutation,
+    insertTierMutation,
+    removeTierMutation,
+    createEmptyRankingMutation,
+    flagMutation,
+    saveError,
+    hasPendingPlayerEdits,
+  } = useRankingEditorMutations(rankingId, {
+    onTierRemoved: () => setConfirmingRemoveTierPosition(undefined),
+    onRankingCreated: selectRanking,
+  });
+
   // Re-derive local drag state from the server whenever a *new* server
   // snapshot arrives, using React's render-time "adjusting state when a
   // prop changes" pattern instead of a useEffect: compare against the
   // last-synced references and call setState directly during render.
   // React re-renders once more before painting, so there's no visible
   // flash and no separate effect pass. Skipped entirely mid-drag so a
-  // background refetch can't yank items out from under the cursor.
+  // background refetch can't yank items out from under the cursor, and
+  // while a move is still being saved (the local order is already ahead).
   // Start unsynced, not at the current data: on a return visit the
   // queries are already cached, and starting "synced" to them would
   // skip the first sync and leave `containers` empty.
@@ -183,6 +200,7 @@ export function RankingEditorPage() {
 
   if (
     !isDragging &&
+    !hasPendingPlayerEdits &&
     detailQuery.data &&
     unrankedQuery.data &&
     (detailQuery.data !== syncedDetail || unrankedQuery.data !== syncedUnranked)
@@ -223,21 +241,6 @@ export function RankingEditorPage() {
       },
     }),
   );
-
-  const {
-    moveMutation,
-    removeMutation,
-    resolveRowMutation,
-    removeRowMutation,
-    insertTierMutation,
-    removeTierMutation,
-    createEmptyRankingMutation,
-    flagMutation,
-    saveError,
-  } = useRankingEditorMutations(rankingId, {
-    onTierRemoved: () => setConfirmingRemoveTierPosition(undefined),
-    onRankingCreated: selectRanking,
-  });
 
   function handleRemoveTierClick(tier: RankingTierDto) {
     const playerCount = containers[tier.label]?.length ?? 0;

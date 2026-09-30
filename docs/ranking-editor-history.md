@@ -133,10 +133,15 @@ row has commands that reuse the existing move path (`stepPlayer` /
   container, holds the request. The row calls `scrollIntoView` itself:
   a row moved within its tier usually still has focus, and `focus()` on
   the focused element doesn't scroll.
+- Player moves and removals share a mutation scope
+  (`useRankingEditorMutations`): they're sent one at a time in the order
+  made, only the last pending one refetches when it settles, and the
+  server sync is skipped while any is pending, as it is mid-drag. A
+  refetch between two quick moves returns an order from before the later
+  one; syncing to it made the player flicker back.
 - React restores focus to a row it only _moves_ in the DOM, but not to one
-  it re-creates. A server resync landing mid-way through quick keyboard
-  moves can put the player back in the tier they just left, remounting
-  the row. `DroppableContainer` therefore notes the focused player during
+  it re-creates. A server resync (e.g. another tab's edit) can put the
+  player in a different tier, remounting the row. `DroppableContainer` therefore notes the focused player during
   render (before the commit) and refocuses their row in a layout effect if
   focus ended up on `<body>`, keeping that row mounted too.
 - The row's key handler ignores keys from its ★/⊘ buttons

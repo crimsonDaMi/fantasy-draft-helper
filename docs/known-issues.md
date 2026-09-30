@@ -52,17 +52,3 @@ data was last loaded ("Injuries as of …").
 
 Status: accepted limitation. Stored rankings don't freeze the status at
 import time; it is always read from the current player cache.
-
-## Ranking Editor Flicker on Quick Keyboard Moves
-
-Each Alt+arrow move in the ranking editor saves immediately, and each save
-refetches the ranking. When presses come faster than the server responds, a
-refetch can return an order from a few presses earlier, and the render-time
-server sync in `RankingEditorPage` briefly shows it before the next refetch
-catches up. Focus stays on the moved player (see the Keyboard section of
-[`ranking-editor-history.md`](ranking-editor-history.md)).
-
-Possible fix: skip the server sync while any move mutation is still pending,
-as it is already skipped mid-drag.
-
-Status: accepted for now; rare in practice.
