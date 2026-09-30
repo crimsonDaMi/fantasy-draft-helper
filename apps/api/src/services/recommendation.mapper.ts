@@ -16,6 +16,7 @@ export function mapRecommendationsResponse(
     lastPick: result.lastPick,
     lastUpdatedAt: result.lastUpdatedAt,
     generatedAt: result.generatedAt,
+    playersUpdatedAt: result.playersUpdatedAt,
     recommendationCount: result.recommendations.length,
     recommendations: result.recommendations.map(mapRecommendation),
     draft: {

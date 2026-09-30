@@ -42,4 +42,6 @@ export interface RecommendationResult {
   lastPick?: DraftPick;
   lastUpdatedAt: string;
   generatedAt: string;
+  /** When the player data (and so injury statuses) was last loaded. */
+  playersUpdatedAt?: string;
 }

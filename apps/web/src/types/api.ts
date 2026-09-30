@@ -41,6 +41,8 @@ export interface RecommendationsResponse {
   };
   lastUpdatedAt: string;
   generatedAt: string;
+  /** When the player data (and so injury statuses) was last loaded. */
+  playersUpdatedAt?: string;
   recommendationCount: number;
   recommendations: ApiRecommendation[];
   draft: ApiDraftInfo;

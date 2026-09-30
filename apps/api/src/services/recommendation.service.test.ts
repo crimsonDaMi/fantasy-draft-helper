@@ -10,6 +10,7 @@ const noopAdpService = {
 
 const noopPlayerService = {
   getPlayerById: () => undefined,
+  getCacheUpdatedAt: () => new Date("2026-09-04T08:00:00.000Z"),
 };
 
 describe("RecommendationService", () => {
@@ -72,6 +73,8 @@ describe("RecommendationService", () => {
     );
 
     expect(result.recommendations).toHaveLength(1);
+
+    expect(result.playersUpdatedAt).toBe("2026-09-04T08:00:00.000Z");
 
     expect(result.recommendations[0]?.ranking.rank).toBe(2);
 
@@ -556,6 +559,7 @@ describe("RecommendationService", () => {
     };
 
     const playerService = {
+      ...noopPlayerService,
       getPlayerById: (id: string) =>
         id === "1"
           ? {
@@ -620,6 +624,7 @@ describe("RecommendationService", () => {
     };
 
     const playerService = {
+      ...noopPlayerService,
       getPlayerById: (id: string) =>
         id === "99"
           ? { sleeperId: "99", fullName: "Unranked Pick" }

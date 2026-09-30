@@ -7,6 +7,11 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- The draft status bar shows when injury statuses were last updated, e.g.
+  "Injuries as of Sep 30, 9:14 AM".
+
 ### Fixed
 
 - Injury statuses stay current on a long-running instance: the player data

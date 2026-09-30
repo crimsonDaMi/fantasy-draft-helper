@@ -18,6 +18,7 @@ interface MonitoringStatusProps {
   lastPick?: RecommendationsResponse["lastPick"];
   generatedAt?: string;
   lastUpdatedAt?: string;
+  playersUpdatedAt?: string;
   isLoading: boolean;
   error?: string;
   onRetry: () => void;
@@ -33,6 +34,7 @@ export function MonitoringStatus({
   lastPick,
   generatedAt,
   lastUpdatedAt,
+  playersUpdatedAt,
   isLoading,
   error,
   onRetry,
@@ -81,6 +83,18 @@ export function MonitoringStatus({
           pollingIntervalMs !== false && (
             <span>Poll: {pollingIntervalMs / 1000}s</span>
           )}
+
+        {playersUpdatedAt && (
+          <span>
+            Injuries as of{" "}
+            {new Date(playersUpdatedAt).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+          </span>
+        )}
 
         {isLoading && <span>Loading…</span>}
       </div>

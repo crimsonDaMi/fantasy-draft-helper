@@ -96,7 +96,10 @@ export class RecommendationService {
     private readonly draftStateService: DraftStateService,
     private readonly rankingStoreService: RankingStoreService,
     private readonly adpService: AdpService,
-    private readonly playerService: Pick<PlayerService, "getPlayerById">,
+    private readonly playerService: Pick<
+      PlayerService,
+      "getPlayerById" | "getCacheUpdatedAt"
+    >,
   ) {}
 
   async getRecommendations(
@@ -178,6 +181,7 @@ export class RecommendationService {
       lastPick: draftState.picks.at(-1),
       lastUpdatedAt: draftState.lastUpdatedAt.toISOString(),
       generatedAt: new Date().toISOString(),
+      playersUpdatedAt: this.playerService.getCacheUpdatedAt()?.toISOString(),
     };
   }
 

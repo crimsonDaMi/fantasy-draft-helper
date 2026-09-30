@@ -47,7 +47,8 @@ API loads on first use and refreshes once a day, as Sleeper's docs ask: the
 first request after the data turns 24 hours old starts a background refresh
 and is answered from the current data meanwhile. A status change within that
 day (e.g. a player ruled out the morning of the draft) is not reflected until
-the next refresh or an API restart.
+the next refresh or an API restart. The draft status bar shows when the
+data was last loaded ("Injuries as of …").
 
 Status: accepted limitation. Stored rankings don't freeze the status at
 import time; it is always read from the current player cache.

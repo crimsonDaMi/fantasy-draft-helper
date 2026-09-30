@@ -293,7 +293,7 @@ tier, and ADP from your ranking when available), and `tierCounts`
 (players left in the best two remaining tiers of your ranking, per
 position — unaffected by `positions`, `q`, and `limit`).
 
-The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations.
+The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations. `playersUpdatedAt` is when the player data — and so the injury statuses — was last loaded from Sleeper.
 
 The frontend communicates only with this API. It does not call Sleeper directly.
 

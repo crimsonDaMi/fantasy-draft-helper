@@ -90,6 +90,7 @@ const recommendationResult = {
   },
   lastUpdatedAt: "2026-09-04T12:00:00.000Z",
   generatedAt: "2026-09-04T12:00:00.000Z",
+  playersUpdatedAt: "2026-09-04T08:00:00.000Z",
 };
 
 describe("recommendations routes", () => {
@@ -114,6 +115,7 @@ describe("recommendations routes", () => {
       },
       lastUpdatedAt: "2026-09-04T12:00:00.000Z",
       generatedAt: "2026-09-04T12:00:00.000Z",
+      playersUpdatedAt: "2026-09-04T08:00:00.000Z",
       recommendationCount: 1,
       recommendations: [
         {

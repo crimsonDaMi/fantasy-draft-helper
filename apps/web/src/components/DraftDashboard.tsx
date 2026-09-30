@@ -120,6 +120,7 @@ export function DraftDashboard() {
         lastPick={data?.lastPick}
         generatedAt={data?.generatedAt}
         lastUpdatedAt={data?.lastUpdatedAt}
+        playersUpdatedAt={data?.playersUpdatedAt}
         pollingIntervalMs={pollingIntervalMs}
         isLoading={isLoading}
         error={error}
