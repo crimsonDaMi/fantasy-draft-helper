@@ -31,6 +31,16 @@ out-of-scope list also gets `needs-scope-decision`. A commit that
 implements an issue references it (`Closes #N`). `docs/known-issues.md`
 lists only accepted external limitations, not open bugs.
 
+An issue's `### Acceptance` list is the definition of done: read it
+before starting and cover each box. Once the change is committed and
+passes the verification gate, tick each box in the issue body that a
+test, the gate, or the diff itself shows is met (`gh issue edit N
+--body-file …`), without changing the rest of the body. Boxes that need
+manual or production checking stay unticked and are listed in one issue
+comment with how to check each; the user ticks those before pushing.
+Never tick a box that wasn't verified, and name any box still open in the
+final report.
+
 ## Working conventions
 
 - File-specific diffs over full-file dumps, except for genuinely new files
