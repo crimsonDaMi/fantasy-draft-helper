@@ -4,6 +4,12 @@ import { Ranking } from "../domain/ranking.js";
 import { PlayerService } from "./player.service.js";
 import { normalizePlayerName } from "../utils/normalize-player-name.js";
 
+// Team abbreviations some ranking exports use where Sleeper's differ.
+const SLEEPER_TEAM_ALIASES: Record<string, string> = {
+  JAC: "JAX",
+  WSH: "WAS",
+};
+
 export class PlayerMatchingService {
   constructor(private readonly playerService: PlayerService) {}
 
@@ -14,7 +20,36 @@ export class PlayerMatchingService {
       return bySleeperId;
     }
 
-    return this.matchByName(ranking);
+    const byName = this.matchByName(ranking);
+
+    if (byName.method === "NONE") {
+      return this.matchTeamDefense(ranking) ?? byName;
+    }
+
+    return byName;
+  }
+
+  /** Sleeper's team defenses use the team abbreviation as their ID, so a
+   * `DEF` row with a team matches even when its name ("Chiefs D/ST")
+   * isn't Sleeper's ("Kansas City Chiefs"). */
+  private matchTeamDefense(ranking: Ranking): PlayerMatch | undefined {
+    if (ranking.position !== "DEF" || !ranking.team) {
+      return undefined;
+    }
+
+    const player = this.playerService.getPlayerById(
+      SLEEPER_TEAM_ALIASES[ranking.team] ?? ranking.team,
+    );
+
+    if (player?.position !== "DEF") {
+      return undefined;
+    }
+
+    return {
+      ranking,
+      player,
+      method: "TEAM_DEFENSE",
+    };
   }
 
   private matchBySleeperId(ranking: Ranking): PlayerMatch | undefined {

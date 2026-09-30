@@ -96,4 +96,102 @@ describe("PlayerMatchingService", () => {
 
     expect(result.player?.sleeperId).toBe("2");
   });
+
+  describe("team defenses", () => {
+    // Shaped like Sleeper's /players/nfl entries: the ID is the team
+    // abbreviation and the name is built from first_name + last_name.
+    const defenses = [
+      {
+        sleeperId: "KC",
+        fullName: "Kansas City Chiefs",
+        team: "KC",
+        position: "DEF",
+        active: true,
+        fantasyPositions: ["DEF"],
+      },
+      {
+        sleeperId: "JAX",
+        fullName: "Jacksonville Jaguars",
+        team: "JAX",
+        position: "DEF",
+        active: true,
+        fantasyPositions: ["DEF"],
+      },
+      {
+        sleeperId: "4046",
+        fullName: "Test Quarterback",
+        team: "KC",
+        position: "QB",
+        active: true,
+        fantasyPositions: ["QB"],
+      },
+    ];
+
+    const defenseService = new PlayerMatchingService({
+      getPlayerById: (id: string) =>
+        defenses.find((player) => player.sleeperId === id),
+      findPlayersByName: (name: string) =>
+        defenses.filter((player) => player.fullName === name),
+    } as never);
+
+    it("matches the full team name by name", () => {
+      const result = defenseService.matchRanking({
+        rank: 1,
+        playerName: "Kansas City Chiefs",
+        team: "KC",
+        position: "DEF",
+      });
+
+      expect(result.method).toBe("NAME_POSITION_TEAM");
+
+      expect(result.player?.sleeperId).toBe("KC");
+    });
+
+    it("matches a short name by team", () => {
+      const result = defenseService.matchRanking({
+        rank: 1,
+        playerName: "Chiefs D/ST",
+        team: "KC",
+        position: "DEF",
+      });
+
+      expect(result.method).toBe("TEAM_DEFENSE");
+
+      expect(result.player?.sleeperId).toBe("KC");
+    });
+
+    it("maps export team abbreviations to Sleeper's", () => {
+      const result = defenseService.matchRanking({
+        rank: 1,
+        playerName: "Jaguars",
+        team: "JAC",
+        position: "DEF",
+      });
+
+      expect(result.method).toBe("TEAM_DEFENSE");
+
+      expect(result.player?.sleeperId).toBe("JAX");
+    });
+
+    it("returns NONE for a short name without a team", () => {
+      const result = defenseService.matchRanking({
+        rank: 1,
+        playerName: "Chiefs D/ST",
+        position: "DEF",
+      });
+
+      expect(result.method).toBe("NONE");
+    });
+
+    it("doesn't match other positions by team", () => {
+      const result = defenseService.matchRanking({
+        rank: 1,
+        playerName: "Unknown Player",
+        team: "KC",
+        position: "QB",
+      });
+
+      expect(result.method).toBe("NONE");
+    });
+  });
 });

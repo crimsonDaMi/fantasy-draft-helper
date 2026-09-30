@@ -40,19 +40,6 @@ Future evaluation may consider:
 - Detection of multiple newly returned picks.
 - Alternative Sleeper endpoints, if they are documented and demonstrably fresher.
 
-## Sleeper Defense Representation
-
-Rankings may contain team defenses using the `DEF` position. Sleeper may represent defenses differently from individual players, including different names, IDs, position values, or team abbreviations.
-
-Before relying on name-based defense matching, verify against the live Sleeper player dataset:
-
-- Which IDs represent team defenses.
-- Which position values are used.
-- Which team abbreviations are used.
-- Whether common ranking names match Sleeper names.
-
-The CSV parser accepts `DEF`, but defense matching should be covered by fixtures once the Sleeper representation is confirmed.
-
 ## Injury Status Freshness
 
 Injury badges come from Sleeper's player dataset (`/players/nfl`), which the

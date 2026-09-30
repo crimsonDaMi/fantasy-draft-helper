@@ -47,8 +47,8 @@ rankings and roster optimization stay out of scope.
 
 ## Deferred ideas
 
-- **Sleeper evaluations** tracked in [`docs/known-issues.md`](docs/known-issues.md):
-  pick propagation delay and team defense (`DEF`) matching.
+- **Sleeper pick propagation delay** tracked in
+  [`docs/known-issues.md`](docs/known-issues.md).
 
 ## Declined refactors
 

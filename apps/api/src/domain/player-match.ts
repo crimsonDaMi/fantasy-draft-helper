@@ -7,6 +7,8 @@ type PlayerMatchMethod =
   | "NAME_POSITION"
   | "NAME_TEAM"
   | "NAME"
+  /** A team defense found by its team abbreviation, which is its Sleeper ID. */
+  | "TEAM_DEFENSE"
   | "NONE"
   | "AMBIGUOUS"
   /** Chosen by the user in the ranking editor for an unmatched row. */

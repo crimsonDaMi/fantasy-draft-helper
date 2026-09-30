@@ -7,6 +7,11 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Fixed
+
+- Team defenses listed by a short name, e.g. "Chiefs D/ST", now match
+  Sleeper when the ranking row has a `DEF`/`DST` position and a team.
+
 ## v1.4.0 — 2026-09-30
 
 ### Added

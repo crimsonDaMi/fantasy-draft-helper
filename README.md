@@ -162,6 +162,10 @@ export) are recognized. Positions may carry a positional rank (`RB12` is
 read as `RB`), and `DST`/`D/ST` are read as `DEF`. Other columns are
 ignored.
 
+Team defenses match by full team name ("Kansas City Chiefs") or, when the
+row has a `DEF` position and a team, by team abbreviation — so short names
+like "Chiefs D/ST" match too.
+
 The sample file is [test-data/example-rankings.csv](test-data/example-rankings.csv).
 
 ## API
