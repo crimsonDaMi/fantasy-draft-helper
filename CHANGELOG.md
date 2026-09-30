@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v1.4.1 — 2026-09-30
+
 ### Added
 
 - The draft status bar shows when injury statuses were last updated, e.g.
