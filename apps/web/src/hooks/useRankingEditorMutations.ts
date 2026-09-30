@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   useIsMutating,
   useMutation,
@@ -17,6 +17,14 @@ import {
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingDetailResponse } from "../types/api";
+
+/** Returned for a queued move that was skipped rather than saved. */
+const SKIPPED = Symbol("skipped");
+
+interface QueuedPlayerEdit {
+  kind: "move" | "remove";
+  variables: { sleeperId: string };
+}
 
 /** Every server mutation the ranking editor makes, each reconciling
  * exactly the queries it can affect once it settles. A failed save is
@@ -60,11 +68,50 @@ export function useRankingEditorMutations(
   // A refetch between two quick moves would return an order from before
   // the later one, and the page would briefly show it.
   const playerEditKey = ["ranking-player-edit", rankingId];
+  // The pending player edits in the order made, by their variables object
+  // (TanStack passes the same one to onMutate, mutationFn, and onSettled).
+  const queuedPlayerEdits = useRef<QueuedPlayerEdit[]>([]);
+
+  // Each move carries the player's absolute target, so a queued move
+  // directly followed by another move of the same player is superseded and
+  // skipped — holding Alt+↓ doesn't save every step. Only a direct
+  // successor counts: another player's edit in between was computed with
+  // this player at the in-between position.
+  function isSupersededMove(variables: object) {
+    const queue = queuedPlayerEdits.current;
+    const index = queue.findIndex((edit) => edit.variables === variables);
+    const next = queue[index + 1];
+    return (
+      index !== -1 &&
+      next?.kind === "move" &&
+      next.variables.sleeperId === queue[index].variables.sleeperId
+    );
+  }
+
+  function queuePlayerEdit(kind: QueuedPlayerEdit["kind"]) {
+    return (variables: QueuedPlayerEdit["variables"]) => {
+      queuedPlayerEdits.current.push({ kind, variables });
+    };
+  }
+
   const playerEditOptions = {
     mutationKey: playerEditKey,
     scope: { id: `ranking-player-edit:${rankingId}` },
     ...saveCallbacks,
-    onSettled: () => {
+    onSuccess: (result: unknown) => {
+      // A skipped move saved nothing, so it can't clear an earlier error.
+      if (result !== SKIPPED) {
+        saveCallbacks.onSuccess();
+      }
+    },
+    onSettled: (
+      _data: unknown,
+      _error: unknown,
+      variables: QueuedPlayerEdit["variables"],
+    ) => {
+      queuedPlayerEdits.current = queuedPlayerEdits.current.filter(
+        (edit) => edit.variables !== variables,
+      );
       // The settling edit still counts as pending.
       if (queryClient.isMutating({ mutationKey: playerEditKey }) <= 1) {
         settleQueries();
@@ -84,21 +131,25 @@ export function useRankingEditorMutations(
   }
 
   const moveMutation = useMutation({
-    mutationFn: ({
-      sleeperId,
-      rank,
-      tier,
-    }: {
+    mutationFn: async (variables: {
       sleeperId: string;
       rank: number;
       tier: string;
-    }) => moveRankingPlayer(rankingId!, sleeperId, rank, tier),
+    }) => {
+      if (isSupersededMove(variables)) {
+        return SKIPPED;
+      }
+      const { sleeperId, rank, tier } = variables;
+      return moveRankingPlayer(rankingId!, sleeperId, rank, tier);
+    },
+    onMutate: queuePlayerEdit("move"),
     ...playerEditOptions,
   });
 
   const removeMutation = useMutation({
     mutationFn: ({ sleeperId }: { sleeperId: string }) =>
       removeRankingPlayer(rankingId!, sleeperId),
+    onMutate: queuePlayerEdit("remove"),
     ...playerEditOptions,
   });
 

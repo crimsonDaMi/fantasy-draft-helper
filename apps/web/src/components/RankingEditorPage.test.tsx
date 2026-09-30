@@ -597,13 +597,15 @@ describe("RankingEditorPage", () => {
           .parentElement!;
 
       fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1),
+      );
       fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
 
       expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
       // The second move waits for the first to be saved.
-      await waitFor(() =>
-        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1),
-      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1);
       const fetchesBeforeSave = mocks.getRanking.mock.calls.length;
 
       // The server's order after only the first move.
@@ -650,6 +652,68 @@ describe("RankingEditorPage", () => {
         expect(mocks.getRanking).toHaveBeenCalledTimes(fetchesBeforeSave + 2),
       );
       expect(within(tierA()).getByText("Player One")).toBeInTheDocument();
+    });
+
+    it("skips a queued move that a later move of the same player replaces", async () => {
+      const saves: (() => void)[] = [];
+      mocks.moveRankingPlayer.mockImplementation(
+        () => new Promise((resolve) => saves.push(() => resolve({}))),
+      );
+      renderWithClient();
+      await screen.findByText("Player One");
+      row("Player One").focus();
+
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      // The first save is under way before the next presses.
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1),
+      );
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      const fetchesBeforeSave = mocks.getRanking.mock.calls.length;
+      saves[0]();
+
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(2),
+      );
+      saves[1]();
+
+      await waitFor(() =>
+        expect(mocks.getRanking).toHaveBeenCalledTimes(fetchesBeforeSave + 1),
+      );
+      expect(mocks.moveRankingPlayer.mock.calls).toEqual([
+        ["ranking-1", "1", 2, "S"],
+        ["ranking-1", "1", 3, "A"],
+      ]);
+    });
+
+    it("saves every queued move when another player's move is in between", async () => {
+      const saves: (() => void)[] = [];
+      mocks.moveRankingPlayer.mockImplementation(
+        () => new Promise((resolve) => saves.push(() => resolve({}))),
+      );
+      renderWithClient();
+      await screen.findByText("Player One");
+
+      // Another save is under way, so all three moves below are queued.
+      fireEvent.keyDown(row("Player Two"), { key: "ArrowDown", altKey: true });
+      await waitFor(() =>
+        expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(1),
+      );
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+      fireEvent.keyDown(row("Player Three"), { key: "ArrowUp", altKey: true });
+      fireEvent.keyDown(row("Player One"), { key: "ArrowDown", altKey: true });
+
+      for (const count of [1, 2, 3, 4]) {
+        await waitFor(() =>
+          expect(mocks.moveRankingPlayer).toHaveBeenCalledTimes(count),
+        );
+        saves[count - 1]();
+      }
+
+      expect(
+        mocks.moveRankingPlayer.mock.calls.map(([, sleeperId]) => sleeperId),
+      ).toEqual(["2", "1", "3", "1"]);
     });
 
     it("doesn't move the first player of the ranking up", async () => {

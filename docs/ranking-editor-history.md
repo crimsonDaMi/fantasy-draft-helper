@@ -139,6 +139,13 @@ row has commands that reuse the existing move path (`stepPlayer` /
   server sync is skipped while any is pending, as it is mid-drag. A
   refetch between two quick moves returns an order from before the later
   one; syncing to it made the player flicker back.
+- A queued move directly followed by another move of the same player is
+  skipped: each move carries an absolute target, so only the last one
+  matters, and holding Alt+↓ across 80 slots would otherwise save every
+  step before `#N` updates. Only a direct successor counts — another
+  player's move in between was computed with this player at the
+  in-between position. `#N` itself isn't recomputed locally, because the
+  server's rank also counts unmatched import rows.
 - React restores focus to a row it only _moves_ in the DOM, but not to one
   it re-creates. A server resync (e.g. another tab's edit) can put the
   player in a different tier, remounting the row. `DroppableContainer` therefore notes the focused player during
