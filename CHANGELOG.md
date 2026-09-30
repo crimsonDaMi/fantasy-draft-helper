@@ -7,6 +7,13 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Changed
+
+- ADP now matches the draft's league format. 1QB drafts show 1QB ADP
+  instead of Superflex ADP, and dynasty drafts show dynasty ADP. The
+  recommendations legend and the draft recap name the format used, e.g.
+  "1QB PPR" or "SF".
+
 ## v1.4.1 — 2026-09-30
 
 ### Added

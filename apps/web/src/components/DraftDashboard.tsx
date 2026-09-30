@@ -146,7 +146,11 @@ export function DraftDashboard() {
           </div>
           <div className="draft-board__main">
             {data.draftStatus === "COMPLETE" ? (
-              <DraftRecap draft={data.draft} myPicks={myPicks} />
+              <DraftRecap
+                draft={data.draft}
+                adpFormat={data.adpFormat}
+                myPicks={myPicks}
+              />
             ) : (
               <>
                 <div className="recommendation-filters">
@@ -176,6 +180,7 @@ export function DraftDashboard() {
                 )}
                 <RecommendationsList
                   recommendations={data.recommendations}
+                  adpFormat={data.adpFormat}
                   onFlagChange={(sleeperId, flag) =>
                     flagMutation.mutate({ sleeperId, flag })
                   }

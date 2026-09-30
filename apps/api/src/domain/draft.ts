@@ -27,6 +27,9 @@ export interface Draft {
   name?: string;
   /** Sleeper's draft type: `snake`, `linear`, or `auction`. */
   type?: string;
+  /** Sleeper's `metadata.scoring_type`, e.g. `ppr`, `half_ppr`, `2qb`,
+   * `dynasty_ppr`. */
+  scoringType?: string;
   teams?: number;
   rounds?: number;
   /** Third-round-reversal style: from this round on, snake order flips. */

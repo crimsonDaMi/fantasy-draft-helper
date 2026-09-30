@@ -1,8 +1,8 @@
 # Agent Instructions
 
-Self-hosted NFL fantasy draft helper for a Sleeper Superflex league. pnpm
-monorepo: Fastify/Node/SQLite API (`apps/api`) + React/Vite web app
-(`apps/web`). Single Docker image, published to GHCR; shared instances
+Self-hosted NFL fantasy draft helper for Sleeper leagues (1QB or
+Superflex). pnpm monorepo: Fastify/Node/SQLite API (`apps/api`) +
+React/Vite web app (`apps/web`). Single Docker image, published to GHCR; shared instances
 are deployed with `deploy/server/`.
 
 ## Read these first

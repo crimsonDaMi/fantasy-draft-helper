@@ -9,6 +9,7 @@ describe("RecommendationsList", () => {
   it("shows the position in its own badge, not in the meta line", () => {
     const { container } = render(
       <RecommendationsList
+        adpFormat="SF"
         recommendations={[
           {
             rank: 1,
@@ -46,6 +47,7 @@ describe("RecommendationsList", () => {
   it("reveals the legend on tap, without watch/avoid when flags are off", () => {
     render(
       <RecommendationsList
+        adpFormat="SF"
         recommendations={[
           {
             rank: 1,
@@ -70,6 +72,7 @@ describe("RecommendationsList", () => {
 
     expect(button).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText(/injured reserve/)).toBeInTheDocument();
+    expect(screen.getByText(/ADP is SF ADP/)).toBeInTheDocument();
     expect(screen.queryByText(/watch a player/)).not.toBeInTheDocument();
   });
 });

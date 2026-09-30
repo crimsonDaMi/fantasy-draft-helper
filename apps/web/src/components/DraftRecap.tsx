@@ -39,10 +39,12 @@ function Value({ diff }: { diff?: number }) {
 
 interface DraftRecapProps {
   draft: ApiDraftInfo;
+  /** ADP format of the ADP column, e.g. `1QB PPR`. */
+  adpFormat: string;
   myPicks: ApiDraftPick[];
 }
 
-export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
+export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
   const picks = [...myPicks].sort((a, b) => a.pickNo - b.pickNo);
   const { open, panelId, buttonProps } = useInfoTip();
 
@@ -70,7 +72,7 @@ export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
           player later than you ranked them (a steal); negative, earlier (a
           reach).
         </p>
-        <p>vs. ADP: the same, measured against ADP.</p>
+        <p>vs. ADP: the same, measured against {adpFormat} ADP.</p>
       </InfoTipPanel>
 
       {picks.length === 0 ? (
@@ -88,7 +90,7 @@ export function DraftRecap({ draft, myPicks }: DraftRecapProps) {
                   <th>Player</th>
                   <th>Your rank</th>
                   <th title="Pick number minus your rank">vs. rank</th>
-                  <th>ADP</th>
+                  <th>ADP ({adpFormat})</th>
                   <th title="Pick number minus ADP">vs. ADP</th>
                 </tr>
               </thead>

@@ -32,6 +32,8 @@ export interface PositionTierCounts {
 export interface RecommendationResult {
   recommendations: Recommendation[];
   draft: Draft;
+  /** Label of the ADP format used, e.g. `1QB PPR` or `SF`. */
+  adpFormat: string;
   picks: RankedDraftPick[];
   tierCounts: PositionTierCounts[];
   /** Available players hidden because they're flagged `avoid`. */

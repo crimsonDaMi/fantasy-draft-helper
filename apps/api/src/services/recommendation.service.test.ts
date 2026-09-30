@@ -19,6 +19,7 @@ describe("RecommendationService", () => {
       getDraftState: async () => ({
         draft: {
           status: "DRAFTING",
+          rosterSlots: {},
         },
         picks: [],
         draftedPlayerIds: new Set(["1"]),
@@ -92,6 +93,7 @@ describe("RecommendationService", () => {
       getDraftState: async () => ({
         draft: {
           status: "DRAFTING",
+          rosterSlots: {},
         },
         picks: [],
         draftedPlayerIds: new Set(),
@@ -157,6 +159,7 @@ describe("RecommendationService", () => {
       getDraftState: async () => ({
         draft: {
           status: "DRAFTING",
+          rosterSlots: {},
         },
         picks: [],
         draftedPlayerIds: new Set(),
@@ -239,6 +242,7 @@ describe("RecommendationService", () => {
       getDraftState: async () => ({
         draft: {
           status: "DRAFTING",
+          rosterSlots: {},
         },
         picks: [],
         draftedPlayerIds: new Set(),
@@ -307,6 +311,7 @@ describe("RecommendationService", () => {
       getDraftState: async () => ({
         draft: {
           status: "DRAFTING",
+          rosterSlots: {},
         },
         picks: [],
         draftedPlayerIds: new Set(["2"]),
@@ -373,7 +378,7 @@ describe("RecommendationService", () => {
   it("attaches ADP diff when the player is in the ADP snapshot", async () => {
     const draftStateService = {
       getDraftState: async () => ({
-        draft: { status: "DRAFTING" },
+        draft: { status: "DRAFTING", rosterSlots: {} },
         picks: [],
         draftedPlayerIds: new Set(),
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -427,7 +432,7 @@ describe("RecommendationService", () => {
   it("omits adp when the player is not in the ADP snapshot", async () => {
     const draftStateService = {
       getDraftState: async () => ({
-        draft: { status: "DRAFTING" },
+        draft: { status: "DRAFTING", rosterSlots: {} },
         picks: [],
         draftedPlayerIds: new Set(),
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -475,10 +480,53 @@ describe("RecommendationService", () => {
     expect(result.recommendations[0]?.adp).toBeUndefined();
   });
 
+  it.each([
+    [{ QB: 1, SUPER_FLEX: 1 }, "Redraft SF ADP", "SF"],
+    [{ QB: 1, FLEX: 2 }, "Redraft PPR ADP", "1QB PPR"],
+  ])(
+    "reads the ADP column matching the draft's lineup %o",
+    async (rosterSlots, column, label) => {
+      const draftStateService = {
+        getDraftState: async () => ({
+          draft: { status: "DRAFTING", rosterSlots, scoringType: "ppr" },
+          picks: [],
+          draftedPlayerIds: new Set(),
+          lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        }),
+      };
+
+      const requestedColumns: string[] = [];
+
+      const adpService = {
+        getSnapshot: async (requested: string) => {
+          requestedColumns.push(requested);
+          return new Map();
+        },
+      };
+
+      const service = new RecommendationService(
+        draftStateService as never,
+        { getFlags: () => ({}), getRankingMatches: () => [] } as never,
+        adpService as never,
+        noopPlayerService as never,
+      );
+
+      const result = await service.getRecommendations(
+        "draft-1",
+        "ranking-1",
+        TEST_USER_ID,
+        10,
+      );
+
+      expect(requestedColumns).toEqual([column]);
+      expect(result.adpFormat).toBe(label);
+    },
+  );
+
   it("filters by a name or team search before applying the limit", async () => {
     const draftStateService = {
       getDraftState: async () => ({
-        draft: { status: "DRAFTING" },
+        draft: { status: "DRAFTING", rosterSlots: {} },
         picks: [],
         draftedPlayerIds: new Set(),
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -536,7 +584,7 @@ describe("RecommendationService", () => {
   it("reports the live injury status of recommended players", async () => {
     const draftStateService = {
       getDraftState: async () => ({
-        draft: { status: "DRAFTING" },
+        draft: { status: "DRAFTING", rosterSlots: {} },
         picks: [],
         draftedPlayerIds: new Set(),
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -684,7 +732,7 @@ describe("RecommendationService", () => {
   it("hides avoided players unless asked, and marks flagged ones", async () => {
     const draftStateService = {
       getDraftState: async () => ({
-        draft: { status: "DRAFTING" },
+        draft: { status: "DRAFTING", rosterSlots: {} },
         picks: [],
         draftedPlayerIds: new Set(),
         lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),

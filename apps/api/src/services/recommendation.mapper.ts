@@ -31,6 +31,7 @@ export function mapRecommendationsResponse(
       budget: result.draft.budget,
       rosterSlots: result.draft.rosterSlots,
     },
+    adpFormat: result.adpFormat,
     picks: result.picks.map(mapPick),
     tierCounts: result.tierCounts,
     avoidedCount: result.avoidedCount,

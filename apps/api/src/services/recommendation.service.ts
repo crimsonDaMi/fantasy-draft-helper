@@ -4,6 +4,7 @@ import {
   Recommendation,
   RecommendationResult,
 } from "../domain/recommendation.js";
+import { adpFormatFor } from "../domain/adp-format.js";
 import { DraftPick } from "../domain/draft.js";
 import { FANTASY_POSITIONS } from "../domain/ranking.js";
 import { PlayerMatch } from "../domain/player-match.js";
@@ -120,7 +121,9 @@ export class RecommendationService {
       userId,
     );
 
-    const adpBySleeperId = await this.adpService.getSnapshot();
+    const adpFormat = adpFormatFor(draftState.draft);
+
+    const adpBySleeperId = await this.adpService.getSnapshot(adpFormat.column);
 
     const flags = this.rankingStoreService.getFlags(rankingId);
 
@@ -172,6 +175,7 @@ export class RecommendationService {
     return {
       recommendations,
       draft: draftState.draft,
+      adpFormat: adpFormat.label,
       picks,
       tierCounts: countRemainingByTier(available),
       avoidedCount: available.filter(isAvoided).length,

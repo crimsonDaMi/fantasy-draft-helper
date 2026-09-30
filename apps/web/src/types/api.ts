@@ -46,6 +46,8 @@ export interface RecommendationsResponse {
   recommendationCount: number;
   recommendations: ApiRecommendation[];
   draft: ApiDraftInfo;
+  /** ADP format matching the draft's league, e.g. `1QB PPR` or `SF`. */
+  adpFormat: string;
   picks: ApiDraftPick[];
   tierCounts: ApiPositionTierCounts[];
   /** Available players hidden because they're flagged `avoid`. */

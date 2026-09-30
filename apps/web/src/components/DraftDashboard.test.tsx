@@ -47,6 +47,7 @@ function recommendationsResponse(
     recommendationCount: 0,
     recommendations: [],
     draft: { type: "snake", teams: 4, rounds: 3, rosterSlots: { QB: 1 } },
+    adpFormat: "1QB PPR",
     picks: [],
     tierCounts: [],
     avoidedCount: 0,
@@ -342,6 +343,9 @@ describe("DraftDashboard", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
     expect(screen.getByText("-2")).toHaveClass("adp-diff--reach");
+    expect(
+      screen.getByRole("columnheader", { name: "ADP (1QB PPR)" }),
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText("Search available players")).toBeNull();
   });
 

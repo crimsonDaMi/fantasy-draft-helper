@@ -90,6 +90,7 @@ export function mapSleeperDraft(
 ): Draft {
   const settings = draft.settings ?? {};
   const name = draft.metadata?.name;
+  const scoringType = draft.metadata?.scoring_type;
 
   return {
     id: draft.draft_id,
@@ -100,6 +101,10 @@ export function mapSleeperDraft(
     startTime: draft.start_time,
     name: typeof name === "string" && name !== "" ? name : undefined,
     type: draft.type,
+    scoringType:
+      typeof scoringType === "string" && scoringType !== ""
+        ? scoringType
+        : undefined,
     teams: positiveInteger(settings.teams),
     rounds: positiveInteger(settings.rounds),
     reversalRound: positiveInteger(settings.reversal_round),

@@ -27,7 +27,8 @@ React web app -> Fastify API -> Sleeper API
 - A draft recap once the draft completes: your picks against your ranking
   and ADP, downloadable as a CSV.
 - ADP vs. personal ranking diff, sourced from Sleeper's publicly-shared ADP
-  sheet — see "ADP Data Source" below.
+  sheet in the draft's league format (1QB or Superflex, redraft or
+  dynasty). See "ADP Data Source" below.
 - Drag-and-drop ranking editor at `/rankings/edit`: reorder players, move
   them between tiers, add/remove tiers, search, build a ranking from
   scratch, and export it as a CSV.
@@ -289,7 +290,8 @@ are applied before `limit`.
 Besides the recommendations, the response carries what the draft-day
 panels need: `draft` (type, teams, rounds, reversal round, draft order,
 and lineup slots), `picks` (every pick made, each with the player's rank,
-tier, and ADP from your ranking when available), and `tierCounts`
+tier, and ADP when available), `adpFormat` (the ADP format used for the
+draft, e.g. `1QB PPR` or `SF` — see "ADP Data Source"), and `tierCounts`
 (players left in the best two remaining tiers of your ranking, per
 position — unaffected by `positions`, `q`, and `limit`).
 
@@ -386,10 +388,12 @@ This is a **soft dependency**, not a formal API contract:
 - If the sheet's format changes in a way the parser can't handle, ADP data
   is silently omitted from recommendations rather than breaking them —
   recommendations always work with or without ADP.
-- Currently reads the "Redraft SF ADP" column, matching this league's
-  Superflex scoring format. Change `ADP_COLUMN` in `adp.service.ts` if your
-  league uses a different format (e.g. `"Redraft PPR ADP"`,
-  `"Dynasty PPR ADP"`).
+- The column matches each draft's league format. A lineup with a
+  `SUPER_FLEX` slot or two QB slots reads Superflex ADP; any other lineup
+  reads 1QB ADP for the draft's scoring (PPR or half PPR). The sheet has no
+  standard-scoring column, so standard-scoring drafts use PPR ADP. Dynasty
+  drafts read the sheet's dynasty columns. The app labels ADP with the
+  format it uses, e.g. "1QB PPR" or "Dynasty SF".
 
 ## Player Cache Refresh Cooldown
 

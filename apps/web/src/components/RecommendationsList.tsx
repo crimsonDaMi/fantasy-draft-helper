@@ -7,6 +7,8 @@ import { PositionBadge } from "./PositionBadge";
 
 interface RecommendationsListProps {
   recommendations: ApiRecommendation[];
+  /** ADP format the badges compare against, e.g. `1QB PPR`. */
+  adpFormat: string;
   /** Omit to render the list without watch/avoid controls. */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
 }
@@ -54,6 +56,7 @@ function AdpBadge({ recommendation }: { recommendation: ApiRecommendation }) {
 
 export function RecommendationsList({
   recommendations,
+  adpFormat,
   onFlagChange,
 }: RecommendationsListProps) {
   const legend = useInfoTip();
@@ -116,6 +119,7 @@ export function RecommendationsList({
             draft the player later than your rank — likely still available
             later.
           </li>
+          <li>ADP is {adpFormat} ADP from Sleeper, matching this draft.</li>
           <li>
             Injury: Q questionable · D doubtful · O out · IR injured reserve
           </li>

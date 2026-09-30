@@ -67,7 +67,7 @@ describe("mapSleeperDraft", () => {
       sport: "nfl",
       season: "2026",
       type: "snake",
-      metadata: { name: "Test League" },
+      metadata: { name: "Test League", scoring_type: "dynasty_2qb" },
       draft_order: { "user-a": 1, "user-b": 2 },
       settings: {
         teams: 12,
@@ -86,6 +86,7 @@ describe("mapSleeperDraft", () => {
     expect(result).toMatchObject({
       name: "Test League",
       type: "snake",
+      scoringType: "dynasty_2qb",
       teams: 12,
       rounds: 16,
       reversalRound: 3,
