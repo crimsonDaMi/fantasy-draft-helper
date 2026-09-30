@@ -119,9 +119,9 @@ ranking is stored in order, so there is no sorting per request.
 The web app polls via TanStack Query (`useDraftRecommendations`): disabled
 without both IDs, ~30 s pre-draft, ~3 s while drafting
 (`VITE_POLLING_INTERVAL_MS`), stopped once complete or after a terminal
-error. The UI shows the last successful refresh time so Sleeper's pick
-propagation delay is visible rather than hidden (see
-[`known-issues.md`](known-issues.md)). No WebSockets.
+error. Sleeper's pick propagation delay is an accepted limitation (see
+[`known-issues.md`](known-issues.md)); the debug UI shows the last
+successful refresh time. No WebSockets.
 
 API contracts are documented in the root [`README.md`](../README.md#api);
 the database schema is the `CREATE TABLE` statements in

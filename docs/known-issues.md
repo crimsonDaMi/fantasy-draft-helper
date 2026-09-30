@@ -1,54 +1,24 @@
-# Known Issues and Evaluation Items
+# Known Limitations
 
-Open external limitations and unverified behavior, with the evidence still
-needed. Remove an item once it is resolved — git history and
-`CHANGELOG.md` keep the record.
+Accepted external limitations. Nothing here is under evaluation; an item is
+removed if it is ever resolved — git history and `CHANGELOG.md` keep the
+record.
 
-## Sleeper Draft Pick Propagation Delay
+## Sleeper Pick Propagation Delay
 
-### Observation
+Sleeper can expose a pick through its API several seconds after it appears
+in Sleeper's own draft screen (up to ~20 seconds in mock drafts with fast
+automated picks). Until then, the drafted player can still appear in the
+recommendations, and several picks can arrive in one refresh.
 
-Sleeper may take several seconds to expose a pick through its API after the pick appears in the Sleeper draft interface. Testing with mock drafts suggested delays of approximately 20 seconds in some cases, especially when automated drafters make rapid picks. This observation is not yet a representative measurement for live drafts.
-
-### Impact
-
-Recommendations are based on the latest picks returned by Sleeper. During a propagation delay, a recently drafted player may temporarily appear as available, and multiple picks may appear between refreshes.
-
-### Current Decision
-
-The application uses the state returned by Sleeper and does not infer picks or attempt to predict unavailable players. The frontend should display the last successful refresh time and an understandable freshness or delayed-data state. Polling more frequently than the active-draft interval is unlikely to solve an upstream propagation delay.
-
-### Evaluation Needed
-
-- Measure typical and worst-case delay during live and mock drafts.
-- Compare update timing from `/draft/{draft_id}` and `/draft/{draft_id}/picks`.
-- Check whether `last_picked` or other draft metadata provides earlier change detection.
-- Determine whether propagation differs between human and automated picks.
-- Validate whether the current polling intervals are appropriate.
-
-WebSockets, pick prediction, and server-side workarounds for this issue are out of scope.
-
-Status: open, as a documented upstream limitation. The live draft test (1-minute pick clock) did not show it as a practical problem.
-
-## Draft State Consistency
-
-This is the application-level consequence of Sleeper propagation delay. The recommendation calculation must remain deterministic for the pick set returned by Sleeper, while the UI should make freshness visible. A player that has not yet appeared in Sleeper's picks endpoint may remain in recommendations temporarily.
-
-Future evaluation may consider:
-
-- A visible "data may be delayed" indicator.
-- Detection of multiple newly returned picks.
-- Alternative Sleeper endpoints, if they are documented and demonstrably fresher.
+The app shows the state Sleeper returns: it doesn't infer or predict picks,
+and polling faster wouldn't help with a delay on Sleeper's side. A live
+draft with a 1-minute pick clock didn't show this as a practical problem.
 
 ## Injury Status Freshness
 
 Injury badges come from Sleeper's player dataset (`/players/nfl`), which the
-API loads on first use and refreshes once a day, as Sleeper's docs ask: the
-first request after the data turns 24 hours old starts a background refresh
-and is answered from the current data meanwhile. A status change within that
-day (e.g. a player ruled out the morning of the draft) is not reflected until
-the next refresh or an API restart. The draft status bar shows when the
-data was last loaded ("Injuries as of …").
-
-Status: accepted limitation. Stored rankings don't freeze the status at
-import time; it is always read from the current player cache.
+API refreshes once a day, as Sleeper's docs ask. A status change within that
+day (e.g. a player ruled out the morning of the draft) shows after the next
+refresh or an API restart. The draft status bar shows when the data was
+last loaded ("Injuries as of …").

@@ -47,8 +47,9 @@ rankings and roster optimization stay out of scope.
 
 ## Deferred ideas
 
-- **Sleeper pick propagation delay** tracked in
-  [`docs/known-issues.md`](docs/known-issues.md).
+None. Accepted external limitations (Sleeper's pick propagation delay,
+once-a-day injury data) are listed in
+[`docs/known-issues.md`](docs/known-issues.md).
 
 ## Declined refactors
 
