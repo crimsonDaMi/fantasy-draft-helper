@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Known limitations
+    url: https://github.com/crimsonDaMi/fantasy-draft-helper/blob/main/docs/known-issues.md
+    about: Accepted external limitations (Sleeper pick delay, injury data freshness) that aren't tracked as bugs.

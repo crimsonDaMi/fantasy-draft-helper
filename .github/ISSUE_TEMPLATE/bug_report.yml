@@ -1,0 +1,78 @@
+name: Bug report
+description: Something in the app doesn't work as it should.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [known limitations](https://github.com/crimsonDaMi/fantasy-draft-helper/blob/main/docs/known-issues.md) first:
+        Sleeper's delay in showing picks and once-a-day injury updates are accepted and not bugs.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, in 1–3 sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. 
+        2. 
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should have happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown next to the app name in the header, e.g. v1.4.1.
+      placeholder: v1.4.1
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Draft view
+        - Ranking editor
+        - Ranking import / export
+        - Login / accounts
+        - Installation / hosting
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Where it happened. Leave out what doesn't apply.
+      value: |
+        - Install: <local | self-hosted | online hosting | pnpm dev>
+        - Device / browser: <e.g. Android phone, Chrome 140>
+        - Draft: <snake | auction | mock; 1QB | Superflex; draft ID if you can share it>
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Error messages, API logs (`docker compose logs`), or screenshots. Remove passwords and tokens.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Filled in by maintainers when triaging.
+      value: |
+        - [ ] Fixed, with a test that fails without the fix
+        - [ ] CHANGELOG updated

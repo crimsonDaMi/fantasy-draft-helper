@@ -23,12 +23,13 @@ New feature work needs its scope confirmed with the user before starting.
 
 Features and bugs are tracked as GitHub issues
 (<https://github.com/crimsonDaMi/fantasy-draft-helper/issues>, via the
-`gh` CLI), never copied into `DEVELOPMENT_PLAN.md` or other docs. New ideas and found bugs become an
-issue, labelled `enhancement` or `bug` plus `priority: high|medium|low`;
-one that conflicts with the out-of-scope list also gets
-`needs-scope-decision`. A commit that implements an issue references it
-(`Closes #N`). `docs/known-issues.md` lists only accepted external
-limitations, not open bugs.
+`gh` CLI), never copied into `DEVELOPMENT_PLAN.md` or other docs. New
+ideas and found bugs become an issue following the feature or bug
+template's sections (`.github/ISSUE_TEMPLATE/`), labelled `enhancement`
+or `bug` plus `priority: high|medium|low`; one that conflicts with the
+out-of-scope list also gets `needs-scope-decision`. A commit that
+implements an issue references it (`Closes #N`). `docs/known-issues.md`
+lists only accepted external limitations, not open bugs.
 
 ## Working conventions
 

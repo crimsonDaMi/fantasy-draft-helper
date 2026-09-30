@@ -510,7 +510,8 @@ The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/COD
 ## Issues
 
 Bug reports and feature requests go to
-[GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues).
+[GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues/new/choose),
+using the bug report or feature request form.
 
 ## Support
 

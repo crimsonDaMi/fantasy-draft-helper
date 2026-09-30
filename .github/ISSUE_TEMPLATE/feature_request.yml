@@ -1,0 +1,64 @@
+name: Feature request
+description: Suggest something the app should do for drafters.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Features stay informational:
+        the app never reorders your ranking by scarcity or projections, suggests or makes picks, or acts on Sleeper for you (see the out-of-scope list in `DEVELOPMENT_PLAN.md`).
+        A request that conflicts with it is labelled `needs-scope-decision`.
+  - type: textarea
+    id: need
+    attributes:
+      label: Need
+      description: The drafter problem, in 1–3 sentences. What gets in your way on draft day or while preparing?
+      placeholder: Drafters switch tabs between picks and miss that their turn has come.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would see and do in the app.
+    validations:
+      required: true
+  - type: dropdown
+    id: formats
+    attributes:
+      label: Formats
+      description: Which league types benefit?
+      multiple: true
+      options:
+        - All
+        - 1QB
+        - Superflex
+        - Redraft
+        - Dynasty / rookie drafts
+        - Keeper
+        - Best ball
+        - Snake drafts
+        - Auction drafts
+        - Shared instances
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Fill in what you know and leave the rest; maintainers complete it when triaging.
+      value: |
+        - Demand: ?/5 · Complexity: ?/5
+        - Data: <source, e.g. Sleeper field or CSV column>
+        - Schema: <none | new table (no reset) | new column (major bump)>
+        - Scope: <ok | touches DEVELOPMENT_PLAN "Out of scope": …>
+        - Likely touch points: <files>
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: How we'll know it's done.
+      value: |
+        - [ ] 
+        - [ ] CHANGELOG and README updated
