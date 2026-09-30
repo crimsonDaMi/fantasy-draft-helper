@@ -43,9 +43,11 @@ Future evaluation may consider:
 ## Injury Status Freshness
 
 Injury badges come from Sleeper's player dataset (`/players/nfl`), which the
-API loads once and refreshes at most every 24 hours — as Sleeper's docs ask.
-A status change during that window (e.g. a player ruled out the morning of
-the draft) is not reflected until the next refresh or an API restart.
+API loads on first use and refreshes once a day, as Sleeper's docs ask: the
+first request after the data turns 24 hours old starts a background refresh
+and is answered from the current data meanwhile. A status change within that
+day (e.g. a player ruled out the morning of the draft) is not reflected until
+the next refresh or an API restart.
 
 Status: accepted limitation. Stored rankings don't freeze the status at
 import time; it is always read from the current player cache.

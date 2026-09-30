@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PlayerCache } from "../cache/player.cache.js";
 import { PlayerService, RefreshCooldownError } from "./player.service.js";
@@ -100,6 +100,110 @@ describe("PlayerService refresh cooldown", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("PlayerService automatic refresh", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  async function createLoadedService() {
+    const cache = new PlayerCache();
+    const service = new PlayerService({} as never, cache);
+    const refreshPlayers = vi
+      .spyOn(service, "refreshPlayers")
+      .mockImplementation(async () => {
+        cache.replace([
+          {
+            sleeperId: "1",
+            fullName: "Test Player",
+            active: true,
+            fantasyPositions: ["WR"],
+          },
+        ]);
+      });
+
+    await service.ensurePlayersLoaded();
+
+    refreshPlayers.mockClear();
+
+    return { cache, service, refreshPlayers };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("doesn't refresh a cache less than a day old", async () => {
+    const { service, refreshPlayers } = await createLoadedService();
+
+    vi.advanceTimersByTime(DAY_MS - 1);
+
+    await service.ensurePlayersLoaded();
+
+    expect(refreshPlayers).not.toHaveBeenCalled();
+  });
+
+  it("refreshes a day-old cache in the background, once", async () => {
+    const { cache, service, refreshPlayers } = await createLoadedService();
+
+    let resolveRefresh!: () => void;
+
+    refreshPlayers.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRefresh = () => {
+            cache.replace([]);
+            resolve();
+          };
+        }),
+    );
+
+    vi.advanceTimersByTime(DAY_MS);
+
+    // Returns without waiting for the pending refresh.
+    await service.ensurePlayersLoaded();
+    await service.ensurePlayersLoaded();
+
+    expect(refreshPlayers).toHaveBeenCalledTimes(1);
+
+    expect(service.getPlayerCount()).toBe(1);
+
+    resolveRefresh();
+
+    await vi.waitFor(() => expect(service.getPlayerCount()).toBe(0));
+  });
+
+  it("keeps the data after a failed refresh and retries an hour later", async () => {
+    const { service, refreshPlayers } = await createLoadedService();
+
+    refreshPlayers.mockRejectedValue(new Error("Sleeper unavailable"));
+
+    vi.advanceTimersByTime(DAY_MS);
+
+    await service.ensurePlayersLoaded();
+
+    await vi.waitFor(() => expect(refreshPlayers).toHaveBeenCalledTimes(1));
+
+    // Let the failed refresh settle before the next request.
+    await vi.advanceTimersByTimeAsync(0);
+
+    vi.advanceTimersByTime(60 * 60 * 1000 - 1);
+
+    await service.ensurePlayersLoaded();
+
+    expect(refreshPlayers).toHaveBeenCalledTimes(1);
+
+    expect(service.getPlayerCount()).toBe(1);
+
+    vi.advanceTimersByTime(1);
+
+    await service.ensurePlayersLoaded();
+
+    expect(refreshPlayers).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -9,6 +9,8 @@ See `RELEASING.md`.
 
 ### Fixed
 
+- Injury statuses stay current on a long-running instance: the player data
+  now refreshes once a day instead of only when the API restarts.
 - Team defenses listed by a short name, e.g. "Chiefs D/ST", now match
   Sleeper when the ranking row has a `DEF`/`DST` position and a team.
 

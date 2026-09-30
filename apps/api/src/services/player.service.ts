@@ -8,6 +8,10 @@ import { mapSleeperPlayer } from "./player.mapper.js";
 // than once per day." https://docs.sleeper.com/
 const REFRESH_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
+// How long to wait before retrying a failed automatic refresh, so draft
+// polling can't hammer Sleeper while it's down.
+const REFRESH_RETRY_MS = 60 * 60 * 1000;
+
 export class RefreshCooldownError extends Error {
   constructor(public readonly retryAfterMs: number) {
     super(
@@ -20,6 +24,10 @@ export class RefreshCooldownError extends Error {
 
 export class PlayerService {
   private playersLoadPromise?: Promise<void>;
+
+  private backgroundRefreshPromise?: Promise<void>;
+
+  private lastFailedRefreshAt?: number;
 
   constructor(
     private readonly sleeperClient: SleeperClient,
@@ -53,8 +61,12 @@ export class PlayerService {
     await this.refreshPlayers();
   }
 
+  /** Loads the cache when it's empty; once it's a day old, refreshes it in
+   * the background and keeps serving the current data meanwhile. */
   async ensurePlayersLoaded(): Promise<void> {
     if (this.playerCache.size > 0) {
+      this.refreshInBackgroundIfStale();
+
       return;
     }
 
@@ -67,6 +79,32 @@ export class PlayerService {
     } finally {
       this.playersLoadPromise = undefined;
     }
+  }
+
+  private refreshInBackgroundIfStale(): void {
+    const updatedAt = this.playerCache.updatedAt?.getTime() ?? 0;
+    const now = Date.now();
+
+    if (
+      this.backgroundRefreshPromise ||
+      now - updatedAt < REFRESH_COOLDOWN_MS ||
+      (this.lastFailedRefreshAt !== undefined &&
+        now - this.lastFailedRefreshAt < REFRESH_RETRY_MS)
+    ) {
+      return;
+    }
+
+    this.backgroundRefreshPromise = this.refreshPlayers()
+      .then(() => {
+        this.lastFailedRefreshAt = undefined;
+      })
+      .catch(() => {
+        // Keep the current data; retry after REFRESH_RETRY_MS.
+        this.lastFailedRefreshAt = Date.now();
+      })
+      .finally(() => {
+        this.backgroundRefreshPromise = undefined;
+      });
   }
 
   getPlayerById(sleeperId: string): Player | undefined {

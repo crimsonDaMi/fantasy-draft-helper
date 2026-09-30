@@ -406,6 +406,11 @@ cooldown applies globally to the shared player cache, not per-user — since
 player data is objectively the same for everyone, there's no reason for
 each person to have their own cooldown window.
 
+The API also refreshes the cache on its own: the first request after the
+data turns 24 hours old starts a background refresh and is answered from the
+current data meanwhile. If that refresh fails, the current data stays and the
+next attempt waits an hour.
+
 ## Authentication Setup
 
 Access is restricted to a hardcoded allowlist of usernames — proportionate
