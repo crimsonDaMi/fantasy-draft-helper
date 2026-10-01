@@ -203,6 +203,17 @@ export function findUserDrafts(
   return request(`/drafts?${params.toString()}`);
 }
 
+/** What the instance says about itself, for the privacy notice. */
+export interface InstanceInfo {
+  operator?: { name: string; contact: string; address?: string };
+  /** 0 means accounts are kept until their owner deletes them. */
+  accountRetentionDays: number;
+}
+
+export function getInstanceInfo(): Promise<InstanceInfo> {
+  return request("/instance", {}, { notifyOnUnauthorized: false });
+}
+
 export interface AuthUser {
   id: string;
   username: string;

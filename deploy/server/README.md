@@ -48,7 +48,13 @@ reach that port.
 
 Accounts unused for two years are deleted automatically, together with
 their rankings. Change this with `ACCOUNT_RETENTION_DAYS` (in days; `0`
-keeps accounts until their owners delete them). See "Authentication Setup" in the root
+keeps accounts until their owners delete them).
+
+For a public instance, also set `OPERATOR_NAME`, `OPERATOR_CONTACT` and
+optionally `OPERATOR_ADDRESS`, so the privacy notice at `/privacy` says who
+runs it (see "Privacy Notice" in the root [`README.md`](../../README.md#privacy-notice)).
+Request logs, which contain visitors' IP addresses, are limited to three
+10 MB files in `docker-compose.yml` and roll over on their own. See "Authentication Setup" in the root
 [`README.md`](../../README.md#authentication-setup).
 
 The app now listens on `127.0.0.1:3000` only — reachable from the machine

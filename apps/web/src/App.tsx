@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router";
 
 import { AccountPage } from "./components/AccountPage";
 import { DraftDashboard } from "./components/DraftDashboard";
+import { PrivacyPage } from "./components/PrivacyPage";
 import { RankingEditorPage } from "./components/RankingEditorPage";
 import { ThemeSelect } from "./components/ThemeSelect";
 import { LoginForm } from "./components/LoginForm";
@@ -22,11 +23,20 @@ function App() {
 
   if (!auth.user) {
     return (
-      <LoginForm
-        error={auth.error}
-        onLogin={auth.login}
-        onRegister={auth.register}
-      />
+      <Routes>
+        {/* Readable before registering, as GDPR expects. */}
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route
+          path="*"
+          element={
+            <LoginForm
+              error={auth.error}
+              onLogin={auth.login}
+              onRegister={auth.register}
+            />
+          }
+        />
+      </Routes>
     );
   }
 
@@ -75,6 +85,7 @@ function App() {
       <Routes>
         <Route path="/" element={<DraftDashboard />} />
         <Route path="/rankings/edit" element={<RankingEditorPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route
           path="/account"
           element={
@@ -85,6 +96,10 @@ function App() {
           }
         />
       </Routes>
+
+      <footer className="app-footer">
+        <NavLink to="/privacy">Privacy</NavLink>
+      </footer>
     </main>
   );
 }

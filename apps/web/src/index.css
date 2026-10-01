@@ -682,6 +682,39 @@ button {
   text-decoration: underline;
 }
 
+/* Privacy page */
+
+.privacy-page {
+  max-width: 680px;
+  margin: 32px auto;
+  padding: 0 16px;
+  line-height: 1.6;
+}
+
+.privacy-page h3 {
+  margin-top: 24px;
+}
+
+.privacy-page ul {
+  padding-left: 20px;
+}
+
+.privacy-page a,
+.login-panel a,
+.app-footer a {
+  color: var(--color-accent);
+}
+
+.privacy-page__back {
+  font-size: 14px;
+}
+
+.app-footer {
+  margin: 32px 0 16px;
+  text-align: center;
+  font-size: 13px;
+}
+
 /* Account page */
 
 .account-page {

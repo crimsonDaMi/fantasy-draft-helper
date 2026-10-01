@@ -10,6 +10,16 @@ services:
       - OPEN_REGISTRATION=${OPEN_REGISTRATION:-false}
       - TRUST_PROXY=${TRUST_PROXY:-}
       - ACCOUNT_RETENTION_DAYS=${ACCOUNT_RETENTION_DAYS:-}
+      - OPERATOR_NAME=${OPERATOR_NAME:-}
+      - OPERATOR_CONTACT=${OPERATOR_CONTACT:-}
+      - OPERATOR_ADDRESS=${OPERATOR_ADDRESS:-}
+    # Request logs contain visitors' IP addresses; the privacy notice says
+    # they are deleted as newer entries replace them.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
 volumes:

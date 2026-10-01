@@ -130,6 +130,7 @@ function createTestDependencies(): AppDependencies {
     sleeperClient,
     authService,
     accountService,
+    instanceInfo: { accountRetentionDays: 730 },
     adpService: noopAdpService as never,
     draftService,
     playerCache,
@@ -363,6 +364,29 @@ describe("inactive account purge", () => {
     await app.close();
     vi.advanceTimersByTime(DAY_MS);
     expect(purgeInactiveAccounts).toHaveBeenCalledTimes(2);
+
+    dependencies.rankingStoreService.close();
+  });
+});
+
+describe("instance info (end to end)", () => {
+  it("is public, so the privacy notice works before logging in", async () => {
+    const dependencies = {
+      ...createTestDependencies(),
+      instanceInfo: {
+        operator: { name: "Test Operator", contact: "privacy@example.com" },
+        accountRetentionDays: 365,
+      },
+    };
+    const app = await buildApp(dependencies);
+
+    const response = await app.inject({ method: "GET", url: "/instance" });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      operator: { name: "Test Operator", contact: "privacy@example.com" },
+      accountRetentionDays: 365,
+    });
 
     dependencies.rankingStoreService.close();
   });

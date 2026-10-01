@@ -23,7 +23,10 @@ See `RELEASING.md`.
 - Accounts not used for two years are deleted automatically with all of
   their rankings. Instances can change the period with
   `ACCOUNT_RETENTION_DAYS`, or turn it off with `0`.
-
+- A privacy notice, linked from the login screen and the footer, explains
+  what is stored, for how long, and who runs the instance. Operators set
+  their details with `OPERATOR_NAME`, `OPERATOR_CONTACT` and
+  `OPERATOR_ADDRESS`.
 - Public instances can allow anyone to register with
   `OPEN_REGISTRATION=true`. Each network address can create at most 5
   accounts per hour. Behind a reverse proxy, set `TRUST_PROXY` so that
@@ -33,6 +36,8 @@ See `RELEASING.md`.
 
 - Fonts are now served by the app itself instead of Google Fonts, so your
   browser no longer contacts Google.
+- The server setup keeps at most 30 MB of request logs, which contain
+  visitors' IP addresses.
 - New usernames must be 3–32 letters, digits, `_`, `.` or `-`, and new
   passwords at most 128 characters. Existing accounts log in as before.
 - Passwords are hashed with a stronger setting. Existing passwords keep

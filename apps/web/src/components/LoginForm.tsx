@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 import { ErrorMessage } from "./ErrorMessage";
 
 interface LoginFormProps {
@@ -89,6 +90,10 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
       )}
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
+
+      <Link to="/privacy" className="login-panel__hint">
+        Privacy notice
+      </Link>
     </div>
   );
 }

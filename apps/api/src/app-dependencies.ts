@@ -17,12 +17,14 @@ import { RankingEditorService } from "./services/ranking-editor.service.js";
 import { RankingImportService } from "./services/ranking-import.service.js";
 import { RankingStoreService } from "./services/ranking-store.service.js";
 import { RecommendationService } from "./services/recommendation.service.js";
+import { InstanceInfo, readInstanceInfo } from "./utils/instance-info.js";
 import { parseRetentionDays } from "./utils/retention-days.js";
 
 export interface AppDependencies {
   sleeperClient: SleeperClient;
   authService: AuthService;
   accountService: AccountService;
+  instanceInfo: InstanceInfo;
   adpService: AdpService;
   draftService: DraftService;
   playerCache: PlayerCache;
@@ -80,13 +82,19 @@ export function createAppDependencies(
 
   const rankingStoreService = new RankingStoreService(rankingRepository);
 
+  const accountRetentionDays = parseRetentionDays(
+    process.env.ACCOUNT_RETENTION_DAYS,
+  );
+
   const accountService = new AccountService(
     authService,
     userRepository,
     rankingRepository,
-    parseRetentionDays(process.env.ACCOUNT_RETENTION_DAYS),
+    accountRetentionDays,
     logger,
   );
+
+  const instanceInfo = readInstanceInfo(process.env, accountRetentionDays);
 
   const rankingEditorService = new RankingEditorService(
     rankingRepository,
@@ -104,6 +112,7 @@ export function createAppDependencies(
     sleeperClient,
     authService,
     accountService,
+    instanceInfo,
     adpService,
     draftService,
     playerCache,

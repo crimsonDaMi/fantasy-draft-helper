@@ -182,6 +182,17 @@ a Sleeper `404` (e.g. an unknown draft ID) stays `404`.
 GET /health
 ```
 
+### Instance info
+
+```text
+GET /instance
+```
+
+Public, so the privacy notice can show it before login:
+`{ "operator"?: { "name", "contact", "address"? }, "accountRetentionDays" }`.
+`operator` is left out unless `OPERATOR_NAME` and `OPERATOR_CONTACT` are both
+set (see "Privacy Notice" below).
+
 ### Import rankings
 
 ```text
@@ -472,6 +483,27 @@ than a whole number of days stops the API from starting.
 The database file itself isn't encrypted. Its key would have to sit on the
 same machine, so it would add little; encrypting the disk is left to the
 host, and most cloud providers do this by default.
+
+## Privacy Notice
+
+The app has a privacy notice at `/privacy`, linked from the login screen
+and the footer, and readable without an account. It lists what is stored
+and why, the server logs, browser storage, what goes to Sleeper, the
+retention period from `ACCOUNT_RETENTION_DAYS`, and users' rights. Visitors'
+browsers load nothing from other sites: the fonts are bundled with the app.
+
+The operator's identity is configuration, never part of the repository:
+
+```bash
+OPERATOR_NAME="Your Name"
+OPERATOR_CONTACT=privacy@example.com   # email address or https:// URL
+OPERATOR_ADDRESS="1 Example Street, 12345 Example City"   # optional
+```
+
+Without a name and contact, the notice says the operator hasn't provided
+their details. The wording is a starting point, not legal advice: whoever
+runs a public instance is responsible for checking it, and for anything
+else their country requires, e.g. a separate imprint (Impressum).
 
 Users and sessions live in the same database file as rankings by default. Set `AUTH_DATABASE_PATH` to use a
 different file for users/sessions specifically.
