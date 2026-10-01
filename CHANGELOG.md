@@ -7,7 +7,17 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Public instances can allow anyone to register with
+  `OPEN_REGISTRATION=true`. Each network address can create at most 5
+  accounts per hour. Behind a reverse proxy, set `TRUST_PROXY` so that
+  limit applies to the visitor's address instead of the proxy's.
+
 ### Changed
+
+- New usernames must be 3–32 letters, digits, `_`, `.` or `-`, and new
+  passwords at most 128 characters. Existing accounts log in as before.
 
 - ADP now matches the draft's league format. 1QB drafts show 1QB ADP
   instead of Superflex ADP, and dynasty drafts show dynasty ADP. The

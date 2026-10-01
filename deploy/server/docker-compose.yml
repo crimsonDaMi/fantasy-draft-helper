@@ -6,7 +6,9 @@ services:
     volumes:
       - draft-helper-data:/app/data
     environment:
-      - ALLOWED_USERNAMES=${ALLOWED_USERNAMES}
+      - ALLOWED_USERNAMES=${ALLOWED_USERNAMES:-}
+      - OPEN_REGISTRATION=${OPEN_REGISTRATION:-false}
+      - TRUST_PROXY=${TRUST_PROXY:-}
     restart: unless-stopped
 
 volumes:

@@ -63,6 +63,10 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
           onChange={(event) => setUsername(event.target.value)}
           placeholder="Username"
           autoComplete="username"
+          {...(mode === "register" && {
+            pattern: "[A-Za-z0-9_.\\-]{3,32}",
+            title: "3–32 letters, digits, _, . or -",
+          })}
         />
         <input
           type="password"
@@ -70,6 +74,7 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Password"
           autoComplete={mode === "login" ? "current-password" : "new-password"}
+          {...(mode === "register" && { minLength: 8, maxLength: 128 })}
         />
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "..." : mode === "login" ? "Log in" : "Register"}
@@ -78,7 +83,8 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
 
       {mode === "register" && (
         <p className="login-panel__hint">
-          Registration only works for usernames on the league allowlist.
+          Usernames are 3–32 letters, digits, _, . or -; passwords at least 8
+          characters. League instances only accept usernames on their allowlist.
         </p>
       )}
 

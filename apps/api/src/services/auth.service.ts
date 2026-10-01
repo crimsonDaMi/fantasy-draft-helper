@@ -8,6 +8,8 @@ import {
 
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_REGISTRATIONS_PER_IP = 5;
+const REGISTRATION_WINDOW_MS = 60 * 60 * 1000;
 
 interface Session {
   user: User;
@@ -31,17 +33,33 @@ export class AuthService {
     { count: number; windowStartedAt: number }
   >();
 
+  // Accounts created per client IP, kept in memory like failed logins.
+  // Keyed by IP because a new username can be invented for every signup;
+  // behind a proxy this needs TRUST_PROXY so the IP is the client's.
+  private readonly registrations = new Map<
+    string,
+    { count: number; windowStartedAt: number }
+  >();
+
   constructor(
     private readonly repository: UserRepository,
     allowedUsernames: string[] = [],
+    private readonly openRegistration = false,
   ) {
     this.allowedUsernames = new Set(allowedUsernames.map(normalizeUsername));
   }
 
-  async register(username: string, password: string): Promise<Session> {
+  async register(
+    username: string,
+    password: string,
+    clientIp: string,
+  ): Promise<Session> {
     const normalizedUsername = normalizeUsername(username);
 
-    if (!this.allowedUsernames.has(normalizedUsername)) {
+    if (
+      !this.openRegistration &&
+      !this.allowedUsernames.has(normalizedUsername)
+    ) {
       throw new ForbiddenError(
         "This username is not on the league allowlist.",
         "NOT_ALLOWLISTED",
@@ -55,7 +73,16 @@ export class AuthService {
       );
     }
 
+    if (this.hasReachedRegistrationLimit(clientIp)) {
+      throw new TooManyRequestsError(
+        `Too many accounts created from this network. Try again in ${REGISTRATION_WINDOW_MS / 60_000} minutes.`,
+        "TOO_MANY_REGISTRATIONS",
+      );
+    }
+
     const user = await this.repository.createUser(normalizedUsername, password);
+
+    this.recordRegistration(clientIp);
 
     return { user, ...this.repository.createSession(user.id) };
   }
@@ -125,6 +152,37 @@ export class AuthService {
         count: 1,
         windowStartedAt: Date.now(),
       });
+    }
+  }
+
+  private hasReachedRegistrationLimit(clientIp: string): boolean {
+    const entry = this.registrations.get(clientIp);
+
+    return (
+      entry !== undefined &&
+      Date.now() - entry.windowStartedAt < REGISTRATION_WINDOW_MS &&
+      entry.count >= MAX_REGISTRATIONS_PER_IP
+    );
+  }
+
+  private recordRegistration(clientIp: string): void {
+    const now = Date.now();
+
+    // Expired windows are swept here rather than on lookup, so IPs that
+    // never come back don't accumulate. Signups are rare enough that a
+    // full pass is cheap.
+    for (const [ip, entry] of this.registrations) {
+      if (now - entry.windowStartedAt >= REGISTRATION_WINDOW_MS) {
+        this.registrations.delete(ip);
+      }
+    }
+
+    const entry = this.registrations.get(clientIp);
+
+    if (entry) {
+      entry.count += 1;
+    } else {
+      this.registrations.set(clientIp, { count: 1, windowStartedAt: now });
     }
   }
 }

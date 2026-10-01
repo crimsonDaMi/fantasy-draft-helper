@@ -33,6 +33,20 @@ case-insensitively):
 ALLOWED_USERNAMES=alice,bob,carol
 ```
 
+For a public instance that anyone can sign up to, use this instead:
+
+```
+OPEN_REGISTRATION=true
+TRUST_PROXY=loopback,uniquelocal
+```
+
+`TRUST_PROXY` lets the per-IP signup limit (5 accounts per hour) see each
+visitor's address rather than your reverse proxy's. Docker forwards
+`127.0.0.1:3000` into the container from a private bridge address, which
+`uniquelocal` covers. That is safe here because only the machine itself can
+reach that port. See "Authentication Setup" in the root
+[`README.md`](../../README.md#authentication-setup).
+
 The app now listens on `127.0.0.1:3000` only — reachable from the machine
 itself, not the network. `docker compose ps` shows `healthy` once it is up.
 

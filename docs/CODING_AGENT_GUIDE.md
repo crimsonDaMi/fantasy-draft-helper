@@ -11,7 +11,7 @@ row to a Sleeper player ID once, persists the result, and — while a Sleeper
 draft runs — shows the highest-ranked players not yet drafted. It also
 provides a drag-and-drop ranking editor (see
 [`ranking-editor-history.md`](ranking-editor-history.md)), per-user
-accounts behind an allowlist, and an ADP comparison.
+accounts behind an allowlist or open registration, and an ADP comparison.
 
 ## Technology
 

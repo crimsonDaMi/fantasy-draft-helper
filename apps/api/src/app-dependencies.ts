@@ -44,6 +44,7 @@ export function createAppDependencies(
   const authService = new AuthService(
     new UserRepository(process.env.AUTH_DATABASE_PATH),
     allowedUsernames,
+    process.env.OPEN_REGISTRATION === "true",
   );
 
   const adpClient = new AdpClient();

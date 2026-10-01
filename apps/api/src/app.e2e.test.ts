@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildApp } from "./app.js";
 import { AppDependencies } from "./app-dependencies.js";
@@ -311,6 +311,57 @@ describe("error responses (end to end)", () => {
     });
 
     dependencies.rankingStoreService.close();
+  });
+
+  describe("registration throttle behind a proxy", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    function registerFrom(
+      app: Awaited<ReturnType<typeof buildApp>>,
+      clientIp: string,
+      username: string,
+    ) {
+      return app.inject({
+        method: "POST",
+        url: "/auth/register",
+        headers: { "x-forwarded-for": clientIp },
+        payload: { username, password: "correct horse battery" },
+      });
+    }
+
+    it("returns 429 per forwarded client IP once TRUST_PROXY is set", async () => {
+      vi.stubEnv("TRUST_PROXY", "loopback");
+      const dependencies = {
+        ...createTestDependencies(),
+        authService: new AuthService(new UserRepository(":memory:"), [], true),
+      };
+      const app = await buildApp(dependencies);
+
+      for (let index = 0; index < 5; index += 1) {
+        const response = await registerFrom(
+          app,
+          "203.0.113.7",
+          `testuser${index}`,
+        );
+        expect(response.statusCode).toBe(200);
+      }
+
+      const throttled = await registerFrom(app, "203.0.113.7", "testuser5");
+
+      expect(throttled.statusCode).toBe(429);
+      expect(throttled.json()).toEqual({
+        error: "TOO_MANY_REGISTRATIONS",
+        message: expect.any(String),
+      });
+
+      const otherClient = await registerFrom(app, "203.0.113.8", "testuser5");
+
+      expect(otherClient.statusCode).toBe(200);
+
+      dependencies.rankingStoreService.close();
+    });
   });
 
   it("returns 4xx with a { error, message } body for invalid tier edits", async () => {

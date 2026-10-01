@@ -12,7 +12,7 @@ import {
 } from "../utils/domain-errors.js";
 
 function createTestApp(authService: {
-  register: (username: string, password: string) => unknown;
+  register: (username: string, password: string, clientIp: string) => unknown;
   login: (username: string, password: string) => unknown;
   logout: (token: string) => void;
   getUserForSession: (token: string) => unknown;
@@ -127,6 +127,110 @@ describe("auth routes", () => {
       error: "USERNAME_TAKEN",
       message: "taken",
     });
+
+    await app.close();
+  });
+
+  it.each([
+    ["a too-short username", { username: "ab", password: "correct horse" }],
+    [
+      "a username with spaces inside",
+      { username: "test user", password: "correct horse" },
+    ],
+    [
+      "a too-long password",
+      { username: "testuser", password: "x".repeat(129) },
+    ],
+  ])("returns 400 on register for %s", async (_case, payload) => {
+    const authService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: () => {
+        throw new Error("not used");
+      },
+      logout: () => {},
+      getUserForSession: () => undefined,
+    };
+
+    const app = createTestApp(authService);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/auth/register",
+      payload,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: "VALIDATION_ERROR" });
+
+    await app.close();
+  });
+
+  it("passes the trimmed username and the client IP to register", async () => {
+    let registerArgs: unknown[] = [];
+    const authService = {
+      register: (...args: unknown[]) => {
+        registerArgs = args;
+        return {
+          user: { id: "1", username: "testuser" },
+          token: "test-token",
+          expiresAt: "2030-01-01T00:00:00.000Z",
+        };
+      },
+      login: () => {
+        throw new Error("not used");
+      },
+      logout: () => {},
+      getUserForSession: () => undefined,
+    };
+
+    const app = createTestApp(authService);
+
+    await app.inject({
+      method: "POST",
+      url: "/auth/register",
+      remoteAddress: "192.0.2.1",
+      payload: { username: " testuser ", password: "correct horse battery" },
+    });
+
+    expect(registerArgs).toEqual([
+      "testuser",
+      "correct horse battery",
+      "192.0.2.1",
+    ]);
+
+    await app.close();
+  });
+
+  it("still logs in usernames that predate the registration limits", async () => {
+    let loginUsername: unknown;
+    const authService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: (username: string) => {
+        loginUsername = username;
+        return {
+          user: { id: "1", username },
+          token: "test-token",
+          expiresAt: "2030-01-01T00:00:00.000Z",
+        };
+      },
+      logout: () => {},
+      getUserForSession: () => undefined,
+    };
+
+    const app = createTestApp(authService);
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/auth/login",
+      payload: { username: "a", password: "correct horse battery" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(loginUsername).toBe("a");
 
     await app.close();
   });

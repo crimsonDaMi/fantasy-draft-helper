@@ -36,8 +36,8 @@ React web app -> Fastify API -> Sleeper API
   with rename and delete.
 - Watch (★) or avoid (⊘) players per ranking: watched players are
   highlighted, avoided ones hidden from recommendations until shown again.
-- Username/password authentication with a username allowlist; rankings are
-  scoped per user.
+- Username/password authentication with a username allowlist or open
+  registration; rankings are scoped per user.
 - Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
 - Switchable team-inspired color themes.
 
@@ -253,7 +253,9 @@ GET  /auth/me
 
 `register` and `login` accept JSON `{ "username": "string", "password": "string" }`
 and set an `httpOnly` session cookie on success. `register` only succeeds for
-usernames on the server's allowlist (see "Authentication Setup" below).
+usernames on the server's allowlist unless open registration is enabled,
+and limits how many accounts one client IP can create (see "Authentication
+Setup" below).
 `logout` clears the session. `GET /auth/me` returns the current user, or
 `401` if not logged in.
 
@@ -427,6 +429,20 @@ ALLOWED_USERNAMES=alice,bob pnpm --filter @fantasy-draft-helper/api dev
 
 Usernames are matched case-insensitively. Only usernames on this list can
 successfully call `POST /auth/register`; anyone else gets a `403`.
+
+For a public instance, set `OPEN_REGISTRATION=true` instead. Anyone can then
+register and `ALLOWED_USERNAMES` is ignored. Either way, one client IP can
+create at most 5 accounts per hour (`429` after that). New usernames must
+be 3–32 letters, digits, `_`, `.` or `-`, and passwords 8–128 characters.
+Login still accepts usernames created before these limits existed.
+
+Behind a reverse proxy, every request comes from the proxy's address, so
+the per-IP limit would apply to all visitors together. Set `TRUST_PROXY` to
+the proxy's address so the API reads the client IP from `X-Forwarded-For`.
+It takes a comma-separated list of IPs, CIDRs, or the named ranges
+`loopback` and `uniquelocal`, or `true` to trust any sender. Only list
+addresses that nothing but your proxy can connect from: a trusted sender
+can claim any client IP. Hop counts like `1` have no effect.
 
 Passwords are hashed with Node's built-in `scrypt` (no external hashing
 dependency) and never stored in plaintext. Sessions are opaque tokens

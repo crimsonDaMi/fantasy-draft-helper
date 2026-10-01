@@ -9,6 +9,16 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
+// Stricter than login, which still has to accept accounts created before
+// these limits existed.
+const registrationSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_.-]{3,32}$/),
+  password: z.string().min(8).max(128),
+});
+
 const isProduction = process.env.NODE_ENV === "production";
 
 function setSessionCookie(
@@ -30,11 +40,12 @@ function setSessionCookie(
 export function createAuthRoutes(authService: AuthService) {
   return async function authRoutes(app: FastifyInstance) {
     app.post("/auth/register", async (request, reply) => {
-      const { username, password } = credentialsSchema.parse(request.body);
+      const { username, password } = registrationSchema.parse(request.body);
 
       const { user, token, expiresAt } = await authService.register(
         username,
         password,
+        request.ip,
       );
 
       setSessionCookie(reply, token, expiresAt);

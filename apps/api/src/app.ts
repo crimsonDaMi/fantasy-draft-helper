@@ -17,6 +17,7 @@ import { createRankingsRoutes } from "./routes/rankings.routes.js";
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
 import { loginRequired, SESSION_COOKIE } from "./utils/require-user.js";
 import { isSpaClientRoute } from "./utils/spa-client-routes.js";
+import { parseTrustProxy } from "./utils/trust-proxy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +38,7 @@ const API_PREFIXES = ["/health", "/auth", ...PROTECTED_PREFIXES];
 export async function buildApp(injectedDependencies?: AppDependencies) {
   const app = Fastify({
     logger: true,
+    trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   });
 
   // Created after the Fastify instance so services can log through its
