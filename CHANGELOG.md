@@ -31,6 +31,8 @@ See `RELEASING.md`.
 
 ### Changed
 
+- Fonts are now served by the app itself instead of Google Fonts, so your
+  browser no longer contacts Google.
 - New usernames must be 3–32 letters, digits, `_`, `.` or `-`, and new
   passwords at most 128 characters. Existing accounts log in as before.
 - Passwords are hashed with a stronger setting. Existing passwords keep
