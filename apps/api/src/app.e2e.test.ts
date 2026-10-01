@@ -4,6 +4,7 @@ import { buildApp } from "./app.js";
 import { AppDependencies } from "./app-dependencies.js";
 import { PlayerCache } from "./cache/player.cache.js";
 import { SleeperClient } from "./clients/sleeper.client.js";
+import { AccountService } from "./services/account.service.js";
 import { AuthService } from "./services/auth.service.js";
 import { DraftService } from "./services/draft.service.js";
 import { DraftStateService } from "./services/draft-state.service.js";
@@ -26,6 +27,7 @@ import {
 // Keeps password hashing fast; production uses the OWASP cost.
 const FAST_SCRYPT_COST = { log2N: 10, r: 8, p: 1 };
 const DAY_MS = 24 * 60 * 60 * 1000;
+const silentLogger = { info: () => {} } as never;
 
 function createFixtureClient() {
   return {
@@ -93,11 +95,20 @@ function createTestDependencies(): AppDependencies {
   const draftService = new DraftService(sleeperClient);
   const draftStateService = new DraftStateService(draftService, playerService);
 
-  const authService = new AuthService(
-    new UserRepository(":memory:", FAST_SCRYPT_COST),
-    ["alice", "bob", "testuser"],
-  );
+  const userRepository = new UserRepository(":memory:", FAST_SCRYPT_COST);
+  const authService = new AuthService(userRepository, [
+    "alice",
+    "bob",
+    "testuser",
+  ]);
   const rankingRepository = new RankingRepository(":memory:");
+  const accountService = new AccountService(
+    authService,
+    userRepository,
+    rankingRepository,
+    730,
+    silentLogger,
+  );
   const rankingStoreService = new RankingStoreService(rankingRepository);
   const rankingEditorService = new RankingEditorService(
     rankingRepository,
@@ -118,6 +129,7 @@ function createTestDependencies(): AppDependencies {
   return {
     sleeperClient,
     authService,
+    accountService,
     adpService: noopAdpService as never,
     draftService,
     playerCache,
@@ -320,6 +332,37 @@ describe("session renewal (end to end)", () => {
     expect(renewed?.expires?.getTime()).toBeGreaterThan(
       Date.now() + SESSION_TTL_MS - 60_000,
     );
+
+    dependencies.rankingStoreService.close();
+  });
+});
+
+describe("inactive account purge", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("runs once the app is ready and then once a day, until closed", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const purgeInactiveAccounts = vi.fn(() => 0);
+    const dependencies = {
+      ...createTestDependencies(),
+      accountService: {
+        purgesInactiveAccounts: true,
+        purgeInactiveAccounts,
+      } as never,
+    };
+    const app = await buildApp(dependencies);
+
+    await app.ready();
+    expect(purgeInactiveAccounts).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(DAY_MS);
+    expect(purgeInactiveAccounts).toHaveBeenCalledTimes(2);
+
+    await app.close();
+    vi.advanceTimersByTime(DAY_MS);
+    expect(purgeInactiveAccounts).toHaveBeenCalledTimes(2);
 
     dependencies.rankingStoreService.close();
   });

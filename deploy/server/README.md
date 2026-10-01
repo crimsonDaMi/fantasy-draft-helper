@@ -44,7 +44,11 @@ TRUST_PROXY=loopback,uniquelocal
 visitor's address rather than your reverse proxy's. Docker forwards
 `127.0.0.1:3000` into the container from a private bridge address, which
 `uniquelocal` covers. That is safe here because only the machine itself can
-reach that port. See "Authentication Setup" in the root
+reach that port.
+
+Accounts unused for two years are deleted automatically, together with
+their rankings. Change this with `ACCOUNT_RETENTION_DAYS` (in days; `0`
+keeps accounts until their owners delete them). See "Authentication Setup" in the root
 [`README.md`](../../README.md#authentication-setup).
 
 The app now listens on `127.0.0.1:3000` only — reachable from the machine

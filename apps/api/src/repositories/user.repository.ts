@@ -98,7 +98,10 @@ const USER_SCHEMA = `
     username TEXT NOT NULL UNIQUE,
     password_salt TEXT NOT NULL,
     password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    -- Registration, login, or a session renewal (at most daily). Accounts
+    -- unused for longer than the retention period are deleted.
+    last_active_at TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS sessions (
@@ -141,10 +144,10 @@ export class UserRepository {
 
     this.database
       .prepare(
-        `INSERT INTO users (id, username, password_salt, password_hash, created_at)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO users (id, username, password_salt, password_hash, created_at, last_active_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
       )
-      .run(id, username, salt, hash, createdAt);
+      .run(id, username, salt, hash, createdAt, createdAt);
 
     return { id, username };
   }
@@ -231,6 +234,8 @@ export class UserRepository {
         expiresAt.toISOString(),
       );
 
+    this.markActive(userId, createdAt);
+
     return {
       token,
       expiresAt: expiresAt.toISOString(),
@@ -281,6 +286,8 @@ export class UserRepository {
       .prepare(`UPDATE sessions SET expires_at = ? WHERE token = ?`)
       .run(renewedExpiresAtIso, tokenHash);
 
+    this.markActive(user.id, new Date(now));
+
     return { user, renewedExpiresAt: renewedExpiresAtIso };
   }
 
@@ -288,6 +295,21 @@ export class UserRepository {
     this.database
       .prepare(`DELETE FROM sessions WHERE token = ?`)
       .run(hashSessionToken(token));
+  }
+
+  /** Deletes the user; their sessions go with them (FK cascade). Their
+   * rankings live in another repository and must be deleted first. */
+  deleteUser(userId: string): void {
+    this.database.prepare(`DELETE FROM users WHERE id = ?`).run(userId);
+  }
+
+  /** Users whose last activity is older than `cutoff`. */
+  listInactiveUserIds(cutoff: Date): string[] {
+    const rows = this.database
+      .prepare(`SELECT id FROM users WHERE last_active_at < ?`)
+      .all(cutoff.toISOString()) as unknown as { id: string }[];
+
+    return rows.map((row) => row.id);
   }
 
   deleteExpiredSessions(): void {
@@ -298,6 +320,12 @@ export class UserRepository {
 
   close(): void {
     this.database.close();
+  }
+
+  private markActive(userId: string, at: Date): void {
+    this.database
+      .prepare(`UPDATE users SET last_active_at = ? WHERE id = ?`)
+      .run(at.toISOString(), userId);
   }
 
   private async updatePasswordHash(

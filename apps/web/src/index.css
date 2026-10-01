@@ -673,6 +673,67 @@ button {
 .app-header__user {
   font-size: 13px;
   color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.app-header__user:hover,
+.app-header__user.active {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* Account page */
+
+.account-page {
+  max-width: 420px;
+  margin: 32px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.account-page__section h3 {
+  margin: 0;
+}
+
+.account-page__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.account-page input {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.account-page__delete {
+  background: none;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-page__delete:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .app-header__version {

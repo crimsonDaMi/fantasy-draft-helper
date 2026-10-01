@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { AuthUser } from "../api/fantasy-api";
 import {
+  deleteAccount as apiDeleteAccount,
   getCurrentUser,
   onUnauthorized,
   login as apiLogin,
@@ -16,6 +17,8 @@ interface UseAuthResult {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Rejects (leaving the user logged in) if the password is wrong. */
+  deleteAccount: (password: string) => Promise<void>;
 }
 
 export function useAuth(): UseAuthResult {
@@ -73,5 +76,10 @@ export function useAuth(): UseAuthResult {
     setUser(undefined);
   }, []);
 
-  return { user, isLoading, error, login, register, logout };
+  const deleteAccount = useCallback(async (password: string) => {
+    await apiDeleteAccount(password);
+    setUser(undefined);
+  }, []);
+
+  return { user, isLoading, error, login, register, logout, deleteAccount };
 }

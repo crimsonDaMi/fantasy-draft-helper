@@ -289,6 +289,12 @@ export class RankingRepository {
     }
   }
 
+  /** Deletes all of a user's rankings with their players, tiers, and
+   * flags (FK cascade), for account deletion. */
+  deleteAllForUser(userId: string): void {
+    this.database.prepare(`DELETE FROM rankings WHERE user_id = ?`).run(userId);
+  }
+
   close(): void {
     this.database.close();
   }

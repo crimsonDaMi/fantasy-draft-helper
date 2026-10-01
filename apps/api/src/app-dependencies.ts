@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from "fastify";
 
 import { AdpClient } from "./clients/adp.client.js";
+import { AccountService } from "./services/account.service.js";
 import { AuthService } from "./services/auth.service.js";
 import { PlayerCache } from "./cache/player.cache.js";
 import { SleeperClient } from "./clients/sleeper.client.js";
@@ -16,10 +17,12 @@ import { RankingEditorService } from "./services/ranking-editor.service.js";
 import { RankingImportService } from "./services/ranking-import.service.js";
 import { RankingStoreService } from "./services/ranking-store.service.js";
 import { RecommendationService } from "./services/recommendation.service.js";
+import { parseRetentionDays } from "./utils/retention-days.js";
 
 export interface AppDependencies {
   sleeperClient: SleeperClient;
   authService: AuthService;
+  accountService: AccountService;
   adpService: AdpService;
   draftService: DraftService;
   playerCache: PlayerCache;
@@ -41,8 +44,10 @@ export function createAppDependencies(
     .map((name) => name.trim())
     .filter(Boolean);
 
+  const userRepository = new UserRepository(process.env.AUTH_DATABASE_PATH);
+
   const authService = new AuthService(
-    new UserRepository(process.env.AUTH_DATABASE_PATH),
+    userRepository,
     allowedUsernames,
     process.env.OPEN_REGISTRATION === "true",
   );
@@ -75,6 +80,14 @@ export function createAppDependencies(
 
   const rankingStoreService = new RankingStoreService(rankingRepository);
 
+  const accountService = new AccountService(
+    authService,
+    userRepository,
+    rankingRepository,
+    parseRetentionDays(process.env.ACCOUNT_RETENTION_DAYS),
+    logger,
+  );
+
   const rankingEditorService = new RankingEditorService(
     rankingRepository,
     playerService,
@@ -90,6 +103,7 @@ export function createAppDependencies(
   return {
     sleeperClient,
     authService,
+    accountService,
     adpService,
     draftService,
     playerCache,

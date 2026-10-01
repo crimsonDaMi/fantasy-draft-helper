@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import fastifyStatic from "@fastify/static";
@@ -28,6 +28,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { version: APP_VERSION } = JSON.parse(
   readFileSync(path.join(__dirname, "../../../package.json"), "utf-8"),
 ) as { version: string };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Largest accepted ranking CSV upload.
 const MAX_CSV_UPLOAD_BYTES = 1024 * 1024;
@@ -78,7 +80,11 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
     };
   });
 
-  await app.register(createAuthRoutes(dependencies.authService));
+  await app.register(
+    createAuthRoutes(dependencies.authService, dependencies.accountService),
+  );
+
+  scheduleInactiveAccountPurge(app, dependencies);
 
   app.decorateRequest("user", undefined);
 
@@ -153,4 +159,34 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
   });
 
   return app;
+}
+
+/** Deletes inactive accounts once the app is ready, then once a day. */
+function scheduleInactiveAccountPurge(
+  app: FastifyInstance,
+  { accountService }: AppDependencies,
+): void {
+  if (!accountService.purgesInactiveAccounts) {
+    return;
+  }
+
+  let timer: NodeJS.Timeout | undefined;
+
+  const purge = () => {
+    try {
+      accountService.purgeInactiveAccounts();
+    } catch (error) {
+      app.log.error(error, "Failed to delete inactive accounts");
+    }
+  };
+
+  app.addHook("onReady", async () => {
+    purge();
+    // unref: a pending purge never keeps the process alive on shutdown.
+    timer = setInterval(purge, DAY_MS).unref();
+  });
+
+  app.addHook("onClose", async () => {
+    clearInterval(timer);
+  });
 }

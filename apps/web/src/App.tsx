@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes } from "react-router";
 
+import { AccountPage } from "./components/AccountPage";
 import { DraftDashboard } from "./components/DraftDashboard";
 import { RankingEditorPage } from "./components/RankingEditorPage";
 import { ThemeSelect } from "./components/ThemeSelect";
@@ -45,7 +46,13 @@ function App() {
             </a>
             <span className="app-header__version">v{__APP_VERSION__}</span>
             <ThemeSelect themeId={theme} onChange={setTheme} />
-            <span className="app-header__user">{auth.user.username}</span>
+            <NavLink
+              to="/account"
+              className="app-header__user"
+              title="Account settings"
+            >
+              {auth.user.username}
+            </NavLink>
             <button
               type="button"
               className="header-button"
@@ -68,6 +75,15 @@ function App() {
       <Routes>
         <Route path="/" element={<DraftDashboard />} />
         <Route path="/rankings/edit" element={<RankingEditorPage />} />
+        <Route
+          path="/account"
+          element={
+            <AccountPage
+              username={auth.user.username}
+              onDeleteAccount={auth.deleteAccount}
+            />
+          }
+        />
       </Routes>
     </main>
   );

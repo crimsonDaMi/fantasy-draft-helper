@@ -9,10 +9,20 @@ See `RELEASING.md`.
 
 ### Upgrading
 
-- Everyone is logged out once after updating, because sessions are now
-  stored differently. Logging in again is enough; no data is lost.
+- **This release changes the database schema, so existing data can't be
+  kept.** Before updating, ask everyone to download each ranking they want
+  to keep with "Export CSV". Then run `docker compose down -v` and
+  `docker compose up -d`. Everyone registers again and re-imports their
+  CSV files.
 
 ### Added
+
+- Delete your account: the new Account page (click your username in the
+  header) deletes your account and all of your rankings after you enter
+  your password.
+- Accounts not used for two years are deleted automatically with all of
+  their rankings. Instances can change the period with
+  `ACCOUNT_RETENTION_DAYS`, or turn it off with `0`.
 
 - Public instances can allow anyone to register with
   `OPEN_REGISTRATION=true`. Each network address can create at most 5

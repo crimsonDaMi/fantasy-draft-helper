@@ -9,6 +9,7 @@ services:
       - ALLOWED_USERNAMES=${ALLOWED_USERNAMES:-}
       - OPEN_REGISTRATION=${OPEN_REGISTRATION:-false}
       - TRUST_PROXY=${TRUST_PROXY:-}
+      - ACCOUNT_RETENTION_DAYS=${ACCOUNT_RETENTION_DAYS:-}
     restart: unless-stopped
 
 volumes:

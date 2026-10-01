@@ -11,17 +11,26 @@ import {
   UnauthorizedError,
 } from "../utils/domain-errors.js";
 
-function createTestApp(authService: {
-  register: (username: string, password: string, clientIp: string) => unknown;
-  login: (username: string, password: string) => unknown;
-  logout: (token: string) => void;
-  getUserForSession: (token: string) => unknown;
-}) {
+function createTestApp(
+  authService: {
+    register: (username: string, password: string, clientIp: string) => unknown;
+    login: (username: string, password: string) => unknown;
+    logout: (token: string) => void;
+    getUserForSession: (token: string) => unknown;
+  },
+  accountService: {
+    deleteAccount: (user: unknown, password: string) => unknown;
+  } = {
+    deleteAccount: () => {
+      throw new Error("not used");
+    },
+  },
+) {
   const app = Fastify();
 
   app.register(cookie);
 
-  app.register(createAuthRoutes(authService as never));
+  app.register(createAuthRoutes(authService as never, accountService as never));
 
   app.setErrorHandler(errorHandler);
 
@@ -458,5 +467,86 @@ describe("auth routes", () => {
     expect(clearedCookie?.value).toBe("");
 
     await app.close();
+  });
+
+  describe("DELETE /auth/account", () => {
+    const loggedInAuthService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: () => {
+        throw new Error("not used");
+      },
+      logout: () => {},
+      getUserForSession: (token: string) =>
+        token === "valid-token"
+          ? { user: { id: "1", username: "testuser" } }
+          : undefined,
+    };
+
+    it("deletes the account with the password and clears the cookie", async () => {
+      let deleteArgs: unknown[] = [];
+      const app = createTestApp(loggedInAuthService, {
+        deleteAccount: (...args: unknown[]) => {
+          deleteArgs = args;
+        },
+      });
+
+      const response = await app.inject({
+        method: "DELETE",
+        url: "/auth/account",
+        cookies: { session: "valid-token" },
+        payload: { password: "correct horse battery" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ deleted: true });
+      expect(deleteArgs).toEqual([
+        { id: "1", username: "testuser" },
+        "correct horse battery",
+      ]);
+      const sessionCookie = response.cookies.find((c) => c.name === "session");
+      expect(sessionCookie?.value).toBe("");
+
+      await app.close();
+    });
+
+    it("returns 403 and keeps the cookie for a wrong password", async () => {
+      const app = createTestApp(loggedInAuthService, {
+        deleteAccount: () => {
+          throw new ForbiddenError("Incorrect password.", "INVALID_PASSWORD");
+        },
+      });
+
+      const response = await app.inject({
+        method: "DELETE",
+        url: "/auth/account",
+        cookies: { session: "valid-token" },
+        payload: { password: "wrong password" },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual({
+        error: "INVALID_PASSWORD",
+        message: "Incorrect password.",
+      });
+      expect(response.cookies).toEqual([]);
+
+      await app.close();
+    });
+
+    it("returns 401 without a session", async () => {
+      const app = createTestApp(loggedInAuthService);
+
+      const response = await app.inject({
+        method: "DELETE",
+        url: "/auth/account",
+        payload: { password: "correct horse battery" },
+      });
+
+      expect(response.statusCode).toBe(401);
+
+      await app.close();
+    });
   });
 });

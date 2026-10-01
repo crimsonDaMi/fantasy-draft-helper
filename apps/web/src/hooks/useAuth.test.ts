@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth } from "./useAuth";
 
 const mocks = vi.hoisted(() => ({
+  deleteAccount: vi.fn(),
   getCurrentUser: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../api/fantasy-api", () => ({
+  deleteAccount: mocks.deleteAccount,
   getCurrentUser: mocks.getCurrentUser,
   login: mocks.login,
   logout: mocks.logout,
@@ -59,5 +61,30 @@ describe("useAuth session-expiry handling", () => {
     renderHook(() => useAuth());
 
     await waitFor(() => expect(mocks.onUnauthorized).toHaveBeenCalledTimes(1));
+  });
+
+  it("logs out after the account is deleted", async () => {
+    mocks.deleteAccount.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.user).toBeDefined());
+
+    await act(() => result.current.deleteAccount("correct horse battery"));
+
+    expect(mocks.deleteAccount).toHaveBeenCalledWith("correct horse battery");
+    expect(result.current.user).toBeUndefined();
+  });
+
+  it("stays logged in when deleting fails", async () => {
+    mocks.deleteAccount.mockRejectedValue(new Error("Incorrect password."));
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.user).toBeDefined());
+
+    await act(() =>
+      expect(result.current.deleteAccount("wrong")).rejects.toThrow(
+        "Incorrect password.",
+      ),
+    );
+
+    expect(result.current.user).toEqual({ id: "1", username: "alice" });
   });
 });

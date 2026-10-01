@@ -92,6 +92,42 @@ export class AuthService {
   }
 
   async login(username: string, password: string): Promise<Session> {
+    const user = await this.checkCredentials(username, password);
+
+    return { user, ...this.repository.createSession(user.id) };
+  }
+
+  /** Re-checks a logged-in user's password before a destructive action.
+   * Shares the login lockout, so it can't be used to guess passwords. */
+  async confirmPassword(user: User, password: string): Promise<void> {
+    try {
+      await this.checkCredentials(user.username, password);
+    } catch (error) {
+      // 403, not 401: the user is logged in, and the web app treats any
+      // 401 as an expired session.
+      if (error instanceof UnauthorizedError) {
+        throw new ForbiddenError("Incorrect password.", "INVALID_PASSWORD");
+      }
+      throw error;
+    }
+  }
+
+  logout(token: string): void {
+    this.repository.deleteSession(token);
+  }
+
+  getUserForSession(token: string): SessionLookup | undefined {
+    return this.repository.getSession(token);
+  }
+
+  close(): void {
+    this.repository.close();
+  }
+
+  private async checkCredentials(
+    username: string,
+    password: string,
+  ): Promise<User> {
     const normalizedUsername = normalizeUsername(username);
 
     if (this.isLockedOut(normalizedUsername)) {
@@ -116,19 +152,7 @@ export class AuthService {
 
     this.failedLogins.delete(normalizedUsername);
 
-    return { user, ...this.repository.createSession(user.id) };
-  }
-
-  logout(token: string): void {
-    this.repository.deleteSession(token);
-  }
-
-  getUserForSession(token: string): SessionLookup | undefined {
-    return this.repository.getSession(token);
-  }
-
-  close(): void {
-    this.repository.close();
+    return user;
   }
 
   private isLockedOut(username: string): boolean {

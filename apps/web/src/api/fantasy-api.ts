@@ -233,6 +233,15 @@ export function login(username: string, password: string): Promise<AuthUser> {
   return postCredentials("/auth/login", username, password);
 }
 
+/** Permanently deletes the logged-in user's account and all of its
+ * rankings. Rejects with a 403 for a wrong password. */
+export async function deleteAccount(password: string): Promise<void> {
+  await request("/auth/account", {
+    method: "DELETE",
+    ...jsonBody({ password }),
+  });
+}
+
 /** Best effort: the response status is ignored, since the user is logged
  * out locally either way and an expired session is already gone. */
 export async function logout(): Promise<void> {

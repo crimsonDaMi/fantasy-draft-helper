@@ -249,6 +249,7 @@ POST /auth/register
 POST /auth/login
 POST /auth/logout
 GET  /auth/me
+DELETE /auth/account
 ```
 
 `register` and `login` accept JSON `{ "username": "string", "password": "string" }`
@@ -257,7 +258,9 @@ usernames on the server's allowlist unless open registration is enabled,
 and limits how many accounts one client IP can create (see "Authentication
 Setup" below).
 `logout` clears the session. `GET /auth/me` returns the current user, or
-`401` if not logged in.
+`401` if not logged in. `DELETE /auth/account` takes `{ "password": "string" }`
+and permanently deletes the logged-in user with all of their rankings
+(`403` for a wrong password, which counts toward the login lockout).
 
 All other API routes (`/rankings`, `/drafts`, `/players`) require a valid
 session cookie; `/health` and `/auth/*` remain open.
@@ -453,6 +456,18 @@ server only stores a SHA-256 of each token, so a leaked database or backup
 contains no usable sessions. A session expires after 30 days without use and
 at most 90 days after login; using it moves its expiry forward (at most once
 a day) and renews the cookie.
+
+Accounts are deleted together with everything tied to them: their
+sessions, rankings, tiers, players, and watch/avoid flags. Users delete
+their own account from the Account page (click your username in the
+header), after entering their password again. Accounts not used for
+`ACCOUNT_RETENTION_DAYS` days are deleted the same way. The default is 730,
+about two seasons, so skipping one season doesn't cost anyone their
+rankings. The check runs at startup and once a day. Registering, logging
+in, and using the app all count as use; ongoing use is recorded at most
+once a day. Set `ACCOUNT_RETENTION_DAYS=0` to keep accounts until their
+owner deletes them, e.g. on a private league instance. Any value other
+than a whole number of days stops the API from starting.
 
 The database file itself isn't encrypted. Its key would have to sit on the
 same machine, so it would add little; encrypting the disk is left to the

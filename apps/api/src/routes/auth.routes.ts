@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
+import { AccountService } from "../services/account.service.js";
 import { AuthService } from "../services/auth.service.js";
 import {
   loginRequired,
@@ -23,7 +24,14 @@ const registrationSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
-export function createAuthRoutes(authService: AuthService) {
+const deleteAccountSchema = z.object({
+  password: z.string().min(1),
+});
+
+export function createAuthRoutes(
+  authService: AuthService,
+  accountService: AccountService,
+) {
   return async function authRoutes(app: FastifyInstance) {
     app.post("/auth/register", async (request, reply) => {
       const { username, password } = registrationSchema.parse(request.body);
@@ -77,6 +85,23 @@ export function createAuthRoutes(authService: AuthService) {
       }
 
       return { user: session.user };
+    });
+
+    app.delete("/auth/account", async (request, reply) => {
+      const token = request.cookies[SESSION_COOKIE];
+      const session = token ? authService.getUserForSession(token) : undefined;
+
+      if (!session) {
+        throw loginRequired();
+      }
+
+      const { password } = deleteAccountSchema.parse(request.body);
+
+      await accountService.deleteAccount(session.user, password);
+
+      reply.clearCookie(SESSION_COOKIE, { path: "/" });
+
+      return { deleted: true };
     });
   };
 }
