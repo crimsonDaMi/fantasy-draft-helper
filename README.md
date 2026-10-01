@@ -445,8 +445,18 @@ addresses that nothing but your proxy can connect from: a trusted sender
 can claim any client IP. Hop counts like `1` have no effect.
 
 Passwords are hashed with Node's built-in `scrypt` (no external hashing
-dependency) and never stored in plaintext. Sessions are opaque tokens
-stored server-side, carried via an `httpOnly` cookie, valid for 30 days.
+dependency) at OWASP's minimum cost (N=2^17, r=8, p=1, 128 MiB per hash),
+with a random salt per user. The cost is stored with each hash, so older,
+cheaper hashes keep working and are upgraded on the user's next login.
+Sessions are opaque random tokens carried via an `httpOnly` cookie. The
+server only stores a SHA-256 of each token, so a leaked database or backup
+contains no usable sessions. A session expires after 30 days without use and
+at most 90 days after login; using it moves its expiry forward (at most once
+a day) and renews the cookie.
+
+The database file itself isn't encrypted. Its key would have to sit on the
+same machine, so it would add little; encrypting the disk is left to the
+host, and most cloud providers do this by default.
 
 Users and sessions live in the same database file as rankings by default. Set `AUTH_DATABASE_PATH` to use a
 different file for users/sessions specifically.

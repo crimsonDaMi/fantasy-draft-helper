@@ -3,11 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthService } from "./auth.service.js";
 import { UserRepository } from "../repositories/user.repository.js";
 
+// Keeps password hashing fast; production uses the OWASP cost.
+const FAST_SCRYPT_COST = { log2N: 10, r: 8, p: 1 };
+
 const PASSWORD = "correct horse battery";
 const CLIENT_IP = "192.0.2.1";
 
 async function createServiceWithUser() {
-  const service = new AuthService(new UserRepository(":memory:"), ["testuser"]);
+  const service = new AuthService(
+    new UserRepository(":memory:", FAST_SCRYPT_COST),
+    ["testuser"],
+  );
 
   await service.register("testuser", PASSWORD, CLIENT_IP);
 
@@ -82,9 +88,10 @@ describe("AuthService login lockout", () => {
 
 describe("AuthService register", () => {
   it("rejects a username that isn't on the allowlist", async () => {
-    const service = new AuthService(new UserRepository(":memory:"), [
-      "testuser",
-    ]);
+    const service = new AuthService(
+      new UserRepository(":memory:", FAST_SCRYPT_COST),
+      ["testuser"],
+    );
 
     await expect(
       service.register("someone", PASSWORD, CLIENT_IP),
@@ -102,7 +109,11 @@ describe("AuthService register", () => {
   });
 
   it("accepts any username with open registration", async () => {
-    const service = new AuthService(new UserRepository(":memory:"), [], true);
+    const service = new AuthService(
+      new UserRepository(":memory:", FAST_SCRYPT_COST),
+      [],
+      true,
+    );
 
     await expect(
       service.register("someone", PASSWORD, CLIENT_IP),
@@ -122,7 +133,11 @@ describe("AuthService registration throttle", () => {
   }
 
   function createOpenService() {
-    return new AuthService(new UserRepository(":memory:"), [], true);
+    return new AuthService(
+      new UserRepository(":memory:", FAST_SCRYPT_COST),
+      [],
+      true,
+    );
   }
 
   it("rejects a sixth account from the same IP within an hour", async () => {

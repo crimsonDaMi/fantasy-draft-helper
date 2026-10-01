@@ -15,7 +15,11 @@ import { errorHandler } from "./utils/error-handler.js";
 import { createRankingEditorRoutes } from "./routes/ranking-editor.routes.js";
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
 import { createRecommendationsRoutes } from "./routes/recommendations.routes.js";
-import { loginRequired, SESSION_COOKIE } from "./utils/require-user.js";
+import {
+  loginRequired,
+  SESSION_COOKIE,
+  setSessionCookie,
+} from "./utils/require-user.js";
 import { isSpaClientRoute } from "./utils/spa-client-routes.js";
 import { parseTrustProxy } from "./utils/trust-proxy.js";
 
@@ -92,15 +96,19 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
     }
 
     const token = request.cookies[SESSION_COOKIE];
-    const user = token
+    const session = token
       ? dependencies.authService.getUserForSession(token)
       : undefined;
 
-    if (!user) {
+    if (!token || !session) {
       throw loginRequired();
     }
 
-    request.user = user;
+    if (session.renewedExpiresAt) {
+      setSessionCookie(reply, token, session.renewedExpiresAt);
+    }
+
+    request.user = session.user;
   });
 
   await app.register(

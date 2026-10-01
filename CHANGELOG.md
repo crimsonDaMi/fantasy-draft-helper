@@ -7,6 +7,11 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Upgrading
+
+- Everyone is logged out once after updating, because sessions are now
+  stored differently. Logging in again is enough; no data is lost.
+
 ### Added
 
 - Public instances can allow anyone to register with
@@ -18,7 +23,11 @@ See `RELEASING.md`.
 
 - New usernames must be 3–32 letters, digits, `_`, `.` or `-`, and new
   passwords at most 128 characters. Existing accounts log in as before.
-
+- Passwords are hashed with a stronger setting. Existing passwords keep
+  working and are upgraded on the next login. Logging in and registering
+  take a fraction of a second longer.
+- Staying logged in: a session now lasts 30 days from its last use instead
+  of 30 days from login, up to 90 days in total.
 - ADP now matches the draft's league format. 1QB drafts show 1QB ADP
   instead of Superflex ADP, and dynasty drafts show dynasty ADP. The
   recommendations legend and the draft recap name the format used, e.g.

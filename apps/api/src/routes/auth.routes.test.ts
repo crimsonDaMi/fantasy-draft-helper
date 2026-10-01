@@ -346,7 +346,9 @@ describe("auth routes", () => {
       },
       logout: () => {},
       getUserForSession: (token: string) =>
-        token === "valid-token" ? { id: "1", username: "testuser" } : undefined,
+        token === "valid-token"
+          ? { user: { id: "1", username: "testuser" } }
+          : undefined,
     };
 
     const app = createTestApp(authService);
@@ -361,6 +363,41 @@ describe("auth routes", () => {
     expect(response.json()).toEqual({
       user: { id: "1", username: "testuser" },
     });
+    expect(response.cookies).toEqual([]);
+
+    await app.close();
+  });
+
+  it("renews the session cookie when the session was extended", async () => {
+    const authService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: () => {
+        throw new Error("not used");
+      },
+      logout: () => {},
+      getUserForSession: () => ({
+        user: { id: "1", username: "testuser" },
+        renewedExpiresAt: "2030-02-01T00:00:00.000Z",
+      }),
+    };
+
+    const app = createTestApp(authService);
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/auth/me",
+      cookies: { session: "valid-token" },
+    });
+
+    const sessionCookie = response.cookies.find((c) => c.name === "session");
+
+    expect(sessionCookie?.value).toBe("valid-token");
+    expect(sessionCookie?.httpOnly).toBe(true);
+    expect(sessionCookie?.expires).toEqual(
+      new Date("2030-02-01T00:00:00.000Z"),
+    );
 
     await app.close();
   });

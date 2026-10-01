@@ -1,4 +1,8 @@
-import { User, UserRepository } from "../repositories/user.repository.js";
+import {
+  SessionLookup,
+  User,
+  UserRepository,
+} from "../repositories/user.repository.js";
 import {
   ConflictError,
   ForbiddenError,
@@ -119,7 +123,7 @@ export class AuthService {
     this.repository.deleteSession(token);
   }
 
-  getUserForSession(token: string): User | undefined {
+  getUserForSession(token: string): SessionLookup | undefined {
     return this.repository.getSession(token);
   }
 

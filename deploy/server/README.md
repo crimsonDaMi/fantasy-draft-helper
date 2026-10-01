@@ -100,7 +100,8 @@ docker compose up -d
   Docker volume. There is no automated backup — copy the volume's contents
   elsewhere periodically if losing it would hurt. Each user can also
   download their ranking via "Export CSV" in the ranking editor and
-  re-import it later.
+  re-import it later. Backups contain usernames and password hashes, so
+  keep them somewhere private.
 - **Schema changes require a volume drop.** No migration system exists (a
   deliberate choice), so a schema change is a major version bump (see
   [`RELEASING.md`](../../RELEASING.md)), and its release notes say so. If a

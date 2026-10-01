@@ -18,7 +18,14 @@ import type {
   SleeperPlayersResponse,
   SleeperUser,
 } from "./types/sleeper.js";
-import { UserRepository } from "./repositories/user.repository.js";
+import {
+  SESSION_TTL_MS,
+  UserRepository,
+} from "./repositories/user.repository.js";
+
+// Keeps password hashing fast; production uses the OWASP cost.
+const FAST_SCRYPT_COST = { log2N: 10, r: 8, p: 1 };
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function createFixtureClient() {
   return {
@@ -86,11 +93,10 @@ function createTestDependencies(): AppDependencies {
   const draftService = new DraftService(sleeperClient);
   const draftStateService = new DraftStateService(draftService, playerService);
 
-  const authService = new AuthService(new UserRepository(":memory:"), [
-    "alice",
-    "bob",
-    "testuser",
-  ]);
+  const authService = new AuthService(
+    new UserRepository(":memory:", FAST_SCRYPT_COST),
+    ["alice", "bob", "testuser"],
+  );
   const rankingRepository = new RankingRepository(":memory:");
   const rankingStoreService = new RankingStoreService(rankingRepository);
   const rankingEditorService = new RankingEditorService(
@@ -290,6 +296,35 @@ describe("multi-user isolation (end to end)", () => {
   });
 });
 
+describe("session renewal (end to end)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("renews the session cookie from a protected route once a day has passed", async () => {
+    const dependencies = createTestDependencies();
+    const app = await buildApp(dependencies);
+    const alice = await registerUser(app, "alice");
+
+    vi.useFakeTimers({ now: Date.now() + 2 * DAY_MS, toFake: ["Date"] });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/rankings",
+      headers: { cookie: alice.cookie },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const renewed = response.cookies.find((c) => c.name === "session");
+    expect(`session=${renewed?.value}`).toBe(alice.cookie);
+    expect(renewed?.expires?.getTime()).toBeGreaterThan(
+      Date.now() + SESSION_TTL_MS - 60_000,
+    );
+
+    dependencies.rankingStoreService.close();
+  });
+});
+
 describe("error responses (end to end)", () => {
   // Guards the handler registration order in buildApp: a handler set
   // after the route plugins load never reaches them, and a ZodError
@@ -335,7 +370,11 @@ describe("error responses (end to end)", () => {
       vi.stubEnv("TRUST_PROXY", "loopback");
       const dependencies = {
         ...createTestDependencies(),
-        authService: new AuthService(new UserRepository(":memory:"), [], true),
+        authService: new AuthService(
+          new UserRepository(":memory:", FAST_SCRYPT_COST),
+          [],
+          true,
+        ),
       };
       const app = await buildApp(dependencies);
 

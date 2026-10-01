@@ -1,8 +1,12 @@
-import { FastifyInstance, FastifyReply } from "fastify";
+import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { AuthService } from "../services/auth.service.js";
-import { loginRequired, SESSION_COOKIE } from "../utils/require-user.js";
+import {
+  loginRequired,
+  SESSION_COOKIE,
+  setSessionCookie,
+} from "../utils/require-user.js";
 
 const credentialsSchema = z.object({
   username: z.string().min(1),
@@ -18,24 +22,6 @@ const registrationSchema = z.object({
     .regex(/^[A-Za-z0-9_.-]{3,32}$/),
   password: z.string().min(8).max(128),
 });
-
-const isProduction = process.env.NODE_ENV === "production";
-
-function setSessionCookie(
-  reply: FastifyReply,
-  token: string,
-  expiresAt: string,
-): void {
-  reply.setCookie(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: isProduction,
-    path: "/",
-    // Matches the server-side session expiry, so the cookie survives a
-    // browser restart for as long as the session itself is valid.
-    expires: new Date(expiresAt),
-  });
-}
 
 export function createAuthRoutes(authService: AuthService) {
   return async function authRoutes(app: FastifyInstance) {
@@ -78,15 +64,19 @@ export function createAuthRoutes(authService: AuthService) {
       return { loggedOut: true };
     });
 
-    app.get("/auth/me", async (request) => {
+    app.get("/auth/me", async (request, reply) => {
       const token = request.cookies[SESSION_COOKIE];
-      const user = token ? authService.getUserForSession(token) : undefined;
+      const session = token ? authService.getUserForSession(token) : undefined;
 
-      if (!user) {
+      if (!token || !session) {
         throw loginRequired();
       }
 
-      return { user };
+      if (session.renewedExpiresAt) {
+        setSessionCookie(reply, token, session.renewedExpiresAt);
+      }
+
+      return { user: session.user };
     });
   };
 }
