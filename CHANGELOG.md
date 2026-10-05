@@ -7,6 +7,13 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Announcements: operators can show a message, e.g. planned downtime, in a
+  banner on every page by writing it to `announcement.txt` in the data
+  volume, without a restart. Users can dismiss it until the message
+  changes. See "Planned maintenance" in `deploy/server/README.md`.
+
 ## v2.0.0 — 2026-10-01
 
 ### Upgrading

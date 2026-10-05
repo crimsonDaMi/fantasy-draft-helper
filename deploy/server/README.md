@@ -77,6 +77,30 @@ Put something in front of `127.0.0.1:3000` that terminates HTTPS:
 Either way the app itself needs no configuration for this. Keep the public
 URL out of the repository; share it with your league directly.
 
+## Planned maintenance
+
+To warn users about planned downtime, write a message to
+`announcement.txt` in the data volume. Every page, the login screen
+included, shows it in a banner, and no restart is needed:
+
+```bash
+docker compose exec draft-helper sh -c \
+  'echo "Maintenance on Sunday, 03:00–03:30 UTC" > /app/data/announcement.txt'
+```
+
+Open tabs pick it up within five minutes, or as soon as they regain focus.
+Users can dismiss the banner; a changed message shows again. Remove the
+file to clear it:
+
+```bash
+docker compose exec draft-helper rm /app/data/announcement.txt
+```
+
+While the container is stopped, the app can't show anything. Configure
+your reverse proxy or tunnel to serve a static maintenance page when the
+app can't be reached or answers `502`, `503` or `504`, so visitors see an
+explanation rather than a generic error.
+
 ## Updating
 
 `pnpm release` pins each new version in this directory's

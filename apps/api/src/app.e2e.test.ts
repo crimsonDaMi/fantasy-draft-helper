@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildApp } from "./app.js";
@@ -131,6 +134,8 @@ function createTestDependencies(): AppDependencies {
     authService,
     accountService,
     instanceInfo: { accountRetentionDays: 730 },
+    // Never created, so no announcement.
+    announcementPath: join(tmpdir(), "fantasy-draft-helper-missing", "a.txt"),
     adpService: noopAdpService as never,
     draftService,
     playerCache,
@@ -389,6 +394,37 @@ describe("instance info (end to end)", () => {
     });
 
     dependencies.rankingStoreService.close();
+  });
+});
+
+describe("announcement (end to end)", () => {
+  it("is public and follows the file without a restart", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-ann-"));
+    const announcementPath = join(directory, "announcement.txt");
+    const dependencies = { ...createTestDependencies(), announcementPath };
+    const app = await buildApp(dependencies);
+    const getMessage = async () => {
+      const response = await app.inject({
+        method: "GET",
+        url: "/announcement",
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers["cache-control"]).toBe("no-store");
+      return (response.json() as { message: string | null }).message;
+    };
+
+    try {
+      expect(await getMessage()).toBeNull();
+
+      writeFileSync(announcementPath, "Maintenance Sunday 03:00 UTC\n");
+      expect(await getMessage()).toBe("Maintenance Sunday 03:00 UTC");
+
+      rmSync(announcementPath);
+      expect(await getMessage()).toBeNull();
+    } finally {
+      dependencies.rankingStoreService.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
 

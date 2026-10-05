@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from "react-router";
 
 import { AccountPage } from "./components/AccountPage";
+import { AnnouncementBanner } from "./components/AnnouncementBanner";
 import { DraftDashboard } from "./components/DraftDashboard";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { RankingEditorPage } from "./components/RankingEditorPage";
@@ -23,25 +24,29 @@ function App() {
 
   if (!auth.user) {
     return (
-      <Routes>
-        {/* Readable before registering, as GDPR expects. */}
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route
-          path="*"
-          element={
-            <LoginForm
-              error={auth.error}
-              onLogin={auth.login}
-              onRegister={auth.register}
-            />
-          }
-        />
-      </Routes>
+      <>
+        <AnnouncementBanner />
+        <Routes>
+          {/* Readable before registering, as GDPR expects. */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route
+            path="*"
+            element={
+              <LoginForm
+                error={auth.error}
+                onLogin={auth.login}
+                onRegister={auth.register}
+              />
+            }
+          />
+        </Routes>
+      </>
     );
   }
 
   return (
     <main>
+      <AnnouncementBanner />
       <header className="app-header">
         <div className="app-header__top">
           <h1>Fantasy Draft Helper</h1>

@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { AppDependencies, createAppDependencies } from "./app-dependencies.js";
 import { createAuthRoutes } from "./routes/auth.routes.js";
 import { createDraftsRoutes } from "./routes/drafts.routes.js";
+import { createAnnouncementRoutes } from "./routes/announcement.routes.js";
 import { createInstanceRoutes } from "./routes/instance.routes.js";
 import { createPlayersRoutes } from "./routes/players.routes.js";
 import { errorHandler } from "./utils/error-handler.js";
@@ -40,7 +41,13 @@ const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
 
 // Every API namespace. Unknown paths under these get a JSON 404; anything
 // else falls through to the SPA shell for client-side routing.
-const API_PREFIXES = ["/health", "/instance", "/auth", ...PROTECTED_PREFIXES];
+const API_PREFIXES = [
+  "/health",
+  "/instance",
+  "/announcement",
+  "/auth",
+  ...PROTECTED_PREFIXES,
+];
 
 export async function buildApp(injectedDependencies?: AppDependencies) {
   const app = Fastify({
@@ -82,6 +89,8 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
   });
 
   await app.register(createInstanceRoutes(dependencies.instanceInfo));
+
+  await app.register(createAnnouncementRoutes(dependencies.announcementPath));
 
   await app.register(
     createAuthRoutes(dependencies.authService, dependencies.accountService),

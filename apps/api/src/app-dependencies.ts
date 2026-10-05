@@ -17,6 +17,7 @@ import { RankingEditorService } from "./services/ranking-editor.service.js";
 import { RankingImportService } from "./services/ranking-import.service.js";
 import { RankingStoreService } from "./services/ranking-store.service.js";
 import { RecommendationService } from "./services/recommendation.service.js";
+import { DEFAULT_ANNOUNCEMENT_PATH } from "./utils/announcement.js";
 import { InstanceInfo, readInstanceInfo } from "./utils/instance-info.js";
 import { parseRetentionDays } from "./utils/retention-days.js";
 
@@ -25,6 +26,7 @@ export interface AppDependencies {
   authService: AuthService;
   accountService: AccountService;
   instanceInfo: InstanceInfo;
+  announcementPath: string;
   adpService: AdpService;
   draftService: DraftService;
   playerCache: PlayerCache;
@@ -96,6 +98,9 @@ export function createAppDependencies(
 
   const instanceInfo = readInstanceInfo(process.env, accountRetentionDays);
 
+  const announcementPath =
+    process.env.ANNOUNCEMENT_PATH ?? DEFAULT_ANNOUNCEMENT_PATH;
+
   const rankingEditorService = new RankingEditorService(
     rankingRepository,
     playerService,
@@ -113,6 +118,7 @@ export function createAppDependencies(
     authService,
     accountService,
     instanceInfo,
+    announcementPath,
     adpService,
     draftService,
     playerCache,

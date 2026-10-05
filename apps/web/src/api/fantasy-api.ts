@@ -214,6 +214,15 @@ export function getInstanceInfo(): Promise<InstanceInfo> {
   return request("/instance", {}, { notifyOnUnauthorized: false });
 }
 
+/** The operator's message to all visitors, e.g. planned downtime. */
+export interface Announcement {
+  message: string | null;
+}
+
+export function getAnnouncement(): Promise<Announcement> {
+  return request("/announcement", {}, { notifyOnUnauthorized: false });
+}
+
 export interface AuthUser {
   id: string;
   username: string;

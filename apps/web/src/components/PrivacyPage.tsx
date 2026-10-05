@@ -125,8 +125,9 @@ export function PrivacyPage() {
         <p>
           To save you re-entering them, your browser&apos;s local storage keeps
           your color theme, the ranking you last selected, and the Sleeper
-          username and draft you last looked up. You can remove them by clearing
-          this site&apos;s data in your browser.
+          username and draft you last looked up, and the last announcement you
+          dismissed. You can remove them by clearing this site&apos;s data in
+          your browser.
         </p>
       </section>
 

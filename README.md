@@ -38,6 +38,9 @@ React web app -> Fastify API -> Sleeper API
   highlighted, avoided ones hidden from recommendations until shown again.
 - Username/password authentication with a username allowlist or open
   registration; rankings are scoped per user.
+- Instance announcements, e.g. planned downtime, shown in a banner on
+  every page (see "Planned maintenance" in
+  [`deploy/server/README.md`](deploy/server/README.md#planned-maintenance)).
 - Draft-day vs. debug UI mode (`VITE_UI_MODE`) — see "UI Modes" below.
 - Switchable team-inspired color themes.
 
@@ -192,6 +195,19 @@ Public, so the privacy notice can show it before login:
 `{ "operator"?: { "name", "contact", "address"? }, "accountRetentionDays" }`.
 `operator` is left out unless `OPERATOR_NAME` and `OPERATOR_CONTACT` are both
 set (see "Privacy Notice" below).
+
+### Announcement
+
+```text
+GET /announcement
+```
+
+Public, so the banner shows on the login screen too: `{ "message": string | null }`.
+The message is the trimmed content of `data/announcement.txt` (relative to
+the API's working directory; Docker: `/app/data/announcement.txt`), cut to
+500 characters, or `null` when the file is missing or blank. The file is
+read on every request, so changes need no restart. Set
+`ANNOUNCEMENT_PATH` to use a different file.
 
 ### Import rankings
 
