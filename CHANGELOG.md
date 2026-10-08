@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v2.1.0 — 2026-10-08
+
 ### Added
 
 - Announcements: operators can show a message, e.g. planned downtime, in a
