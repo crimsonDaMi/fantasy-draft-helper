@@ -13,6 +13,14 @@ See `RELEASING.md`.
   banner on every page by writing it to `announcement.txt` in the data
   volume, without a restart. Users can dismiss it until the message
   changes. See "Planned maintenance" in `deploy/server/README.md`.
+- "Report a bug" and "Request a feature" links in the footer of every page,
+  the login screen included, open the matching GitHub issue form (needs a
+  GitHub account). Bug reports come with the app version filled in.
+
+### Changed
+
+- The "Support me" link moved from the header to the footer, and the login
+  screen's privacy link is now in the footer too.
 
 ## v2.0.0 — 2026-10-01
 

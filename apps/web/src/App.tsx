@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from "react-router";
 
 import { AccountPage } from "./components/AccountPage";
 import { AnnouncementBanner } from "./components/AnnouncementBanner";
+import { AppFooter } from "./components/AppFooter";
 import { DraftDashboard } from "./components/DraftDashboard";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { RankingEditorPage } from "./components/RankingEditorPage";
@@ -40,6 +41,7 @@ function App() {
             }
           />
         </Routes>
+        <AppFooter />
       </>
     );
   }
@@ -51,14 +53,6 @@ function App() {
         <div className="app-header__top">
           <h1>Fantasy Draft Helper</h1>
           <div className="app-header__controls">
-            <a
-              className="app-header__support"
-              href="https://ko-fi.com/crimsonDaMi"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Support me
-            </a>
             <span className="app-header__version">v{__APP_VERSION__}</span>
             <ThemeSelect themeId={theme} onChange={setTheme} />
             <NavLink
@@ -102,9 +96,7 @@ function App() {
         />
       </Routes>
 
-      <footer className="app-footer">
-        <NavLink to="/privacy">Privacy</NavLink>
-      </footer>
+      <AppFooter />
     </main>
   );
 }

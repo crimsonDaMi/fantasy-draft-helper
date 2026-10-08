@@ -502,8 +502,8 @@ host, and most cloud providers do this by default.
 
 ## Privacy Notice
 
-The app has a privacy notice at `/privacy`, linked from the login screen
-and the footer, and readable without an account. It lists what is stored
+The app has a privacy notice at `/privacy`, linked from the footer on
+every page, the login screen included, and readable without an account. It lists what is stored
 and why, the server logs, browser storage, what goes to Sleeper, the
 retention period from `ACCOUNT_RETENTION_DAYS`, and users' rights. Visitors'
 browsers load nothing from other sites: the fonts are bundled with the app.
@@ -604,7 +604,9 @@ The authoritative engineering rules are in [docs/CODING_AGENT_GUIDE.md](docs/COD
 
 Bug reports and feature requests go to
 [GitHub issues](https://github.com/crimsonDaMi/fantasy-draft-helper/issues/new/choose),
-using the bug report or feature request form.
+using the bug report or feature request form. The app's footer links both
+forms on every page and fills in the running version on bug reports;
+filing an issue needs a GitHub account.
 
 ## Support
 
