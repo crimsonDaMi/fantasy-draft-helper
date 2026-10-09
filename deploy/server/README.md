@@ -131,11 +131,22 @@ docker compose up -d
   back whenever Docker does. Make sure Docker (and your proxy or tunnel)
   start on boot.
 - **Data**: the SQLite database lives in the `fantasy-draft-helper-data`
-  Docker volume. There is no automated backup — copy the volume's contents
-  elsewhere periodically if losing it would hurt. Each user can also
-  download their ranking via "Export CSV" in the ranking editor and
-  re-import it later. Backups contain usernames and password hashes, so
-  keep them somewhere private.
+  Docker volume. There is no automated backup — copy the database
+  elsewhere periodically if losing it would hurt. Copying the file while
+  the app writes to it can produce a broken copy; SQLite's online backup
+  (the `sqlite3` CLI, installed on the host) makes a consistent one while
+  the app keeps running:
+
+  ```bash
+  DB="$(docker volume inspect -f '{{ .Mountpoint }}' fantasy-draft-helper-data)/fantasy-draft-helper.db"
+  sudo sqlite3 -readonly "$DB" ".backup 'draft-helper-backup.db'"
+  sqlite3 draft-helper-backup.db "PRAGMA integrity_check;"   # prints "ok"
+  ```
+
+  Each user can also download their ranking via "Export CSV" in the
+  ranking editor and re-import it later. Backups contain usernames and
+  password hashes, so keep them somewhere private.
+
 - **Schema changes require a volume drop.** No migration system exists (a
   deliberate choice), so a schema change is a major version bump (see
   [`RELEASING.md`](../../RELEASING.md)), and its release notes say so. If a

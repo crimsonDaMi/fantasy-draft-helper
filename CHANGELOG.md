@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Changed
+
+- The shared-instance guide now shows how to back up the database safely
+  while the app is running, with SQLite's online backup, and how to check
+  the copy. See "Operational notes" in `deploy/server/README.md`.
+
 ## v2.1.0 — 2026-10-08
 
 ### Added
