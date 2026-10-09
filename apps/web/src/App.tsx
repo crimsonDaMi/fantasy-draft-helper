@@ -90,6 +90,7 @@ function App() {
           element={
             <AccountPage
               username={auth.user.username}
+              onChangePassword={auth.changePassword}
               onDeleteAccount={auth.deleteAccount}
             />
           }

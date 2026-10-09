@@ -135,11 +135,7 @@ export class UserRepository {
 
   async createUser(username: string, password: string): Promise<User> {
     const id = randomUUID();
-    const salt = randomBytes(SALT_BYTES).toString("hex");
-    const hash = formatStoredHash(
-      this.scryptCost,
-      await this.hashPassword(password, salt, this.scryptCost),
-    );
+    const { salt, hash } = await this.newStoredHash(password);
     const createdAt = new Date().toISOString();
 
     this.database
@@ -291,6 +287,33 @@ export class UserRepository {
     return { user, renewedExpiresAt: renewedExpiresAtIso };
   }
 
+  /** Replaces the user's password and ends every session except the one
+   * with `keepSessionToken`, so a stolen or forgotten-about login elsewhere
+   * stops working. */
+  async changePassword(
+    userId: string,
+    password: string,
+    keepSessionToken: string,
+  ): Promise<void> {
+    const { salt, hash } = await this.newStoredHash(password);
+
+    this.database.exec("BEGIN");
+    try {
+      this.database
+        .prepare(
+          `UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?`,
+        )
+        .run(salt, hash, userId);
+      this.database
+        .prepare(`DELETE FROM sessions WHERE user_id = ? AND token != ?`)
+        .run(userId, hashSessionToken(keepSessionToken));
+      this.database.exec("COMMIT");
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   deleteSession(token: string): void {
     this.database
       .prepare(`DELETE FROM sessions WHERE token = ?`)
@@ -332,17 +355,26 @@ export class UserRepository {
     userId: string,
     password: string,
   ): Promise<void> {
-    const salt = randomBytes(SALT_BYTES).toString("hex");
-    const hash = formatStoredHash(
-      this.scryptCost,
-      await this.hashPassword(password, salt, this.scryptCost),
-    );
+    const { salt, hash } = await this.newStoredHash(password);
 
     this.database
       .prepare(
         `UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?`,
       )
       .run(salt, hash, userId);
+  }
+
+  /** A fresh salt and the stored hash of `password` at the current cost. */
+  private async newStoredHash(
+    password: string,
+  ): Promise<{ salt: string; hash: string }> {
+    const salt = randomBytes(SALT_BYTES).toString("hex");
+    const hash = formatStoredHash(
+      this.scryptCost,
+      await this.hashPassword(password, salt, this.scryptCost),
+    );
+
+    return { salt, hash };
   }
 
   /** Async so a login doesn't block the event loop (and every other

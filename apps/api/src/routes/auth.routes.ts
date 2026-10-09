@@ -14,14 +14,22 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
-// Stricter than login, which still has to accept accounts created before
-// these limits existed.
+// For passwords being set (registration, password change). Stricter than
+// login, which still has to accept accounts created before these limits
+// existed.
+const newPasswordSchema = z.string().min(8).max(128);
+
 const registrationSchema = z.object({
   username: z
     .string()
     .trim()
     .regex(/^[A-Za-z0-9_.-]{3,32}$/),
-  password: z.string().min(8).max(128),
+  password: newPasswordSchema,
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: newPasswordSchema,
 });
 
 const deleteAccountSchema = z.object({
@@ -85,6 +93,28 @@ export function createAuthRoutes(
       }
 
       return { user: session.user };
+    });
+
+    app.post("/auth/password", async (request) => {
+      const token = request.cookies[SESSION_COOKIE];
+      const session = token ? authService.getUserForSession(token) : undefined;
+
+      if (!token || !session) {
+        throw loginRequired();
+      }
+
+      const { currentPassword, newPassword } = changePasswordSchema.parse(
+        request.body,
+      );
+
+      await authService.changePassword(
+        session.user,
+        currentPassword,
+        newPassword,
+        token,
+      );
+
+      return { changed: true };
     });
 
     app.delete("/auth/account", async (request, reply) => {

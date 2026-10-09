@@ -14,6 +14,9 @@ See `RELEASING.md`.
   password again.
 - Registration asks for the password twice and doesn't go ahead when the
   two don't match.
+- Change your password on the Account page (click your username in the
+  header): enter the current password and the new one twice. Changing it
+  logs you out on all other devices.
 
 ### Changed
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { AuthUser } from "../api/fantasy-api";
 import {
+  changePassword as apiChangePassword,
   deleteAccount as apiDeleteAccount,
   getCurrentUser,
   onUnauthorized,
@@ -17,6 +18,11 @@ interface UseAuthResult {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Rejects if the current password is wrong; other sessions end. */
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void>;
   /** Rejects (leaving the user logged in) if the password is wrong. */
   deleteAccount: (password: string) => Promise<void>;
 }
@@ -81,5 +87,15 @@ export function useAuth(): UseAuthResult {
     setUser(undefined);
   }, []);
 
-  return { user, isLoading, error, login, register, logout, deleteAccount };
+  return {
+    user,
+    isLoading,
+    error,
+    login,
+    register,
+    logout,
+    // Nothing in the hook's state changes; the current session stays.
+    changePassword: apiChangePassword,
+    deleteAccount,
+  };
 }

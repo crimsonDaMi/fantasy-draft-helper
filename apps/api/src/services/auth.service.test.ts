@@ -188,3 +188,85 @@ describe("AuthService registration throttle", () => {
     ).resolves.toMatchObject({ user: { username: "testuser5" } });
   });
 });
+
+describe("AuthService changePassword", () => {
+  const NEW_PASSWORD = "new correct horse";
+
+  async function createServiceWithSessions() {
+    const service = new AuthService(
+      new UserRepository(":memory:", FAST_SCRYPT_COST),
+      ["testuser"],
+    );
+    const current = await service.register("testuser", PASSWORD, CLIENT_IP);
+    const other = await service.login("testuser", PASSWORD);
+
+    return { service, current, other };
+  }
+
+  it("changes the password, keeping only the current session", async () => {
+    const { service, current, other } = await createServiceWithSessions();
+
+    await service.changePassword(
+      current.user,
+      PASSWORD,
+      NEW_PASSWORD,
+      current.token,
+    );
+
+    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
+      code: "INVALID_CREDENTIALS",
+    });
+    await expect(
+      service.login("testuser", NEW_PASSWORD),
+    ).resolves.toMatchObject({ user: { username: "testuser" } });
+    expect(service.getUserForSession(current.token)?.user).toEqual(
+      current.user,
+    );
+    expect(service.getUserForSession(other.token)).toBeUndefined();
+  });
+
+  it("rejects a wrong current password with 403 and changes nothing", async () => {
+    const { service, current, other } = await createServiceWithSessions();
+
+    await expect(
+      service.changePassword(
+        current.user,
+        "wrong password",
+        NEW_PASSWORD,
+        current.token,
+      ),
+    ).rejects.toMatchObject({ code: "INVALID_PASSWORD" });
+
+    await expect(service.login("testuser", PASSWORD)).resolves.toMatchObject({
+      user: { username: "testuser" },
+    });
+    expect(service.getUserForSession(other.token)?.user).toEqual(current.user);
+  });
+
+  it("counts wrong current passwords towards the login lockout", async () => {
+    const { service, current } = await createServiceWithSessions();
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await expect(
+        service.changePassword(
+          current.user,
+          "wrong password",
+          NEW_PASSWORD,
+          current.token,
+        ),
+      ).rejects.toMatchObject({ code: "INVALID_PASSWORD" });
+    }
+
+    await expect(
+      service.changePassword(
+        current.user,
+        PASSWORD,
+        NEW_PASSWORD,
+        current.token,
+      ),
+    ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
+    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
+      code: "TOO_MANY_LOGIN_ATTEMPTS",
+    });
+  });
+});

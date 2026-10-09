@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAuth } from "./useAuth";
 
 const mocks = vi.hoisted(() => ({
+  changePassword: vi.fn(),
   deleteAccount: vi.fn(),
   getCurrentUser: vi.fn(),
   login: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../api/fantasy-api", () => ({
+  changePassword: mocks.changePassword,
   deleteAccount: mocks.deleteAccount,
   getCurrentUser: mocks.getCurrentUser,
   login: mocks.login,
@@ -72,6 +74,22 @@ describe("useAuth session-expiry handling", () => {
 
     expect(mocks.deleteAccount).toHaveBeenCalledWith("correct horse battery");
     expect(result.current.user).toBeUndefined();
+  });
+
+  it("changes the password and stays logged in", async () => {
+    mocks.changePassword.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuth());
+    await waitFor(() => expect(result.current.user).toBeDefined());
+
+    await act(() =>
+      result.current.changePassword("correct horse battery", "new password1"),
+    );
+
+    expect(mocks.changePassword).toHaveBeenCalledWith(
+      "correct horse battery",
+      "new password1",
+    );
+    expect(result.current.user).toEqual({ id: "1", username: "alice" });
   });
 
   it("stays logged in when deleting fails", async () => {

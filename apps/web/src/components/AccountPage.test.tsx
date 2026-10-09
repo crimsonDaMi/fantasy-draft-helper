@@ -22,6 +22,7 @@ function renderAccountPage(
           element={
             <AccountPage
               username="testuser"
+              onChangePassword={vi.fn()}
               onDeleteAccount={onDeleteAccount}
             />
           }

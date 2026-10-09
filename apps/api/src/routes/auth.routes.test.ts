@@ -17,6 +17,7 @@ function createTestApp(
     login: (username: string, password: string) => unknown;
     logout: (token: string) => void;
     getUserForSession: (token: string) => unknown;
+    changePassword?: (...args: unknown[]) => unknown;
   },
   accountService: {
     deleteAccount: (user: unknown, password: string) => unknown;
@@ -542,6 +543,134 @@ describe("auth routes", () => {
         method: "DELETE",
         url: "/auth/account",
         payload: { password: "correct horse battery" },
+      });
+
+      expect(response.statusCode).toBe(401);
+
+      await app.close();
+    });
+  });
+  describe("POST /auth/password", () => {
+    function loggedInAuthService(
+      changePassword: (...args: unknown[]) => unknown,
+    ) {
+      return {
+        register: () => {
+          throw new Error("not used");
+        },
+        login: () => {
+          throw new Error("not used");
+        },
+        logout: () => {},
+        getUserForSession: (token: string) =>
+          token === "valid-token"
+            ? { user: { id: "1", username: "testuser" } }
+            : undefined,
+        changePassword,
+      };
+    }
+
+    it("changes the password with the current session's token", async () => {
+      let changeArgs: unknown[] = [];
+      const app = createTestApp(
+        loggedInAuthService((...args) => {
+          changeArgs = args;
+        }),
+      );
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/auth/password",
+        cookies: { session: "valid-token" },
+        payload: {
+          currentPassword: "correct horse battery",
+          newPassword: "new correct horse",
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ changed: true });
+      expect(changeArgs).toEqual([
+        { id: "1", username: "testuser" },
+        "correct horse battery",
+        "new correct horse",
+        "valid-token",
+      ]);
+      expect(response.cookies).toEqual([]);
+
+      await app.close();
+    });
+
+    it("returns 403 for a wrong current password", async () => {
+      const app = createTestApp(
+        loggedInAuthService(() => {
+          throw new ForbiddenError("Incorrect password.", "INVALID_PASSWORD");
+        }),
+      );
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/auth/password",
+        cookies: { session: "valid-token" },
+        payload: {
+          currentPassword: "wrong password",
+          newPassword: "new correct horse",
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual({
+        error: "INVALID_PASSWORD",
+        message: "Incorrect password.",
+      });
+
+      await app.close();
+    });
+
+    it.each([
+      ["too short", "short"],
+      ["too long", "x".repeat(129)],
+    ])(
+      "rejects a new password that is %s, like registration does",
+      async (_case, newPassword) => {
+        let called = false;
+        const app = createTestApp(
+          loggedInAuthService(() => {
+            called = true;
+          }),
+        );
+
+        const response = await app.inject({
+          method: "POST",
+          url: "/auth/password",
+          cookies: { session: "valid-token" },
+          payload: { currentPassword: "correct horse battery", newPassword },
+        });
+        const registration = await app.inject({
+          method: "POST",
+          url: "/auth/register",
+          payload: { username: "testuser", password: newPassword },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.json().error).toBe("VALIDATION_ERROR");
+        expect(response.json().message).toBe(registration.json().message);
+        expect(called).toBe(false);
+
+        await app.close();
+      },
+    );
+
+    it("returns 401 without a session", async () => {
+      const app = createTestApp(loggedInAuthService(() => {}));
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/auth/password",
+        payload: {
+          currentPassword: "correct horse battery",
+          newPassword: "new correct horse",
+        },
       });
 
       expect(response.statusCode).toBe(401);

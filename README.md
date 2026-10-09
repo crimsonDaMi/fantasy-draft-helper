@@ -276,6 +276,7 @@ POST /auth/register
 POST /auth/login
 POST /auth/logout
 GET  /auth/me
+POST /auth/password
 DELETE /auth/account
 ```
 
@@ -285,7 +286,12 @@ usernames on the server's allowlist unless open registration is enabled,
 and limits how many accounts one client IP can create (see "Authentication
 Setup" below).
 `logout` clears the session. `GET /auth/me` returns the current user, or
-`401` if not logged in. `DELETE /auth/account` takes `{ "password": "string" }`
+`401` if not logged in. `POST /auth/password` takes
+`{ "currentPassword": "string", "newPassword": "string" }`, sets the new
+password (same 8–128 character rule as `register`) and logs out every other
+session of the user; the current one stays logged in (`403` for a wrong
+current password, which counts toward the login lockout).
+`DELETE /auth/account` takes `{ "password": "string" }`
 and permanently deletes the logged-in user with all of their rankings
 (`403` for a wrong password, which counts toward the login lockout).
 
@@ -483,6 +489,10 @@ server only stores a SHA-256 of each token, so a leaked database or backup
 contains no usable sessions. A session expires after 30 days without use and
 at most 90 days after login; using it moves its expiry forward (at most once
 a day) and renews the cookie.
+
+Users change their password on the Account page by entering the current
+one and the new one twice. That logs them out on all other devices. There's
+no reset for a forgotten password, since accounts have no email address.
 
 Accounts are deleted together with everything tied to them: their
 sessions, rankings, tiers, players, and watch/avoid flags. Users delete

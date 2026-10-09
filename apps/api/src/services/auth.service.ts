@@ -112,6 +112,23 @@ export class AuthService {
     }
   }
 
+  /** Changes a logged-in user's password after re-checking the current
+   * one, and logs out every other session. */
+  async changePassword(
+    user: User,
+    currentPassword: string,
+    newPassword: string,
+    currentSessionToken: string,
+  ): Promise<void> {
+    await this.confirmPassword(user, currentPassword);
+
+    await this.repository.changePassword(
+      user.id,
+      newPassword,
+      currentSessionToken,
+    );
+  }
+
   logout(token: string): void {
     this.repository.deleteSession(token);
   }

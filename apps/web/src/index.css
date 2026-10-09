@@ -803,6 +803,21 @@ button {
   font-size: 14px;
 }
 
+.account-page__submit {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-page__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .account-page__delete {
   background: none;
   border: 1px solid var(--color-danger);

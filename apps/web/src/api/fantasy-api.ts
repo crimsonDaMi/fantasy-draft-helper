@@ -253,6 +253,18 @@ export function login(username: string, password: string): Promise<AuthUser> {
   return postCredentials("/auth/login", username, password);
 }
 
+/** Changes the logged-in user's password and logs out their other
+ * sessions. Rejects with a 403 for a wrong current password. */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await request("/auth/password", {
+    method: "POST",
+    ...jsonBody({ currentPassword, newPassword }),
+  });
+}
+
 /** Permanently deletes the logged-in user's account and all of its
  * rankings. Rejects with a 403 for a wrong password. */
 export async function deleteAccount(password: string): Promise<void> {

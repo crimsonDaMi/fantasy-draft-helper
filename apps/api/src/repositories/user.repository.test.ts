@@ -125,6 +125,46 @@ describe("UserRepository", () => {
     expect(repository.getSession(session.token)).toBeUndefined();
   });
 
+  it("changes the password and ends every other session", async () => {
+    const repository = new UserRepository(":memory:", FAST_SCRYPT_COST);
+    const user = await repository.createUser("testuser", PASSWORD);
+    const current = repository.createSession(user.id);
+    const other = repository.createSession(user.id);
+
+    await repository.changePassword(
+      user.id,
+      "new correct horse",
+      current.token,
+    );
+
+    expect(await repository.verifyPassword("testuser", PASSWORD)).toBe(
+      undefined,
+    );
+    expect(
+      await repository.verifyPassword("testuser", "new correct horse"),
+    ).toEqual({ id: user.id, username: "testuser" });
+    expect(repository.getSession(current.token)?.user.id).toBe(user.id);
+    expect(repository.getSession(other.token)).toBeUndefined();
+  });
+
+  it("leaves other users' sessions alone when changing a password", async () => {
+    const repository = new UserRepository(":memory:", FAST_SCRYPT_COST);
+    const user = await repository.createUser("testuser", PASSWORD);
+    const otherUser = await repository.createUser("otheruser", PASSWORD);
+    const current = repository.createSession(user.id);
+    const otherUsersSession = repository.createSession(otherUser.id);
+
+    await repository.changePassword(
+      user.id,
+      "new correct horse",
+      current.token,
+    );
+
+    expect(repository.getSession(otherUsersSession.token)?.user.id).toBe(
+      otherUser.id,
+    );
+  });
+
   it("rejects a session presented after it expires", async () => {
     const repository = new UserRepository(":memory:", FAST_SCRYPT_COST);
 

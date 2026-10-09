@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import { ChangePasswordForm } from "./ChangePasswordForm";
 import { ErrorMessage } from "./ErrorMessage";
 import { PasswordInput } from "./PasswordInput";
 
 interface AccountPageProps {
   username: string;
+  onChangePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void>;
   onDeleteAccount: (password: string) => Promise<void>;
 }
 
-export function AccountPage({ username, onDeleteAccount }: AccountPageProps) {
+export function AccountPage({
+  username,
+  onChangePassword,
+  onDeleteAccount,
+}: AccountPageProps) {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -35,6 +44,8 @@ export function AccountPage({ username, onDeleteAccount }: AccountPageProps) {
       <p className="account-page__hint">
         Logged in as <strong>{username}</strong>.
       </p>
+
+      <ChangePasswordForm onChangePassword={onChangePassword} />
 
       <form className="account-page__section" onSubmit={handleDelete}>
         <h3>Delete account</h3>
