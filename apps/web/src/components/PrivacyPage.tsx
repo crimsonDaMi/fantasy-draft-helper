@@ -54,6 +54,18 @@ function retentionText(days: number): string {
   return `until you delete your account, or automatically once it hasn't been used for ${days} days${approximately}`;
 }
 
+/** What account deletion removes, including from backups when the
+ * operator has said how long they keep them. */
+function deletionText(backupRetentionDays: number | undefined): string {
+  if (backupRetentionDays === undefined) {
+    return "Deleting an account removes all of its data.";
+  }
+
+  const days = `${backupRetentionDays} ${backupRetentionDays === 1 ? "day" : "days"}`;
+
+  return `Deleting an account removes all of its data from the app right away. Backups of the database, kept only to restore it after a failure, are deleted after ${days} at the latest, so copies of deleted data disappear from them within that time too.`;
+}
+
 export function PrivacyPage() {
   const query = useQuery({
     queryKey: ["instance"],
@@ -159,8 +171,8 @@ export function PrivacyPage() {
           {info
             ? retentionText(info.accountRetentionDays)
             : "until you delete your account"}
-          . Deleting an account removes all of its data. A login expires after
-          30 days without use, and at most 90 days after you logged in.
+          . {deletionText(info?.backupRetentionDays)} A login expires after 30
+          days without use, and at most 90 days after you logged in.
         </p>
       </section>
 

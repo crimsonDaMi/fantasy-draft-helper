@@ -75,4 +75,31 @@ describe("PrivacyPage", () => {
       await screen.findByText(/kept until you delete your account yourself/),
     ).toBeInTheDocument();
   });
+
+  it("doesn't mention backups when the operator hasn't stated a retention", async () => {
+    renderPrivacyPage({ accountRetentionDays: 730 });
+
+    expect(
+      await screen.findByText(/Deleting an account removes all of its data\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/backups?/i)).not.toBeInTheDocument();
+  });
+
+  it("names the backup retention when the operator states one", async () => {
+    renderPrivacyPage({ accountRetentionDays: 730, backupRetentionDays: 21 });
+
+    expect(
+      await screen.findByText(
+        /removes all of its data from the app right away\. Backups of the database.*are deleted after 21 days at the latest/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("uses the singular for a one-day backup retention", async () => {
+    renderPrivacyPage({ accountRetentionDays: 730, backupRetentionDays: 1 });
+
+    expect(
+      await screen.findByText(/deleted after 1 day at the latest/),
+    ).toBeInTheDocument();
+  });
 });

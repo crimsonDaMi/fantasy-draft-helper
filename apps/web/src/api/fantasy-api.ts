@@ -208,6 +208,8 @@ export interface InstanceInfo {
   operator?: { name: string; contact: string; address?: string };
   /** 0 means accounts are kept until their owner deletes them. */
   accountRetentionDays: number;
+  /** How long the operator keeps database backups; absent if unstated. */
+  backupRetentionDays?: number;
 }
 
 export function getInstanceInfo(): Promise<InstanceInfo> {

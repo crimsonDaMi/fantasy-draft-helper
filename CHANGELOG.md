@@ -17,6 +17,9 @@ See `RELEASING.md`.
 - Change your password on the Account page (click your username in the
   header): enter the current password and the new one twice. Changing it
   logs you out on all other devices.
+- Operators who back up the database can set `BACKUP_RETENTION_DAYS`; the
+  privacy notice then says how long deleted data can remain in backups.
+  See "Privacy Notice" in `README.md`.
 
 ### Changed
 

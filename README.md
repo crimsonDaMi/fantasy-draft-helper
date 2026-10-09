@@ -527,7 +527,14 @@ OPERATOR_ADDRESS="1 Example Street, 12345 Example City"   # optional
 ```
 
 Without a name and contact, the notice says the operator hasn't provided
-their details. The wording is a starting point, not legal advice: whoever
+their details.
+
+If you back up the database, set `BACKUP_RETENTION_DAYS` to the longest
+time, in days, that any backup is kept. The notice then says that deleted
+data disappears from backups within that time. Unset, it doesn't mention
+backups. It only describes what you do; the app makes no backups itself.
+Like `ACCOUNT_RETENTION_DAYS`, anything other than a whole number of days
+(at least 1) stops the API from starting. The wording is a starting point, not legal advice: whoever
 runs a public instance is responsible for checking it, and for anything
 else their country requires, e.g. a separate imprint (Impressum).
 

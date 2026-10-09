@@ -11,22 +11,30 @@ export interface InstanceInfo {
   };
   /** 0 means accounts are kept until their owner deletes them. */
   accountRetentionDays: number;
+  /** How long the operator keeps database backups. Unset when they
+   * haven't said, and the notice then doesn't mention backups. */
+  backupRetentionDays?: number;
 }
 
 export function readInstanceInfo(
   env: NodeJS.ProcessEnv,
   accountRetentionDays: number,
+  backupRetentionDays?: number,
 ): InstanceInfo {
   const name = env.OPERATOR_NAME?.trim();
   const contact = env.OPERATOR_CONTACT?.trim();
   const address = env.OPERATOR_ADDRESS?.trim();
+  const retention = {
+    accountRetentionDays,
+    ...(backupRetentionDays === undefined ? {} : { backupRetentionDays }),
+  };
 
   if (!name || !contact) {
-    return { accountRetentionDays };
+    return retention;
   }
 
   return {
     operator: { name, contact, ...(address ? { address } : {}) },
-    accountRetentionDays,
+    ...retention,
   };
 }

@@ -41,4 +41,21 @@ describe("readInstanceInfo", () => {
       readInstanceInfo({ OPERATOR_CONTACT: "x@example.com" }, 730).operator,
     ).toBeUndefined();
   });
+
+  it("includes the backup retention only when it's set", () => {
+    expect(readInstanceInfo({}, 730, 21)).toEqual({
+      accountRetentionDays: 730,
+      backupRetentionDays: 21,
+    });
+    expect(
+      readInstanceInfo(
+        { OPERATOR_NAME: "Test Operator", OPERATOR_CONTACT: "x@example.com" },
+        730,
+        21,
+      ).backupRetentionDays,
+    ).toBe(21);
+    expect(readInstanceInfo({}, 730, undefined)).not.toHaveProperty(
+      "backupRetentionDays",
+    );
+  });
 });

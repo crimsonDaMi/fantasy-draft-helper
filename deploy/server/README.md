@@ -145,7 +145,10 @@ docker compose up -d
 
   Each user can also download their ranking via "Export CSV" in the
   ranking editor and re-import it later. Backups contain usernames and
-  password hashes, so keep them somewhere private.
+  password hashes, so keep them somewhere private, and delete them after a
+  fixed time. Set `BACKUP_RETENTION_DAYS` in `.env` to the longest time any
+  copy is kept (in days), so the privacy notice tells users how long data
+  of deleted accounts survives in backups.
 
 - **Schema changes require a volume drop.** No migration system exists (a
   deliberate choice), so a schema change is a major version bump (see

@@ -19,7 +19,10 @@ import { RankingStoreService } from "./services/ranking-store.service.js";
 import { RecommendationService } from "./services/recommendation.service.js";
 import { DEFAULT_ANNOUNCEMENT_PATH } from "./utils/announcement.js";
 import { InstanceInfo, readInstanceInfo } from "./utils/instance-info.js";
-import { parseRetentionDays } from "./utils/retention-days.js";
+import {
+  parseBackupRetentionDays,
+  parseRetentionDays,
+} from "./utils/retention-days.js";
 
 export interface AppDependencies {
   sleeperClient: SleeperClient;
@@ -96,7 +99,11 @@ export function createAppDependencies(
     logger,
   );
 
-  const instanceInfo = readInstanceInfo(process.env, accountRetentionDays);
+  const instanceInfo = readInstanceInfo(
+    process.env,
+    accountRetentionDays,
+    parseBackupRetentionDays(process.env.BACKUP_RETENTION_DAYS),
+  );
 
   const announcementPath =
     process.env.ANNOUNCEMENT_PATH ?? DEFAULT_ANNOUNCEMENT_PATH;

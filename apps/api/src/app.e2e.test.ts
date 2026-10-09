@@ -381,6 +381,7 @@ describe("instance info (end to end)", () => {
       instanceInfo: {
         operator: { name: "Test Operator", contact: "privacy@example.com" },
         accountRetentionDays: 365,
+        backupRetentionDays: 21,
       },
     };
     const app = await buildApp(dependencies);
@@ -391,6 +392,7 @@ describe("instance info (end to end)", () => {
     expect(response.json()).toEqual({
       operator: { name: "Test Operator", contact: "privacy@example.com" },
       accountRetentionDays: 365,
+      backupRetentionDays: 21,
     });
 
     dependencies.rankingStoreService.close();
