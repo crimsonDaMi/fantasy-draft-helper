@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v2.2.0 — 2026-10-10
+
 ### Added
 
 - Password fields on the login, registration and Account pages have an eye
