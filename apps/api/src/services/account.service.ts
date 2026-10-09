@@ -27,8 +27,12 @@ export class AccountService {
     return this.retentionDays > 0;
   }
 
-  async deleteAccount(user: User, password: string): Promise<void> {
-    await this.authService.confirmPassword(user, password);
+  async deleteAccount(
+    user: User,
+    password: string,
+    clientIp: string,
+  ): Promise<void> {
+    await this.authService.confirmPassword(user, password, clientIp);
 
     this.deleteUserData(user.id);
   }

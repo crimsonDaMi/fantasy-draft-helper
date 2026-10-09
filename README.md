@@ -472,8 +472,17 @@ create at most 5 accounts per hour (`429` after that). New usernames must
 be 3–32 letters, digits, `_`, `.` or `-`, and passwords 8–128 characters.
 Login still accepts usernames created before these limits existed.
 
+Wrong passwords lock a username out for 15 minutes (`429`), counted per
+client IP: after 5 failures from one IP, that IP can't log in to that
+username, while the owner can still log in from elsewhere. Across all IPs
+together, 50 failures lock the username out everywhere, which slows down
+guessing from many addresses. A successful login clears the count for its
+IP only. Re-entering the password to change it or to delete the account
+counts the same way. The counts are kept in memory, so a restart clears
+them.
+
 Behind a reverse proxy, every request comes from the proxy's address, so
-the per-IP limit would apply to all visitors together. Set `TRUST_PROXY` to
+the per-IP limits would apply to all visitors together. Set `TRUST_PROXY` to
 the proxy's address so the API reads the client IP from `X-Forwarded-For`.
 It takes a comma-separated list of IPs, CIDRs, or the named ranges
 `loopback` and `uniquelocal`, or `true` to trust any sender. Only list

@@ -61,6 +61,7 @@ export function createAuthRoutes(
       const { user, token, expiresAt } = await authService.login(
         username,
         password,
+        request.ip,
       );
 
       setSessionCookie(reply, token, expiresAt);
@@ -112,6 +113,7 @@ export function createAuthRoutes(
         currentPassword,
         newPassword,
         token,
+        request.ip,
       );
 
       return { changed: true };
@@ -127,7 +129,7 @@ export function createAuthRoutes(
 
       const { password } = deleteAccountSchema.parse(request.body);
 
-      await accountService.deleteAccount(session.user, password);
+      await accountService.deleteAccount(session.user, password, request.ip);
 
       reply.clearCookie(SESSION_COOKIE, { path: "/" });
 

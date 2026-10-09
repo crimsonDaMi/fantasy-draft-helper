@@ -14,7 +14,7 @@ import {
 function createTestApp(
   authService: {
     register: (username: string, password: string, clientIp: string) => unknown;
-    login: (username: string, password: string) => unknown;
+    login: (username: string, password: string, clientIp: string) => unknown;
     logout: (token: string) => void;
     getUserForSession: (token: string) => unknown;
     changePassword?: (...args: unknown[]) => unknown;
@@ -205,6 +205,42 @@ describe("auth routes", () => {
     });
 
     expect(registerArgs).toEqual([
+      "testuser",
+      "correct horse battery",
+      "192.0.2.1",
+    ]);
+
+    await app.close();
+  });
+
+  it("passes the client IP to login, for the per-IP lockout", async () => {
+    let loginArgs: unknown[] = [];
+    const authService = {
+      register: () => {
+        throw new Error("not used");
+      },
+      login: (...args: unknown[]) => {
+        loginArgs = args;
+        return {
+          user: { id: "1", username: "testuser" },
+          token: "test-token",
+          expiresAt: "2030-01-01T00:00:00.000Z",
+        };
+      },
+      logout: () => {},
+      getUserForSession: () => undefined,
+    };
+
+    const app = createTestApp(authService);
+
+    await app.inject({
+      method: "POST",
+      url: "/auth/login",
+      remoteAddress: "192.0.2.1",
+      payload: { username: "testuser", password: "correct horse battery" },
+    });
+
+    expect(loginArgs).toEqual([
       "testuser",
       "correct horse battery",
       "192.0.2.1",
@@ -496,6 +532,7 @@ describe("auth routes", () => {
       const response = await app.inject({
         method: "DELETE",
         url: "/auth/account",
+        remoteAddress: "192.0.2.1",
         cookies: { session: "valid-token" },
         payload: { password: "correct horse battery" },
       });
@@ -505,6 +542,7 @@ describe("auth routes", () => {
       expect(deleteArgs).toEqual([
         { id: "1", username: "testuser" },
         "correct horse battery",
+        "192.0.2.1",
       ]);
       const sessionCookie = response.cookies.find((c) => c.name === "session");
       expect(sessionCookie?.value).toBe("");
@@ -581,6 +619,7 @@ describe("auth routes", () => {
       const response = await app.inject({
         method: "POST",
         url: "/auth/password",
+        remoteAddress: "192.0.2.1",
         cookies: { session: "valid-token" },
         payload: {
           currentPassword: "correct horse battery",
@@ -595,6 +634,7 @@ describe("auth routes", () => {
         "correct horse battery",
         "new correct horse",
         "valid-token",
+        "192.0.2.1",
       ]);
       expect(response.cookies).toEqual([]);
 

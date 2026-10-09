@@ -23,6 +23,11 @@ See `RELEASING.md`.
 
 ### Changed
 
+- Wrong passwords now lock a username out only for the network they came
+  from (5 failures per IP in 15 minutes), so someone who knows a username
+  can no longer lock its owner out. Across all networks, 50 failures still
+  lock the username for 15 minutes. Behind a reverse proxy this needs
+  `TRUST_PROXY`.
 - The shared-instance guide now shows how to back up the database safely
   while the app is running, with SQLite's online backup, and how to check
   the copy. See "Operational notes" in `deploy/server/README.md`.

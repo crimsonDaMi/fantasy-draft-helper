@@ -20,11 +20,24 @@ async function createServiceWithUser() {
   return service;
 }
 
-async function failLogins(service: AuthService, times: number) {
+const OTHER_IP = "198.51.100.7";
+
+async function failLogins(
+  service: AuthService,
+  times: number,
+  clientIp = CLIENT_IP,
+) {
   for (let attempt = 0; attempt < times; attempt += 1) {
     await expect(
-      service.login("testuser", "wrong password"),
+      service.login("testuser", "wrong password", clientIp),
     ).rejects.toMatchObject({ code: "INVALID_CREDENTIALS" });
+  }
+}
+
+/** Five failures from each of `ipCount` addresses (each one locked out). */
+async function failLoginsFromManyIps(service: AuthService, ipCount: number) {
+  for (let ip = 0; ip < ipCount; ip += 1) {
+    await failLogins(service, 5, `203.0.113.${ip}`);
   }
 }
 
@@ -33,14 +46,24 @@ describe("AuthService login lockout", () => {
     vi.useRealTimers();
   });
 
-  it("locks a username out after five failed logins, even with the right password", async () => {
+  it("locks a username out on one IP after five failed logins, even with the right password", async () => {
     const service = await createServiceWithUser();
 
     await failLogins(service, 5);
 
-    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
-      code: "TOO_MANY_LOGIN_ATTEMPTS",
-    });
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
+  });
+
+  it("still lets the same username log in from another IP", async () => {
+    const service = await createServiceWithUser();
+
+    await failLogins(service, 5);
+
+    await expect(
+      service.login("testuser", PASSWORD, OTHER_IP),
+    ).resolves.toMatchObject({ user: { username: "testuser" } });
   });
 
   it("treats usernames case-insensitively when counting failures", async () => {
@@ -48,39 +71,70 @@ describe("AuthService login lockout", () => {
 
     await failLogins(service, 5);
 
-    await expect(service.login(" TestUser ", PASSWORD)).rejects.toMatchObject({
-      code: "TOO_MANY_LOGIN_ATTEMPTS",
-    });
+    await expect(
+      service.login(" TestUser ", PASSWORD, CLIENT_IP),
+    ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
+  });
+
+  it("locks the account everywhere after 50 failures across many IPs", async () => {
+    const service = await createServiceWithUser();
+
+    await failLoginsFromManyIps(service, 9);
+    await failLogins(service, 4, OTHER_IP);
+
+    // 49 failures: a fresh IP still gets in.
+    await expect(
+      service.login("testuser", PASSWORD, "192.0.2.200"),
+    ).resolves.toMatchObject({ user: { username: "testuser" } });
+
+    await failLogins(service, 1, OTHER_IP);
+
+    await expect(
+      service.login("testuser", PASSWORD, "192.0.2.201"),
+    ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
   });
 
   it("lifts the lockout once the 15-minute window has passed", async () => {
     const service = await createServiceWithUser();
 
     await failLogins(service, 5);
+    await failLoginsFromManyIps(service, 9);
 
     vi.useFakeTimers({ now: Date.now() + 15 * 60 * 1000 });
 
-    await expect(service.login("testuser", PASSWORD)).resolves.toMatchObject({
-      user: { username: "testuser" },
-    });
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).resolves.toMatchObject({ user: { username: "testuser" } });
   });
 
-  it("resets the failure count after a successful login", async () => {
+  it("resets the failure count for that IP after a successful login", async () => {
     const service = await createServiceWithUser();
 
     await failLogins(service, 4);
-    await service.login("testuser", PASSWORD);
+    await service.login("testuser", PASSWORD, CLIENT_IP);
     await failLogins(service, 4);
 
-    await expect(service.login("testuser", PASSWORD)).resolves.toMatchObject({
-      user: { username: "testuser" },
-    });
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).resolves.toMatchObject({ user: { username: "testuser" } });
+  });
+
+  it("keeps the account-wide count after a successful login", async () => {
+    const service = await createServiceWithUser();
+
+    await failLoginsFromManyIps(service, 9);
+    await service.login("testuser", PASSWORD, OTHER_IP);
+    await failLogins(service, 5, OTHER_IP);
+
+    await expect(
+      service.login("testuser", PASSWORD, "192.0.2.200"),
+    ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
   });
 
   it("returns the session expiry alongside the token", async () => {
     const service = await createServiceWithUser();
 
-    const session = await service.login("testuser", PASSWORD);
+    const session = await service.login("testuser", PASSWORD, CLIENT_IP);
 
     expect(new Date(session.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });
@@ -198,7 +252,7 @@ describe("AuthService changePassword", () => {
       ["testuser"],
     );
     const current = await service.register("testuser", PASSWORD, CLIENT_IP);
-    const other = await service.login("testuser", PASSWORD);
+    const other = await service.login("testuser", PASSWORD, OTHER_IP);
 
     return { service, current, other };
   }
@@ -211,13 +265,16 @@ describe("AuthService changePassword", () => {
       PASSWORD,
       NEW_PASSWORD,
       current.token,
+      CLIENT_IP,
     );
 
-    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).rejects.toMatchObject({
       code: "INVALID_CREDENTIALS",
     });
     await expect(
-      service.login("testuser", NEW_PASSWORD),
+      service.login("testuser", NEW_PASSWORD, CLIENT_IP),
     ).resolves.toMatchObject({ user: { username: "testuser" } });
     expect(service.getUserForSession(current.token)?.user).toEqual(
       current.user,
@@ -234,10 +291,13 @@ describe("AuthService changePassword", () => {
         "wrong password",
         NEW_PASSWORD,
         current.token,
+        CLIENT_IP,
       ),
     ).rejects.toMatchObject({ code: "INVALID_PASSWORD" });
 
-    await expect(service.login("testuser", PASSWORD)).resolves.toMatchObject({
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).resolves.toMatchObject({
       user: { username: "testuser" },
     });
     expect(service.getUserForSession(other.token)?.user).toEqual(current.user);
@@ -253,6 +313,7 @@ describe("AuthService changePassword", () => {
           "wrong password",
           NEW_PASSWORD,
           current.token,
+          CLIENT_IP,
         ),
       ).rejects.toMatchObject({ code: "INVALID_PASSWORD" });
     }
@@ -263,9 +324,12 @@ describe("AuthService changePassword", () => {
         PASSWORD,
         NEW_PASSWORD,
         current.token,
+        CLIENT_IP,
       ),
     ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
-    await expect(service.login("testuser", PASSWORD)).rejects.toMatchObject({
+    await expect(
+      service.login("testuser", PASSWORD, CLIENT_IP),
+    ).rejects.toMatchObject({
       code: "TOO_MANY_LOGIN_ATTEMPTS",
     });
   });

@@ -104,7 +104,7 @@ describe("AccountService", () => {
         setup.countUserData(alice.user.id, alice.rankingId).every((n) => n > 0),
       ).toBe(true);
 
-      await setup.accountService.deleteAccount(alice.user, PASSWORD);
+      await setup.accountService.deleteAccount(alice.user, PASSWORD, CLIENT_IP);
 
       expect(setup.countUserData(alice.user.id, alice.rankingId)).toEqual([
         0, 0, 0, 0, 0, 0,
@@ -121,7 +121,7 @@ describe("AccountService", () => {
       const setup = createSetup();
       const alice = await setup.createUserWithData("alice");
 
-      await setup.accountService.deleteAccount(alice.user, PASSWORD);
+      await setup.accountService.deleteAccount(alice.user, PASSWORD, CLIENT_IP);
 
       await expect(
         setup.authService.register("alice", PASSWORD, "192.0.2.2"),
@@ -137,12 +137,16 @@ describe("AccountService", () => {
 
       for (let attempt = 0; attempt < 5; attempt += 1) {
         await expect(
-          setup.accountService.deleteAccount(alice.user, "wrong password"),
+          setup.accountService.deleteAccount(
+            alice.user,
+            "wrong password",
+            CLIENT_IP,
+          ),
         ).rejects.toMatchObject({ code: "INVALID_PASSWORD" });
       }
 
       await expect(
-        setup.accountService.deleteAccount(alice.user, PASSWORD),
+        setup.accountService.deleteAccount(alice.user, PASSWORD, CLIENT_IP),
       ).rejects.toMatchObject({ code: "TOO_MANY_LOGIN_ATTEMPTS" });
       expect(setup.countUserData(alice.user.id, alice.rankingId)).toEqual(
         before,
@@ -199,7 +203,7 @@ describe("AccountService", () => {
       const alice = await setup.createUserWithData("alice");
 
       vi.useFakeTimers({ now: Date.now() + 25 * DAY_MS, toFake: ["Date"] });
-      await setup.authService.login("alice", PASSWORD);
+      await setup.authService.login("alice", PASSWORD, CLIENT_IP);
 
       expect(
         setup.accountService.purgeInactiveAccounts(
