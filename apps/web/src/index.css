@@ -664,6 +664,52 @@ button {
   color: var(--color-text-muted);
 }
 
+/* Password input with show/hide toggle. `[type]` outranks the
+   `.login-panel input` / `.account-page input` padding. */
+
+.password-input {
+  position: relative;
+  display: flex;
+}
+
+.password-input input[type] {
+  flex: 1;
+  min-width: 0;
+  padding-right: 44px;
+}
+
+/* Edge adds its own reveal button to password fields. */
+.password-input input::-ms-reveal {
+  display: none;
+}
+
+.password-input__toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.password-input__toggle:hover {
+  color: var(--color-text);
+}
+
+.password-input__toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
 .app-header__controls {
   display: flex;
   align-items: center;

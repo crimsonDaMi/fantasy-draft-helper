@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 import { ErrorMessage } from "./ErrorMessage";
+import { PasswordInput } from "./PasswordInput";
 
 interface AccountPageProps {
   username: string;
@@ -42,8 +43,7 @@ export function AccountPage({ username, onDeleteAccount }: AccountPageProps) {
           watch/avoid flags. This can&apos;t be undone — export any ranking you
           want to keep as CSV first.
         </p>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Your password"

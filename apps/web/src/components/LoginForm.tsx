@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ErrorMessage } from "./ErrorMessage";
+import { PasswordInput } from "./PasswordInput";
 
 interface LoginFormProps {
   error?: string;
@@ -68,11 +69,11 @@ export function LoginForm({ error, onLogin, onRegister }: LoginFormProps) {
             title: "3–32 letters, digits, _, . or -",
           })}
         />
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Password"
+          aria-label="Password"
           autoComplete={mode === "login" ? "current-password" : "new-password"}
           {...(mode === "register" && { minLength: 8, maxLength: 128 })}
         />

@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Password fields on the login, registration and Account pages have an eye
+  button to show or hide what you typed. Submitting the form hides the
+  password again.
+
 ### Changed
 
 - The shared-instance guide now shows how to back up the database safely
