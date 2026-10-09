@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/logo.svg" width="120" alt=""></p>
+
 # Fantasy Draft Helper
 
 Fantasy Draft Helper is a deterministic NFL fantasy draft assistant. It imports a player ranking CSV, matches players to Sleeper IDs, monitors a Sleeper draft, and displays the highest-ranked available players.

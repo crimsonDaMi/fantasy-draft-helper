@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <rect width="1280" height="640" fill="#0f1411"/>
+  <g stroke="#2fbf71" stroke-opacity="0.12" stroke-width="4">
+    <line x1="160" y1="0" x2="160" y2="640"/>
+    <line x1="320" y1="0" x2="320" y2="640"/>
+    <line x1="480" y1="0" x2="480" y2="640"/>
+    <line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="800" y1="0" x2="800" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+    <line x1="1120" y1="0" x2="1120" y2="640"/>
+  </g>
+  <g transform="translate(64 64)">
+    <g transform="translate(6 -24)">
+      <polyline points="96,190 180,260 96,330" fill="none" stroke="#2fbf71" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="none" stroke="#f2f5f0" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="250,150 250,320 410,320 410,150"/>
+        <line x1="330" y1="320" x2="330" y2="410"/>
+      </g>
+      <g transform="translate(330 218) rotate(-30)">
+        <path d="M-46,0 C-30,-36 30,-36 46,0 C30,36 -30,36 -46,0Z" fill="#8b4a2b"/>
+        <line x1="-16" y1="0" x2="16" y2="0" stroke="#f2f5f0" stroke-width="7" stroke-linecap="round"/>
+      </g>
+    </g>
+  </g>
+  <g font-family="'Saira Condensed', 'Arial Narrow', 'DejaVu Sans Condensed', sans-serif" font-weight="800" fill="#f2f5f0">
+    <text x="620" y="290" font-size="68">FANTASY DRAFT</text>
+    <text x="620" y="370" font-size="68" fill="#2fbf71">HELPER</text>
+  </g>
+  <text x="622" y="424" font-family="'IBM Plex Sans', 'DejaVu Sans', sans-serif" font-size="26" fill="#93a39a">Self-hosted draft board for Sleeper leagues</text>
+</svg>
