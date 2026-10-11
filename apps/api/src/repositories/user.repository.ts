@@ -9,11 +9,11 @@ import {
 import { DatabaseSync } from "node:sqlite";
 import { promisify } from "node:util";
 
-import { applySchema, openDatabase } from "./database.js";
+import { applySchema, openDatabase, runInTransaction } from "./database.js";
+import { DAY_MS } from "../utils/time.js";
 
 const SCRYPT_KEY_LENGTH = 64;
 const SALT_BYTES = 16;
-const DAY_MS = 24 * 60 * 60 * 1000;
 // A session expires after this long without use...
 export const SESSION_TTL_MS = 30 * DAY_MS;
 // ...and this long after login, however often it is used.
@@ -297,21 +297,12 @@ export class UserRepository {
   ): Promise<void> {
     const { salt, hash } = await this.newStoredHash(password);
 
-    this.database.exec("BEGIN");
-    try {
-      this.database
-        .prepare(
-          `UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?`,
-        )
-        .run(salt, hash, userId);
+    runInTransaction(this.database, () => {
+      this.writePasswordHash(userId, salt, hash);
       this.database
         .prepare(`DELETE FROM sessions WHERE user_id = ? AND token != ?`)
         .run(userId, hashSessionToken(keepSessionToken));
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
 
   deleteSession(token: string): void {
@@ -357,6 +348,10 @@ export class UserRepository {
   ): Promise<void> {
     const { salt, hash } = await this.newStoredHash(password);
 
+    this.writePasswordHash(userId, salt, hash);
+  }
+
+  private writePasswordHash(userId: string, salt: string, hash: string): void {
     this.database
       .prepare(
         `UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?`,

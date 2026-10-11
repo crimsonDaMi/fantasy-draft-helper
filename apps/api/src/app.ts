@@ -24,14 +24,13 @@ import {
 } from "./utils/require-user.js";
 import { isSpaClientRoute } from "./utils/spa-client-routes.js";
 import { parseTrustProxy } from "./utils/trust-proxy.js";
+import { DAY_MS } from "./utils/time.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const { version: APP_VERSION } = JSON.parse(
   readFileSync(path.join(__dirname, "../../../package.json"), "utf-8"),
 ) as { version: string };
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Largest accepted ranking CSV upload.
 const MAX_CSV_UPLOAD_BYTES = 1024 * 1024;

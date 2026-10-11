@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { applySchema, openDatabase } from "./database.js";
+import { applySchema, openDatabase, runInTransaction } from "./database.js";
 import { PlayerFlag } from "../domain/player-flag.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { RankingTier } from "../domain/ranking-tier.js";
@@ -175,7 +175,7 @@ export class RankingRepository {
     const rankingId = randomUUID();
     const createdAt = new Date().toISOString();
 
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       // Users keep several rankings side by side (e.g. one per league);
       // importing or starting a new one adds to them.
       const { count } = this.database
@@ -320,7 +320,7 @@ export class RankingRepository {
     targetTier: string,
     newMatch?: PlayerMatch,
   ): PlayerMatch[] {
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       const ordered = this.getOrderedMatches(rankingId);
 
       const currentIndex = ordered.findIndex(
@@ -366,7 +366,7 @@ export class RankingRepository {
     rank: number,
     resolved: PlayerMatch | undefined,
   ): PlayerMatch[] {
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       const ordered = this.getOrderedMatches(rankingId);
       const row = ordered[rank - 1];
 
@@ -396,7 +396,7 @@ export class RankingRepository {
   }
 
   removePlayer(rankingId: string, sleeperId: string): PlayerMatch[] {
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       const ordered = this.getOrderedMatches(rankingId).filter(
         (match) => match.player?.sleeperId !== sleeperId,
       );
@@ -472,7 +472,7 @@ export class RankingRepository {
   /** Inserts a new, empty tier at 1-based `position`, shifting that tier
    * and every one after it (and their players) one step worse. */
   insertTier(rankingId: string, position: number): RankingTier[] {
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       const positions = this.readTierPositions(rankingId);
       const maxPosition = positions.length > 0 ? Math.max(...positions) : 0;
       const clamped = Math.max(1, Math.min(position, maxPosition + 1));
@@ -499,7 +499,7 @@ export class RankingRepository {
   /** Removes the tier at 1-based `position`, merging its players into the
    * next tier down — or, if it's the last (worst) tier, the tier above. */
   removeTier(rankingId: string, position: number): RankingTier[] {
-    this.transaction(() => {
+    runInTransaction(this.database, () => {
       const positions = this.readTierPositions(rankingId);
 
       if (!positions.includes(position)) {
@@ -516,12 +516,9 @@ export class RankingRepository {
         );
       }
 
-      const below = positions
-        .filter((p) => p > position)
-        .sort((a, b) => a - b)[0];
-      const above = positions
-        .filter((p) => p < position)
-        .sort((a, b) => b - a)[0];
+      // `positions` is sorted ascending.
+      const below = positions.find((p) => p > position);
+      const above = positions.filter((p) => p < position).at(-1);
       const mergeTarget = below ?? above;
 
       this.relabelPlayersAtPosition(rankingId, position, mergeTarget!);
@@ -541,19 +538,6 @@ export class RankingRepository {
   // ---------------------------------------------------------------------
   // Internal helpers
   // ---------------------------------------------------------------------
-
-  /** Runs `fn` inside a transaction, rolling back if it throws. */
-  private transaction(fn: () => void): void {
-    this.database.exec("BEGIN");
-
-    try {
-      fn();
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
-  }
 
   private getOrderedMatches(rankingId: string): PlayerMatch[] {
     const rows = this.database
@@ -660,11 +644,9 @@ export class RankingRepository {
     );
 
     // Walk in the direction that avoids colliding with the unique
-    // (ranking_id, position) index while shifting.
-    const ordered =
-      delta > 0
-        ? [...positions].sort((a, b) => b - a)
-        : [...positions].sort((a, b) => a - b);
+    // (ranking_id, position) index while shifting; `positions` is
+    // ascending.
+    const ordered = delta > 0 ? positions.reverse() : positions;
 
     for (const position of ordered) {
       const newPosition = position + delta;

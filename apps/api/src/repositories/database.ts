@@ -20,6 +20,19 @@ export function openDatabase(
   return new DatabaseSync(databasePath);
 }
 
+/** Runs `fn` inside a transaction, rolling back if it throws. */
+export function runInTransaction(database: DatabaseSync, fn: () => void): void {
+  database.exec("BEGIN");
+
+  try {
+    fn();
+    database.exec("COMMIT");
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 /**
  * Runs a repository's `CREATE TABLE IF NOT EXISTS` schema, first refusing
  * to start against a database whose existing tables were created by a

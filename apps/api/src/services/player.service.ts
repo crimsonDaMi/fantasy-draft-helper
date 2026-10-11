@@ -3,21 +3,20 @@ import { PlayerCache } from "../cache/player.cache.js";
 import { Player } from "../domain/player.js";
 import { hasRelevantFantasyPosition } from "../utils/is-fantasy-relevant-player.js";
 import { mapSleeperPlayer } from "./player.mapper.js";
+import { DAY_MS, HOUR_MS, MINUTE_MS } from "../utils/time.js";
 
 // Per Sleeper's own API docs: "You do not need to call this endpoint more
 // than once per day." https://docs.sleeper.com/
-const REFRESH_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const REFRESH_COOLDOWN_MS = DAY_MS;
 
 // How long to wait before retrying a failed automatic refresh, so draft
 // polling can't hammer Sleeper while it's down.
-const REFRESH_RETRY_MS = 60 * 60 * 1000;
+const REFRESH_RETRY_MS = HOUR_MS;
 
 export class RefreshCooldownError extends Error {
   constructor(public readonly retryAfterMs: number) {
     super(
-      `Player data was refreshed recently. Try again in ${Math.ceil(
-        retryAfterMs / (60 * 1000),
-      )} minute(s).`,
+      `Player data was refreshed recently. Try again in ${Math.ceil(retryAfterMs / MINUTE_MS)} minute(s).`,
     );
   }
 }

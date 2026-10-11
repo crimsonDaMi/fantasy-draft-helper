@@ -10,6 +10,7 @@ import {
   UnauthorizedError,
 } from "../utils/domain-errors.js";
 import { WindowCounter } from "../utils/window-counter.js";
+import { HOUR_MS, MINUTE_MS } from "../utils/time.js";
 
 // Failed logins for one username from one client IP.
 const MAX_FAILED_LOGINS_PER_IP = 5;
@@ -17,9 +18,9 @@ const MAX_FAILED_LOGINS_PER_IP = 5;
 // a single network can't lock a user out, low enough to slow down a
 // guessing attack spread across many addresses.
 const MAX_FAILED_LOGINS_PER_ACCOUNT = 50;
-const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+const LOCKOUT_WINDOW_MS = 15 * MINUTE_MS;
 const MAX_REGISTRATIONS_PER_IP = 5;
-const REGISTRATION_WINDOW_MS = 60 * 60 * 1000;
+const REGISTRATION_WINDOW_MS = HOUR_MS;
 
 interface Session {
   user: User;
@@ -85,7 +86,7 @@ export class AuthService {
 
     if (this.registrations.count(clientIp) >= MAX_REGISTRATIONS_PER_IP) {
       throw new TooManyRequestsError(
-        `Too many accounts created from this network. Try again in ${REGISTRATION_WINDOW_MS / 60_000} minutes.`,
+        `Too many accounts created from this network. Try again in ${REGISTRATION_WINDOW_MS / MINUTE_MS} minutes.`,
         "TOO_MANY_REGISTRATIONS",
       );
     }
@@ -171,7 +172,7 @@ export class AuthService {
         MAX_FAILED_LOGINS_PER_ACCOUNT
     ) {
       throw new TooManyRequestsError(
-        `Too many failed login attempts. Try again in ${LOCKOUT_WINDOW_MS / 60_000} minutes.`,
+        `Too many failed login attempts. Try again in ${LOCKOUT_WINDOW_MS / MINUTE_MS} minutes.`,
         "TOO_MANY_LOGIN_ATTEMPTS",
       );
     }

@@ -3,8 +3,7 @@ import type { FastifyBaseLogger } from "fastify";
 import { RankingRepository } from "../repositories/ranking.repository.js";
 import { User, UserRepository } from "../repositories/user.repository.js";
 import { AuthService } from "./auth.service.js";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { DAY_MS } from "../utils/time.js";
 
 /**
  * Deletes accounts with everything tied to them, on request or after

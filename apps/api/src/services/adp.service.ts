@@ -3,9 +3,10 @@ import type { FastifyBaseLogger } from "fastify";
 
 import { AdpClient } from "../clients/adp.client.js";
 import { ADP_COLUMNS, AdpColumn } from "../domain/adp-format.js";
+import { DAY_MS, MINUTE_MS } from "../utils/time.js";
 
-const REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // Sleeper updates this every 1-2 weeks
-const FAILURE_BACKOFF_MS = 5 * 60 * 1000; // don't hammer the source on repeated failure
+const REFRESH_INTERVAL_MS = DAY_MS; // Sleeper updates this every 1-2 weeks
+const FAILURE_BACKOFF_MS = 5 * MINUTE_MS; // don't hammer the source on repeated failure
 const PLAYER_ID_COLUMN = "Player Id";
 
 export class AdpService {
