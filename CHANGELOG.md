@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v2.3.0 — 2026-10-11
+
 ### Added
 
 - Every instance serves `/THIRD-PARTY-NOTICES.txt` with the licenses of the
