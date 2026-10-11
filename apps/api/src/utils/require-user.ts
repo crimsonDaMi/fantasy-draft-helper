@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 import { User } from "../repositories/user.repository.js";
+import type { AuthService } from "../services/auth.service.js";
 import { HttpError } from "./http-error.js";
 
 export const SESSION_COOKIE = "session";
@@ -25,8 +26,32 @@ export function setSessionCookie(
 }
 
 /** The 401 for a request without a valid session. */
-export function loginRequired(): HttpError {
+function loginRequired(): HttpError {
   return new HttpError(401, "Login required", "UNAUTHENTICATED");
+}
+
+/**
+ * The user and token of the request's session cookie, refreshing the
+ * cookie when the lookup extended the session. Throws 401 without a valid
+ * session.
+ */
+export function authenticateSession(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  authService: Pick<AuthService, "getUserForSession">,
+): { user: User; token: string } {
+  const token = request.cookies[SESSION_COOKIE];
+  const session = token ? authService.getUserForSession(token) : undefined;
+
+  if (!token || !session) {
+    throw loginRequired();
+  }
+
+  if (session.renewedExpiresAt) {
+    setSessionCookie(reply, token, session.renewedExpiresAt);
+  }
+
+  return { user: session.user, token };
 }
 
 /**

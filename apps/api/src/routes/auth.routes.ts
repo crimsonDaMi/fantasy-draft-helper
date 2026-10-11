@@ -4,7 +4,7 @@ import { z } from "zod";
 import { AccountService } from "../services/account.service.js";
 import { AuthService } from "../services/auth.service.js";
 import {
-  loginRequired,
+  authenticateSession,
   SESSION_COOKIE,
   setSessionCookie,
 } from "../utils/require-user.js";
@@ -82,34 +82,20 @@ export function createAuthRoutes(
     });
 
     app.get("/auth/me", async (request, reply) => {
-      const token = request.cookies[SESSION_COOKIE];
-      const session = token ? authService.getUserForSession(token) : undefined;
+      const { user } = authenticateSession(request, reply, authService);
 
-      if (!token || !session) {
-        throw loginRequired();
-      }
-
-      if (session.renewedExpiresAt) {
-        setSessionCookie(reply, token, session.renewedExpiresAt);
-      }
-
-      return { user: session.user };
+      return { user };
     });
 
-    app.post("/auth/password", async (request) => {
-      const token = request.cookies[SESSION_COOKIE];
-      const session = token ? authService.getUserForSession(token) : undefined;
-
-      if (!token || !session) {
-        throw loginRequired();
-      }
+    app.post("/auth/password", async (request, reply) => {
+      const { user, token } = authenticateSession(request, reply, authService);
 
       const { currentPassword, newPassword } = changePasswordSchema.parse(
         request.body,
       );
 
       await authService.changePassword(
-        session.user,
+        user,
         currentPassword,
         newPassword,
         token,
@@ -120,16 +106,11 @@ export function createAuthRoutes(
     });
 
     app.delete("/auth/account", async (request, reply) => {
-      const token = request.cookies[SESSION_COOKIE];
-      const session = token ? authService.getUserForSession(token) : undefined;
-
-      if (!session) {
-        throw loginRequired();
-      }
+      const { user } = authenticateSession(request, reply, authService);
 
       const { password } = deleteAccountSchema.parse(request.body);
 
-      await accountService.deleteAccount(session.user, password, request.ip);
+      await accountService.deleteAccount(user, password, request.ip);
 
       reply.clearCookie(SESSION_COOKIE, { path: "/" });
 
