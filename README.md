@@ -8,10 +8,14 @@ shows the best players still available in your order, with each pick
 crossed off as it happens. Works with 1QB and Superflex, redraft and
 dynasty leagues.
 
-It's self-hosted: one Docker container, run on your own computer for draft
-day or shared with your whole league. It doesn't pick for you: no
-auto-drafting and no machine learning, just your rankings and the draft
-state.
+**Try it at [draft-helper.duckdns.org](https://draft-helper.duckdns.org/)**:
+a public instance run by the maintainer. Register with a username and
+password; no email address needed.
+
+Or host it yourself: one Docker container, run on your own computer for
+draft day or shared with your whole league. Either way, it doesn't pick for
+you: no auto-drafting and no machine learning, just your rankings and the
+draft state.
 
 ## Features
 
