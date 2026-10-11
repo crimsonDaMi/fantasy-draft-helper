@@ -59,13 +59,13 @@ const TOUCH_DRAG_TOLERANCE_PX = 8;
 // soon after a drag ends are ignored.
 const POST_DRAG_CLICK_GUARD_MS = 400;
 
-// Replaces dnd-kit's default "press space to pick up" text: there's no
-// keyboard drag, rows have keyboard commands instead.
 const PHONE_VIEWS = [
   { value: "tiers", label: "Tiers" },
   { value: "unranked", label: "Unranked" },
 ] as const;
 
+// Replaces dnd-kit's default "press space to pick up" text: there's no
+// keyboard drag, rows have keyboard commands instead.
 const SCREEN_READER_INSTRUCTIONS: ScreenReaderInstructions = {
   draggable:
     "Up and down arrows move between players. Enter moves the player to " +
@@ -267,6 +267,10 @@ export function RankingEditorPage() {
       : undefined;
   }
 
+  function playerName(sleeperId: string, fallback = "player"): string {
+    return findPlayer(sleeperId)?.fullName ?? fallback;
+  }
+
   // Whether a player passes the position filter and a name search.
   function matchesFilters(player: EditorPlayer, search: string): boolean {
     return filterPlayers([player], positionFilter, search).length > 0;
@@ -310,7 +314,7 @@ export function RankingEditorPage() {
     const rank = computeGlobalRank(working, tierOrder, tier, index);
     moveMutation.mutate({ sleeperId, rank, tier });
     setAnnouncement(
-      `${findPlayer(sleeperId)?.fullName ?? "Player"} moved to ${tierHeading(tier)}, rank ${rank}`,
+      `${playerName(sleeperId, "Player")} moved to ${tierHeading(tier)}, rank ${rank}`,
     );
   }
 
@@ -363,7 +367,7 @@ export function RankingEditorPage() {
     );
     removeMutation.mutate({ sleeperId });
     setAnnouncement(
-      `${findPlayer(sleeperId)?.fullName ?? "Player"} removed from the ranking`,
+      `${playerName(sleeperId, "Player")} removed from the ranking`,
     );
   }
 
@@ -379,16 +383,15 @@ export function RankingEditorPage() {
 
   // Mouse/touch drag announcements by player name, not sleeperId.
   const announcements: Announcements = {
-    onDragStart: ({ active }) =>
-      `Picked up ${findPlayer(String(active.id))?.fullName ?? "player"}.`,
+    onDragStart: ({ active }) => `Picked up ${playerName(String(active.id))}.`,
     onDragOver: ({ over }) =>
       over ? `Over ${containerName(String(over.id))}.` : undefined,
     onDragEnd: ({ active, over }) =>
-      `Dropped ${findPlayer(String(active.id))?.fullName ?? "player"}${
+      `Dropped ${playerName(String(active.id))}${
         over ? ` in ${containerName(String(over.id))}` : ""
       }.`,
     onDragCancel: ({ active }) =>
-      `Cancelled dragging ${findPlayer(String(active.id))?.fullName ?? "player"}.`,
+      `Cancelled dragging ${playerName(String(active.id))}.`,
   };
 
   function handleDragStart(event: DragStartEvent) {

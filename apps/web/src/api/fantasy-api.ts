@@ -10,6 +10,9 @@ import type {
   UserDraftsResponse,
 } from "../types/api";
 
+/** The ranking's rows after an editor change. */
+type RankingPlayersResponse = { players: RankingPlayerDto[] };
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
@@ -322,7 +325,7 @@ export function moveRankingPlayer(
   sleeperId: string,
   rank: number,
   tier: string,
-): Promise<{ players: RankingPlayerDto[] }> {
+): Promise<RankingPlayersResponse> {
   return request(path`/rankings/${rankingId}/players/${sleeperId}`, {
     method: "PATCH",
     ...jsonBody({ rank, tier }),
@@ -332,7 +335,7 @@ export function moveRankingPlayer(
 export function removeRankingPlayer(
   rankingId: string,
   sleeperId: string,
-): Promise<{ players: RankingPlayerDto[] }> {
+): Promise<RankingPlayersResponse> {
   return request(path`/rankings/${rankingId}/players/${sleeperId}`, {
     method: "DELETE",
   });
@@ -346,7 +349,7 @@ export function resolveUnmatchedRow(
   rank: number,
   playerName: string,
   sleeperId: string,
-): Promise<{ players: RankingPlayerDto[] }> {
+): Promise<RankingPlayersResponse> {
   return request(path`/rankings/${rankingId}/unmatched/${rank}`, {
     method: "PATCH",
     ...jsonBody({ playerName, sleeperId }),
@@ -357,7 +360,7 @@ export function removeUnmatchedRow(
   rankingId: string,
   rank: number,
   playerName: string,
-): Promise<{ players: RankingPlayerDto[] }> {
+): Promise<RankingPlayersResponse> {
   return request(
     path`/rankings/${rankingId}/unmatched/${rank}?playerName=${playerName}`,
     { method: "DELETE" },
