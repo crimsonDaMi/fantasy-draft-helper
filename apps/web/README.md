@@ -1,6 +1,6 @@
 # Web app
 
-React + TypeScript + Vite front end. See the root [`README.md`](../../README.md)
+React + TypeScript + Vite front end. See [`docs/development.md`](../../docs/development.md)
 for running and building it.
 
 Linting uses [oxlint](https://oxc.rs), configured in `.oxlintrc.json` in

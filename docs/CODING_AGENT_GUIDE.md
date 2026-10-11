@@ -123,7 +123,7 @@ error. Sleeper's pick propagation delay is an accepted limitation (see
 [`known-issues.md`](known-issues.md)); the debug UI shows the last
 successful refresh time. No WebSockets.
 
-API contracts are documented in the root [`README.md`](../README.md#api);
+API contracts are documented in [`api.md`](api.md);
 the database schema is the `CREATE TABLE` statements in
 `apps/api/src/repositories/`.
 

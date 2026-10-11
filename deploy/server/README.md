@@ -6,7 +6,7 @@ home (self-hosting) or is a rented server (online hosting); only the way
 it is exposed to the internet differs.
 
 For running the app just for yourself on draft day, use the root
-`docker-compose.yml` instead — see the root [`README.md`](../../README.md#installation).
+`docker-compose.yml` instead — see the root [`README.md`](../../README.md#quick-start).
 
 ## Requirements
 
@@ -52,10 +52,11 @@ keeps accounts until their owners delete them).
 
 For a public instance, also set `OPERATOR_NAME`, `OPERATOR_CONTACT` and
 optionally `OPERATOR_ADDRESS`, so the privacy notice at `/privacy` says who
-runs it (see "Privacy Notice" in the root [`README.md`](../../README.md#privacy-notice)).
+runs it (see "Privacy Notice" in
+[`docs/configuration.md`](../../docs/configuration.md#privacy-notice)).
 Request logs, which contain visitors' IP addresses, are limited to three
-10 MB files in `docker-compose.yml` and roll over on their own. See "Authentication Setup" in the root
-[`README.md`](../../README.md#authentication-setup).
+10 MB files in `docker-compose.yml` and roll over on their own. See "Authentication Setup" in
+[`docs/configuration.md`](../../docs/configuration.md#authentication-setup).
 
 The app now listens on `127.0.0.1:3000` only — reachable from the machine
 itself, not the network. `docker compose ps` shows `healthy` once it is up.

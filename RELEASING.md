@@ -188,8 +188,8 @@ surprise-updated mid-draft.
 ## Building a debug image for troubleshooting
 
 If a league mate reports a bug and you need more visibility than the
-production UI shows, build a one-off debug image (see README.md's
-"UI Modes" section) rather than a versioned release:
+production UI shows, build a one-off debug image (see "UI Modes" in
+`docs/configuration.md`) rather than a versioned release:
 
 ```bash
 docker build --build-arg VITE_UI_MODE=debug \
