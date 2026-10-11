@@ -45,6 +45,12 @@ interface NormalizedCsvRow {
   sleeperPlayerId?: string;
 }
 
+type ParsedRow = { ranking: Ranking } | { error: RankingImportError };
+
+function rowError(row: number, message: string): ParsedRow {
+  return { error: { row, message } };
+}
+
 /** A result for a problem with the file as a whole, reported on the
  * header row. */
 function fileError(message: string): RankingImportResult {
@@ -109,46 +115,22 @@ export class RankingCsvService {
     };
   }
 
-  private parseRow(
-    row: NormalizedCsvRow,
-    rowNumber: number,
-  ):
-    | {
-        ranking: Ranking;
-      }
-    | {
-        error: RankingImportError;
-      } {
+  private parseRow(row: NormalizedCsvRow, rowNumber: number): ParsedRow {
     const rank = Number(row.rank);
 
     if (!Number.isInteger(rank) || rank < 1) {
-      return {
-        error: {
-          row: rowNumber,
-          message: "Rank must be a positive integer",
-        },
-      };
+      return rowError(rowNumber, "Rank must be a positive integer");
     }
 
     if (!row.player) {
-      return {
-        error: {
-          row: rowNumber,
-          message: "Name is required",
-        },
-      };
+      return rowError(rowNumber, "Name is required");
     }
 
     const position =
       row.position === undefined ? undefined : normalizePosition(row.position);
 
     if (position !== undefined && !isFantasyPosition(position)) {
-      return {
-        error: {
-          row: rowNumber,
-          message: `Invalid position: ${row.position}`,
-        },
-      };
+      return rowError(rowNumber, `Invalid position: ${row.position}`);
     }
 
     return {

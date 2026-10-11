@@ -13,6 +13,10 @@ const SLEEPER_TEAM_ALIASES: Record<string, string> = {
 export class PlayerMatchingService {
   constructor(private readonly playerService: PlayerService) {}
 
+  matchRankings(rankings: Ranking[]): PlayerMatch[] {
+    return rankings.map((ranking) => this.matchRanking(ranking));
+  }
+
   matchRanking(ranking: Ranking): PlayerMatch {
     const bySleeperId = this.matchBySleeperId(ranking);
 
@@ -71,6 +75,8 @@ export class PlayerMatchingService {
     };
   }
 
+  /** Narrows the players with the row's name step by step, taking the
+   * first step that leaves exactly one. */
   private matchByName(ranking: Ranking): PlayerMatch {
     const candidates = this.playerService.findPlayersByName(ranking.playerName);
 
@@ -81,49 +87,30 @@ export class PlayerMatchingService {
       };
     }
 
-    const byTeamPosition = candidates.filter(
-      (player) =>
-        player.team === ranking.team && player.position === ranking.position,
-    );
+    const steps: [PlayerMatch["method"], (player: Player) => boolean][] = [
+      [
+        "NAME_POSITION_TEAM",
+        (player) =>
+          player.team === ranking.team && player.position === ranking.position,
+      ],
+      ["NAME_POSITION", (player) => player.position === ranking.position],
+      [
+        "NAME_TEAM",
+        (player) => ranking.team !== undefined && player.team === ranking.team,
+      ],
+      ["NAME", () => true],
+    ];
 
-    if (byTeamPosition.length === 1) {
-      return {
-        ranking,
-        player: byTeamPosition[0],
-        method: "NAME_POSITION_TEAM",
-      };
-    }
+    for (const [method, accepts] of steps) {
+      const narrowed = candidates.filter(accepts);
 
-    const byPosition = candidates.filter(
-      (player) => player.position === ranking.position,
-    );
-
-    if (byPosition.length === 1) {
-      return {
-        ranking,
-        player: byPosition[0],
-        method: "NAME_POSITION",
-      };
-    }
-
-    const byTeam = candidates.filter(
-      (player) => ranking.team !== undefined && player.team === ranking.team,
-    );
-
-    if (byTeam.length === 1) {
-      return {
-        ranking,
-        player: byTeam[0],
-        method: "NAME_TEAM",
-      };
-    }
-
-    if (candidates.length === 1) {
-      return {
-        ranking,
-        player: candidates[0],
-        method: "NAME",
-      };
+      if (narrowed.length === 1) {
+        return {
+          ranking,
+          player: narrowed[0],
+          method,
+        };
+      }
     }
 
     return {
@@ -133,25 +120,16 @@ export class PlayerMatchingService {
     };
   }
 
-  matchRankings(rankings: Ranking[]): PlayerMatch[] {
-    return rankings.map((ranking) => this.matchRanking(ranking));
-  }
-
-  private getIdMatchWarnings(ranking: Ranking, player: Player) {
-    const warnings: "ID_METADATA_MISMATCH"[] = [];
-
-    const namesMatch =
+  private getIdMatchWarnings(
+    ranking: Ranking,
+    player: Player,
+  ): PlayerMatch["warnings"] {
+    const metadataMatches =
       normalizePlayerName(ranking.playerName) ===
-      normalizePlayerName(player.fullName);
+        normalizePlayerName(player.fullName) &&
+      player.team === ranking.team &&
+      player.position === ranking.position;
 
-    if (
-      !namesMatch ||
-      player.team !== ranking.team ||
-      player.position !== ranking.position
-    ) {
-      warnings.push("ID_METADATA_MISMATCH");
-    }
-
-    return warnings.length > 0 ? warnings : undefined;
+    return metadataMatches ? undefined : ["ID_METADATA_MISMATCH"];
   }
 }

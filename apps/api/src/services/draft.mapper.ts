@@ -36,6 +36,11 @@ function positiveInteger(value: unknown): number | undefined {
     : undefined;
 }
 
+/** A non-empty string, or undefined for anything else. */
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === "string" && value !== "" ? value : undefined;
+}
+
 function mapRosterSlots(
   settings: Record<string, unknown>,
 ): Partial<Record<RosterSlot, number>> {
@@ -89,8 +94,6 @@ export function mapSleeperDraft(
   tradedPicks?: SleeperTradedPick[] | null,
 ): Draft {
   const settings = draft.settings ?? {};
-  const name = draft.metadata?.name;
-  const scoringType = draft.metadata?.scoring_type;
 
   return {
     id: draft.draft_id,
@@ -99,12 +102,9 @@ export function mapSleeperDraft(
     season: draft.season,
     leagueId: draft.league_id,
     startTime: draft.start_time,
-    name: typeof name === "string" && name !== "" ? name : undefined,
+    name: nonEmptyString(draft.metadata?.name),
     type: draft.type,
-    scoringType:
-      typeof scoringType === "string" && scoringType !== ""
-        ? scoringType
-        : undefined,
+    scoringType: nonEmptyString(draft.metadata?.scoring_type),
     teams: positiveInteger(settings.teams),
     rounds: positiveInteger(settings.rounds),
     reversalRound: positiveInteger(settings.reversal_round),
