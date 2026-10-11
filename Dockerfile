@@ -28,10 +28,12 @@ RUN pnpm install --frozen-lockfile --prod --filter @fantasy-draft-helper/api
 # package.json (for the version in /health), apps/api/dist, and
 # apps/web/dist next to it.
 FROM node:24-slim AS runtime
+LABEL org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build /app/LICENSE ./LICENSE
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist

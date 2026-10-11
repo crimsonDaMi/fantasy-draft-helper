@@ -7,6 +7,13 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Every instance serves `/THIRD-PARTY-NOTICES.txt` with the licenses of the
+  open-source packages and fonts bundled into the app, and the Docker image
+  now includes the project's `LICENSE` file and declares its MIT license in
+  the image metadata.
+
 ## v2.2.0 — 2026-10-10
 
 ### Added

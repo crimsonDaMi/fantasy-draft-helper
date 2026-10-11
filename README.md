@@ -651,3 +651,7 @@ respective owner; the app only uses Sleeper's public API.
 ## License
 
 [MIT](LICENSE) © 2026 Andrej Lohn
+
+The licenses of the third-party packages bundled into the web app are
+collected at build time into `THIRD-PARTY-NOTICES.txt`, served at
+`/THIRD-PARTY-NOTICES.txt` by every running instance.
