@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
   adjustLightness,
+  contrastRatio,
   contrastTextColor,
   LIGHT_TEXT,
   relativeLuminance,
@@ -14,6 +15,10 @@ const STORAGE_KEY = "draft-helper-theme";
 const UNIVERSAL_TEXT = LIGHT_TEXT;
 const UNIVERSAL_TEXT_MUTED = "#8FA396";
 const UNIVERSAL_DANGER = "#E8623D";
+/** Body text's minimum contrast on the lightest surface (WCAG AAA). Well
+ * above the 4.5:1 muted text gets, so muted text still reads as
+ * secondary. */
+const BODY_TEXT_CONTRAST = 7;
 
 interface ThemeTokens {
   bg: string;
@@ -31,8 +36,20 @@ interface ThemeTokens {
 export function deriveTokens(base: string, accent: string): ThemeTokens {
   // Guarantee a dark, scoreboard-style background even for teams whose
   // official primary color is bright (e.g. Chiefs red, Rams blue).
-  const bg =
-    relativeLuminance(base) > 0.18 ? adjustLightness(base, -0.28) : base;
+  let bg = relativeLuminance(base) > 0.18 ? adjustLightness(base, -0.28) : base;
+
+  // Some bases just under that cut-off are still too light for light
+  // text (e.g. Jaguars teal): darken them until body text clears
+  // BODY_TEXT_CONTRAST on the lightest surface.
+  for (
+    let step = 0;
+    step < 100 &&
+    contrastRatio(UNIVERSAL_TEXT, adjustLightness(bg, 0.08)) <
+      BODY_TEXT_CONTRAST;
+    step++
+  ) {
+    bg = adjustLightness(bg, -0.01);
+  }
 
   const surfaceRaised = adjustLightness(bg, 0.08);
 
@@ -42,7 +59,8 @@ export function deriveTokens(base: string, accent: string): ThemeTokens {
     surfaceRaised,
     border: `${UNIVERSAL_TEXT}14`,
     text: UNIVERSAL_TEXT,
-    textMuted: UNIVERSAL_TEXT_MUTED,
+    // The shared muted gray, lightened where a theme's surface needs it.
+    textMuted: withContrastOn(UNIVERSAL_TEXT_MUTED, surfaceRaised),
     accent,
     accentText: contrastTextColor(accent),
     // Many team accents are too dark to read as text on the background;

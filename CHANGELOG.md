@@ -39,6 +39,10 @@ See `RELEASING.md`.
   buttons, Download CSV in the recap, + New ranking, Choose player… and
   Remove in the ranking editor, and the draft slot dropdown used the
   browser's plain white style.
+- Secondary text (team, tier and ADP lines, hints, labels) is easier to
+  read: it was too faint in 19 of the 32 themes, including the default.
+  Six themes whose background was too light for any light text, such as
+  Everglade, now use a darker shade of their team color.
 
 ## v2.3.0 — 2026-10-11
 
