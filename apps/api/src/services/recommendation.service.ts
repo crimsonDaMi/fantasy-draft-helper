@@ -54,12 +54,42 @@ const TIERS_SHOWN_PER_POSITION = 2;
 function adpComparison(
   rank: number,
   adpValue: number | undefined,
+  positionRank: number | undefined,
 ): Recommendation["adp"] {
   if (adpValue === undefined) {
     return undefined;
   }
 
-  return { value: adpValue, diff: Math.round((rank - adpValue) * 10) / 10 };
+  return {
+    value: adpValue,
+    diff: Math.round((rank - adpValue) * 10) / 10,
+    positionRank,
+  };
+}
+
+/** Each player's place within their position, in the given order (1 for
+ * the first WR, …). Entries without a Sleeper ID still take their place,
+ * so unmatched ranking rows keep the numbering true to the ranking. */
+function positionRanks(
+  entries: { sleeperId?: string; position?: string }[],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  const ranks = new Map<string, number>();
+
+  for (const { sleeperId, position } of entries) {
+    if (!position) {
+      continue;
+    }
+
+    const count = (counts.get(position) ?? 0) + 1;
+    counts.set(position, count);
+
+    if (sleeperId) {
+      ranks.set(sleeperId, count);
+    }
+  }
+
+  return ranks;
 }
 
 /** Per position, the first tiers (in ranking order) that still have
@@ -129,6 +159,24 @@ export class RecommendationService {
 
     const matched = matches.filter(hasPlayer);
 
+    // From the full ranking, so the numbers don't shift as players are
+    // drafted or filtered out.
+    const positionRankBySleeperId = positionRanks(
+      matches.map((match) => ({
+        sleeperId: match.player?.sleeperId,
+        position: match.player?.position ?? match.ranking.position,
+      })),
+    );
+
+    const adpPositionRankBySleeperId = positionRanks(
+      [...adpBySleeperId]
+        .sort(([, a], [, b]) => a - b)
+        .map(([sleeperId]) => ({
+          sleeperId,
+          position: this.playerService.getPlayerById(sleeperId)?.position,
+        })),
+    );
+
     const available = matched.filter(
       (match) => !draftedPlayerIds.has(match.player.sleeperId),
     );
@@ -149,10 +197,12 @@ export class RecommendationService {
       .map((match): Recommendation => ({
         ranking: match.ranking,
         player: match.player,
+        positionRank: positionRankBySleeperId.get(match.player.sleeperId),
         flag: flags[match.player.sleeperId],
         adp: adpComparison(
           match.ranking.rank,
           adpBySleeperId.get(match.player.sleeperId),
+          adpPositionRankBySleeperId.get(match.player.sleeperId),
         ),
       }));
 
@@ -167,8 +217,10 @@ export class RecommendationService {
         ...pick,
         playerName: pick.playerName ?? this.playerName(pick, match?.player),
         rank: match?.ranking.rank,
+        positionRank: positionRankBySleeperId.get(pick.playerId),
         tier: match?.ranking.tier,
         adp: adpBySleeperId.get(pick.playerId),
+        adpPositionRank: adpPositionRankBySleeperId.get(pick.playerId),
       };
     });
 

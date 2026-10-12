@@ -44,6 +44,45 @@ describe("RecommendationsList", () => {
     );
   });
 
+  it("labels positional ranks, by ADP only when ADP exists", () => {
+    const { container } = render(
+      <RecommendationsList
+        adpFormat="SF"
+        recommendations={[
+          {
+            rank: 20,
+            positionRank: 12,
+            tier: "B",
+            player: {
+              sleeperId: "1",
+              fullName: "Player One",
+              position: "WR",
+              team: "AAA",
+            },
+            adp: { value: 25, diff: -5, positionRank: 15 },
+          },
+          {
+            rank: 21,
+            positionRank: 8,
+            player: {
+              sleeperId: "2",
+              fullName: "Player Two",
+              position: "RB",
+              team: "BBB",
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector(".hero__meta")).toHaveTextContent(
+      /^AAA · WR12 · Tier B · ▲ 5.0 ADP · ADP WR15$/,
+    );
+    expect(container.querySelector(".rec-list__meta")).toHaveTextContent(
+      /^BBB · RB8$/,
+    );
+  });
+
   it("reveals the legend on tap, without watch/avoid when flags are off", () => {
     render(
       <RecommendationsList

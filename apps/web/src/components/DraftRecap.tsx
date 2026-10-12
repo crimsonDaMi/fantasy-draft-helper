@@ -1,5 +1,6 @@
 import type { ApiDraftInfo, ApiDraftPick } from "../types/api";
 import { formatPick } from "../utils/draft-order";
+import { formatPositionRank } from "../utils/position-rank";
 import { toRecapCsv } from "../utils/recap-csv";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
@@ -13,6 +14,11 @@ function downloadCsv(csv: string) {
   link.download = "draft-recap.csv";
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/** `#14 · WR5`, or just `#14` without a positional rank. */
+function withPositionRank(value: string, positionRank?: string) {
+  return positionRank ? `${value} · ${positionRank}` : value;
 }
 
 /** Positive when the player came later than you ranked (or than ADP). */
@@ -73,6 +79,10 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
           reach).
         </p>
         <p>vs. ADP: the same, measured against {adpFormat} ADP.</p>
+        <p>
+          WR5: the player's place among their position, in your ranking and by
+          ADP.
+        </p>
       </InfoTipPanel>
 
       {picks.length === 0 ? (
@@ -104,7 +114,17 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
                         {pick.playerName ?? pick.playerId}
                       </span>
                     </td>
-                    <td>{pick.rank === undefined ? "–" : `#${pick.rank}`}</td>
+                    <td>
+                      {pick.rank === undefined
+                        ? "–"
+                        : withPositionRank(
+                            `#${pick.rank}`,
+                            formatPositionRank(
+                              pick.position,
+                              pick.positionRank,
+                            ),
+                          )}
+                    </td>
                     <Value
                       diff={
                         pick.rank === undefined
@@ -113,7 +133,15 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
                       }
                     />
                     <td>
-                      {pick.adp === undefined ? "–" : pick.adp.toFixed(1)}
+                      {pick.adp === undefined
+                        ? "–"
+                        : withPositionRank(
+                            pick.adp.toFixed(1),
+                            formatPositionRank(
+                              pick.position,
+                              pick.adpPositionRank,
+                            ),
+                          )}
                     </td>
                     <Value
                       diff={

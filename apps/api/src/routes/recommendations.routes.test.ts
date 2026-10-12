@@ -58,6 +58,8 @@ const recommendationResult = {
         team: "BUF",
         position: "QB",
       },
+      positionRank: 1,
+      adp: { value: 2.5, diff: -1.5, positionRank: 2 },
     },
   ],
   draft: {
@@ -77,6 +79,9 @@ const recommendationResult = {
       draftSlot: 4,
       playerName: "Player Nine",
       rank: 3,
+      positionRank: 2,
+      adp: 5.1,
+      adpPositionRank: 3,
     },
   ],
   tierCounts: [{ position: "QB", tiers: [{ tier: "A", remaining: 1 }] }],
@@ -120,6 +125,7 @@ describe("recommendations routes", () => {
       recommendations: [
         {
           rank: 1,
+          positionRank: 1,
           tier: "A",
           player: {
             sleeperId: "1",
@@ -127,6 +133,7 @@ describe("recommendations routes", () => {
             team: "BUF",
             position: "QB",
           },
+          adp: { value: 2.5, diff: -1.5, positionRank: 2 },
         },
       ],
       draft: {
@@ -142,6 +149,9 @@ describe("recommendations routes", () => {
           playerId: "9",
           playerName: "Player Nine",
           rank: 3,
+          positionRank: 2,
+          adp: 5.1,
+          adpPositionRank: 3,
         },
       ],
       tierCounts: [{ position: "QB", tiers: [{ tier: "A", remaining: 1 }] }],

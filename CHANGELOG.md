@@ -7,6 +7,14 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Added
+
+- Positional ranks next to each player in the recommendations, recent
+  picks and draft recap: where the player sits among their position in
+  your ranking (e.g. `WR12`) and, when Sleeper has ADP for them, by ADP
+  (e.g. `ADP WR15`). Numbered over your whole ranking, so they don't
+  shift as players are drafted or filtered out.
+
 ## v2.3.0 — 2026-10-11
 
 ### Added

@@ -41,6 +41,7 @@ export function mapRecommendationsResponse(
 function mapRecommendation(recommendation: Recommendation) {
   return {
     rank: recommendation.ranking.rank,
+    positionRank: recommendation.positionRank,
     tier: recommendation.ranking.tier,
     player: {
       sleeperId: recommendation.player.sleeperId,
@@ -66,8 +67,10 @@ function mapPick(pick: RankedDraftPick) {
     position: pick.position,
     team: pick.team,
     rank: pick.rank,
+    positionRank: pick.positionRank,
     tier: pick.tier,
     adp: pick.adp,
+    adpPositionRank: pick.adpPositionRank,
     amount: pick.amount,
   };
 }

@@ -330,7 +330,9 @@ describe("DraftDashboard", () => {
             playerName: "Player Ten",
             position: "QB",
             rank: 3,
+            positionRank: 2,
             adp: 1.5,
+            adpPositionRank: 1,
           },
         ],
       }),
@@ -343,6 +345,8 @@ describe("DraftDashboard", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download CSV" })).toBeEnabled();
     expect(screen.getByText("-2")).toHaveClass("adp-diff--reach");
+    expect(screen.getByRole("cell", { name: "#3 · QB2" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "1.5 · QB1" })).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: "ADP (1QB PPR)" }),
     ).toBeInTheDocument();

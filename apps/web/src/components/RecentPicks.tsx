@@ -1,5 +1,6 @@
 import type { ApiDraftPick } from "../types/api";
 import { formatPick, positionalRun } from "../utils/draft-order";
+import { formatPositionRank } from "../utils/position-rank";
 import { PositionBadge } from "./PositionBadge";
 
 const RECENT_PICK_COUNT = 10;
@@ -19,9 +20,22 @@ function RankComparison({
   pick: ApiDraftPick;
   threshold: number;
 }) {
+  const adpPositionRank = formatPositionRank(
+    pick.position,
+    pick.adpPositionRank,
+  );
+  const adpLabel = adpPositionRank && ` · ADP ${adpPositionRank}`;
+
   if (pick.rank === undefined) {
-    return <span className="recent-picks__rank">unranked</span>;
+    return (
+      <span className="recent-picks__rank">
+        unranked
+        {adpLabel}
+      </span>
+    );
   }
+
+  const positionRank = formatPositionRank(pick.position, pick.positionRank);
 
   const diff = pick.pickNo - pick.rank;
   const variant =
@@ -34,12 +48,14 @@ function RankComparison({
   return (
     <span className="recent-picks__rank">
       your #{pick.rank}
+      {positionRank && ` · ${positionRank}`}
       {variant && (
         <span className={`adp-diff ${variant}`}>
           {" "}
           {variant === "adp-diff--value" ? "steal" : "reach"}
         </span>
       )}
+      {adpLabel}
     </span>
   );
 }

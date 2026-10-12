@@ -4,6 +4,7 @@ import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
 import { InjuryBadge } from "./InjuryBadge";
 import { PositionBadge } from "./PositionBadge";
+import { formatPositionRank } from "../utils/position-rank";
 
 interface RecommendationsListProps {
   recommendations: ApiRecommendation[];
@@ -18,9 +19,20 @@ function flagClass(recommendation: ApiRecommendation): string {
 }
 
 function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
+  const { position } = recommendation.player;
+  const positionRank = formatPositionRank(
+    position,
+    recommendation.positionRank,
+  );
+  const adpPositionRank = formatPositionRank(
+    position,
+    recommendation.adp?.positionRank,
+  );
+
   return (
     <>
       {recommendation.player.team}
+      {positionRank && ` · ${positionRank}`}
       {recommendation.tier && ` · Tier ${recommendation.tier}`}
       {recommendation.adp && (
         <>
@@ -28,6 +40,7 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
           <AdpBadge recommendation={recommendation} />
         </>
       )}
+      {adpPositionRank && ` · ADP ${adpPositionRank}`}
     </>
   );
 }
@@ -118,6 +131,10 @@ export function RecommendationsList({
             <span className="adp-diff adp-diff--reach">▲ ADP</span>: others
             draft the player later than your rank — likely still available
             later.
+          </li>
+          <li>
+            WR12: the player's place among their position in your ranking · ADP
+            WR15: the same by ADP
           </li>
           <li>ADP is {adpFormat} ADP from Sleeper, matching this draft.</li>
           <li>

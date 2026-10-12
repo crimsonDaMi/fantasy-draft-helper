@@ -10,11 +10,15 @@ export type PlayerFlag = "watch" | "avoid";
 
 export interface ApiRecommendation {
   rank: number;
+  /** Place among the player's position in your full ranking (12 for WR12). */
+  positionRank?: number;
   tier?: string;
   player: ApiPlayer;
   adp?: {
     value: number;
     diff: number;
+    /** Place among the player's position by ADP. */
+    positionRank?: number;
   };
   flag?: PlayerFlag;
 }
@@ -94,8 +98,10 @@ export interface ApiDraftPick {
   team?: string;
   /** Where the player sat in your ranking, when they were in it. */
   rank?: number;
+  positionRank?: number;
   tier?: string;
   adp?: number;
+  adpPositionRank?: number;
   /** Winning bid in auctions. */
   amount?: number;
 }

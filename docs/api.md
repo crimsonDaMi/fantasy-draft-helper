@@ -159,7 +159,7 @@ are applied before `limit`.
 Besides the recommendations, the response carries what the draft-day
 panels need: `draft` (type, teams, rounds, reversal round, draft order,
 and lineup slots), `picks` (every pick made, each with the player's rank,
-tier, and ADP when available), `adpFormat` (the ADP format used for the
+`positionRank`, tier, and ADP with `adpPositionRank` when available), `adpFormat` (the ADP format used for the
 draft, e.g. `1QB PPR` or `SF` — see
 [ADP Data Source](configuration.md#adp-data-source)), and `tierCounts`
 (players left in the best two remaining tiers of your ranking, per
@@ -173,6 +173,7 @@ Position data is available for that player:
 ```json
 {
   "rank": 3,
+  "positionRank": 2,
   "tier": "A",
   "player": {
     "sleeperId": "9221",
@@ -180,9 +181,14 @@ Position data is available for that player:
     "team": "DET",
     "position": "RB"
   },
-  "adp": { "value": 3.7, "diff": -0.7 }
+  "adp": { "value": 3.7, "diff": -0.7, "positionRank": 2 }
 }
 ```
+
+`positionRank` is the player's place among their position in your whole
+ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't
+change as players are drafted or filtered out. `adp.positionRank` is the
+same by ADP order.
 
 `adp.diff` is `your rank − ADP value`: negative means you have the player
 ranked earlier than the field's consensus (a reach relative to ADP);

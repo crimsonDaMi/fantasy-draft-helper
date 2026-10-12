@@ -1324,10 +1324,12 @@ button {
   padding: 0;
 }
 
+/* Wraps the rank comparison onto its own line when the panel is too
+ * narrow for it next to the name. */
 .recent-picks__row {
-  display: grid;
-  grid-template-columns: 3em auto 1fr auto;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
   align-items: baseline;
   padding: 4px 0;
   border-bottom: 1px solid var(--color-border);
@@ -1344,7 +1346,16 @@ button {
   white-space: nowrap;
 }
 
+.recent-picks__pick {
+  flex: 0 0 3.5em;
+}
+
+.recent-picks__rank {
+  margin-left: auto;
+}
+
 .recent-picks__name {
+  flex: 1 1 8em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

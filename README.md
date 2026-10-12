@@ -24,6 +24,9 @@ draft state.
 - The top available players in your ranking order, refreshed every few
   seconds while the draft runs, with filters by position and search by
   name or team.
+- Positional ranks (e.g. `WR12`) from your ranking next to each player in
+  the recommendations, recent picks and recap, plus the positional rank by
+  ADP (e.g. `ADP WR15`) where ADP exists.
 - Find your draft by Sleeper username, or paste a draft link for mock
   drafts.
 - ADP next to each player, in your league's format (1QB or Superflex,

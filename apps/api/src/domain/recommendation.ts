@@ -6,11 +6,15 @@ import { Draft, DraftPick, DraftStatus } from "./draft.js";
 interface Adp {
   value: number;
   diff: number;
+  /** The player's place among their position by ADP, e.g. 15 for WR15. */
+  positionRank?: number;
 }
 
 export interface Recommendation {
   ranking: Ranking;
   player: Player;
+  /** The player's place among their position in the full ranking. */
+  positionRank?: number;
   adp?: Adp;
   flag?: PlayerFlag;
 }
@@ -18,8 +22,10 @@ export interface Recommendation {
 /** A made pick, joined with where the player sat in the user's ranking. */
 export interface RankedDraftPick extends DraftPick {
   rank?: number;
+  positionRank?: number;
   tier?: string;
   adp?: number;
+  adpPositionRank?: number;
 }
 
 /** How many of the user's still-undrafted ranked players remain in the
