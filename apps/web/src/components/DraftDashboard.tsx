@@ -13,6 +13,7 @@ import { MonitoringStatus } from "./MonitoringStatus";
 import { RankingsUpload } from "./RankingsUpload";
 import { AdpRankingStart } from "./AdpRankingStart";
 import { RecommendationsList } from "./RecommendationsList";
+import { SearchField } from "./SearchField";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
 import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
@@ -168,12 +169,11 @@ export function DraftDashboard() {
                     selected={positions}
                     onChange={setPositions}
                   />
-                  <input
-                    type="search"
-                    className="search-input recommendation-filters__search"
+                  <SearchField
+                    className="recommendation-filters__search"
                     placeholder="Search available players…"
                     value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+                    onValueChange={setSearch}
                     aria-label="Search available players"
                   />
                 </div>

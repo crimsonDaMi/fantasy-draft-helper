@@ -21,6 +21,9 @@ interface DraftFormProps {
   onSubmit: (selection: DraftSelection) => void;
 }
 
+const MIN_SEASON = 2017;
+const MAX_SEASON = 2100;
+
 const STATUS_LABELS: Record<ApiUserDraft["status"], string> = {
   PRE_DRAFT: "not started",
   DRAFTING: "live",
@@ -57,6 +60,18 @@ export function DraftForm({ initialDraftId, onSubmit }: DraftFormProps) {
     onSubmit({ draftId: parsedDraftId });
   }
 
+  /** Steps the season by `delta`, from the current year when the field
+   * isn't a number, within MIN_SEASON..MAX_SEASON. */
+  const seasonNumber = Number.parseInt(season, 10);
+
+  function stepSeason(delta: number) {
+    const from = Number.isNaN(seasonNumber)
+      ? new Date().getFullYear()
+      : seasonNumber;
+
+    setSeason(String(Math.min(MAX_SEASON, Math.max(MIN_SEASON, from + delta))));
+  }
+
   function handleLookup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedUsername = username.trim();
@@ -79,15 +94,37 @@ export function DraftForm({ initialDraftId, onSubmit }: DraftFormProps) {
           placeholder="Sleeper username"
           aria-label="Sleeper username"
         />
-        <input
-          type="number"
-          className="draft-form__season"
-          value={season}
-          min={2017}
-          max={2100}
-          onChange={(event) => setSeason(event.target.value)}
-          aria-label="Season"
-        />
+        {/* Own ▲/▼ buttons: the browser's number arrows can't be themed. */}
+        <span className="number-stepper draft-form__season">
+          <input
+            type="number"
+            value={season}
+            min={MIN_SEASON}
+            max={MAX_SEASON}
+            onChange={(event) => setSeason(event.target.value)}
+            aria-label="Season"
+          />
+          <span className="number-stepper__buttons">
+            <button
+              type="button"
+              className="number-stepper__button"
+              aria-label="Next season"
+              disabled={seasonNumber >= MAX_SEASON}
+              onClick={() => stepSeason(1)}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              className="number-stepper__button"
+              aria-label="Previous season"
+              disabled={seasonNumber <= MIN_SEASON}
+              onClick={() => stepSeason(-1)}
+            >
+              ▼
+            </button>
+          </span>
+        </span>
         <button type="submit" disabled={lookup.isPending}>
           Find drafts
         </button>

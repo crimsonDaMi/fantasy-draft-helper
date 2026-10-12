@@ -49,6 +49,7 @@ import {
   type TierDisplayMode,
 } from "./ranking-editor-logic";
 import { ErrorMessage } from "./ErrorMessage";
+import { SearchField } from "./SearchField";
 
 // Mouse drags start after a few pixels; touch drags need a long press,
 // so a swipe on a row scrolls the list instead of grabbing the player.
@@ -584,12 +585,11 @@ export function RankingEditorPage() {
           selected={positionFilter}
           onChange={setPositionFilter}
         />
-        <input
-          type="search"
-          className="search-input ranking-editor__ranked-search"
+        <SearchField
+          className="ranking-editor__ranked-search"
           placeholder="Search ranked players…"
           value={rankedSearch}
-          onChange={(event) => setRankedSearch(event.target.value)}
+          onValueChange={setRankedSearch}
           aria-label="Search ranked players"
         />
       </div>
@@ -717,12 +717,10 @@ export function RankingEditorPage() {
           {(!isPhone || phoneView === "unranked") && (
             <aside className="ranking-editor__unranked-sticky">
               <div className="ranking-editor__unranked-search-wrap">
-                <input
-                  type="search"
-                  className="search-input"
+                <SearchField
                   placeholder="Search unranked players…"
                   value={unrankedSearch}
-                  onChange={(event) => setUnrankedSearch(event.target.value)}
+                  onValueChange={setUnrankedSearch}
                   aria-label="Search unranked players"
                 />
               </div>

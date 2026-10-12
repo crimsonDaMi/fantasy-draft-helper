@@ -43,6 +43,10 @@ See `RELEASING.md`.
   read: it was too faint in 19 of the 32 themes, including the default.
   Six themes whose background was too light for any light text, such as
   Everglade, now use a darker shade of their team color.
+- Browser-drawn parts of controls follow the theme too. The Season field
+  in Draft setup has its own ▲/▼ buttons, every search field has its own
+  clear (×) button, and checkboxes and scrollbars use dark, theme-colored
+  versions instead of the browser's light ones.
 
 ## v2.3.0 — 2026-10-11
 

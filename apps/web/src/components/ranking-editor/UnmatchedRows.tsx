@@ -5,6 +5,7 @@ import {
   filterPlayersByQuery,
   type EditorPlayer,
 } from "../ranking-editor-logic";
+import { SearchField } from "../SearchField";
 
 const MAX_SEARCH_RESULTS = 8;
 
@@ -121,11 +122,9 @@ export function UnmatchedRows({
               </span>
               {searchingRank === rank && (
                 <div className="unmatched-rows__search">
-                  <input
-                    type="search"
-                    className="search-input"
+                  <SearchField
                     value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    onValueChange={setQuery}
                     aria-label={`Search a player for ${playerName}`}
                     autoFocus
                   />
