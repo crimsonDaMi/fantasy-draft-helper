@@ -14,6 +14,11 @@ See `RELEASING.md`.
   your ranking (e.g. `WR12`) and, when Sleeper has ADP for them, by ADP
   (e.g. `ADP WR15`). Numbered over your whole ranking, so they don't
   shift as players are drafted or filtered out.
+- No CSV needed to get started: "Start from Sleeper ADP" in Draft setup,
+  and on Edit rankings when you have no ranking yet, creates a ranking of
+  every Sleeper ADP player in ADP order, in the format you choose (1QB or
+  Superflex, PPR or half PPR, redraft or dynasty). Rename, edit and export
+  it like any other ranking.
 
 ### Fixed
 

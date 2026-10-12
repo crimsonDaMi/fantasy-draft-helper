@@ -11,6 +11,7 @@ import { RecentPicks } from "./RecentPicks";
 import { TierCounts } from "./TierCounts";
 import { MonitoringStatus } from "./MonitoringStatus";
 import { RankingsUpload } from "./RankingsUpload";
+import { AdpRankingStart } from "./AdpRankingStart";
 import { RecommendationsList } from "./RecommendationsList";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
@@ -205,6 +206,13 @@ export function DraftDashboard() {
             onImported={(result) => {
               setImportResult(result);
               selectRanking(result.rankingId);
+            }}
+          />
+
+          <AdpRankingStart
+            onCreated={(rankingId) => {
+              setImportResult(undefined);
+              selectRanking(rankingId);
             }}
           />
 

@@ -38,6 +38,7 @@ function createTestApp(importResult: unknown, matches: unknown[] = []) {
     createRankingsRoutes(
       rankingImportService as never,
       rankingStoreService as never,
+      {} as never,
     ),
   );
 
@@ -270,6 +271,7 @@ describe("rankings routes", () => {
           getRankingMatches: () => [],
           getLatestRankingId: () => undefined,
         } as never,
+        {} as never,
       ),
     );
 
@@ -311,6 +313,7 @@ describe("rankings routes", () => {
           }),
         } as never,
         { createRanking } as never,
+        {} as never,
       ),
     );
 
@@ -340,5 +343,82 @@ describe("rankings routes", () => {
     expect(createRanking).toHaveBeenCalledWith([], TEST_USER.id, expected);
 
     await app.close();
+  });
+
+  describe("POST /rankings/from-adp", () => {
+    function createAdpTestApp(rankingId: string | undefined) {
+      const app = Fastify();
+
+      app.setErrorHandler(errorHandler);
+      app.decorateRequest("user", undefined);
+      app.addHook("onRequest", async (request) => {
+        request.user = TEST_USER;
+      });
+
+      const createFromAdp = vi.fn(async () => rankingId);
+
+      app.register(
+        createRankingsRoutes(
+          {} as never,
+          {} as never,
+          { createFromAdp } as never,
+        ),
+      );
+
+      return Object.assign(app, { createFromAdp });
+    }
+
+    it("creates a ranking from the chosen ADP column", async () => {
+      const app = createAdpTestApp("ranking-3");
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/rankings/from-adp",
+        payload: { column: "Redraft SF ADP" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ rankingId: "ranking-3" });
+      expect(app.createFromAdp).toHaveBeenCalledWith(
+        TEST_USER.id,
+        "Redraft SF ADP",
+      );
+
+      await app.close();
+    });
+
+    it("returns 503 when no ADP data is available", async () => {
+      const app = createAdpTestApp(undefined);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/rankings/from-adp",
+        payload: { column: "Redraft PPR ADP" },
+      });
+
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toEqual({
+        error: "ADP_UNAVAILABLE",
+        message:
+          "Sleeper's ADP data can't be reached right now. Try again in a few minutes.",
+      });
+
+      await app.close();
+    });
+
+    it("rejects an unknown ADP column", async () => {
+      const app = createAdpTestApp("ranking-3");
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/rankings/from-adp",
+        payload: { column: "Standard ADP" },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(app.createFromAdp).not.toHaveBeenCalled();
+
+      await app.close();
+    });
   });
 });

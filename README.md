@@ -46,6 +46,9 @@ draft state.
 - Import rankings from a CSV, including FantasyPros exports, matched to
   Sleeper players automatically, with a report of anything that didn't
   match.
+- No CSV? Start a ranking from Sleeper ADP in any format (1QB or
+  Superflex, PPR or half PPR, redraft or dynasty) and adjust it in the
+  editor.
 - A drag-and-drop ranking editor: reorder players, move them between
   tiers, add and remove tiers, start from scratch, and export as a CSV.
 - Several saved rankings, e.g. one per league.

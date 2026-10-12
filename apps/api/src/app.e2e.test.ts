@@ -13,6 +13,7 @@ import { DraftService } from "./services/draft.service.js";
 import { DraftStateService } from "./services/draft-state.service.js";
 import { PlayerService } from "./services/player.service.js";
 import { RankingEditorService } from "./services/ranking-editor.service.js";
+import { AdpRankingService } from "./services/adp-ranking.service.js";
 import { RankingStoreService } from "./services/ranking-store.service.js";
 import { RankingRepository } from "./repositories/ranking.repository.js";
 import { RecommendationService } from "./services/recommendation.service.js";
@@ -137,6 +138,11 @@ function createTestDependencies(): AppDependencies {
     // Never created, so no announcement.
     announcementPath: join(tmpdir(), "fantasy-draft-helper-missing", "a.txt"),
     adpService: noopAdpService as never,
+    adpRankingService: new AdpRankingService(
+      noopAdpService,
+      playerService,
+      rankingStoreService,
+    ),
     draftService,
     playerCache,
     playerService,

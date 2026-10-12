@@ -128,6 +128,7 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
     createRankingsRoutes(
       dependencies.rankingImportService,
       dependencies.rankingStoreService,
+      dependencies.adpRankingService,
     ),
   );
 

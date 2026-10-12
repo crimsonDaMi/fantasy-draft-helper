@@ -515,6 +515,50 @@ button {
   outline-offset: 2px;
 }
 
+/* Start a ranking from Sleeper ADP */
+
+.adp-ranking-start {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.adp-ranking-start__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.adp-ranking-start__format,
+.adp-ranking-start__submit {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.adp-ranking-start__submit {
+  font-weight: 500;
+}
+
+.adp-ranking-start__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adp-ranking-start__format:focus-visible,
+.adp-ranking-start__submit:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .upload-validation-list {
   margin: 8px 0 0;
   padding-left: 20px;

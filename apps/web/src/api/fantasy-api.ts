@@ -9,6 +9,7 @@ import type {
   RecommendationsResponse,
   UserDraftsResponse,
 } from "../types/api";
+import type { AdpColumn } from "../utils/adp-formats";
 
 /** The ranking's rows after an editor change. */
 type RankingPlayersResponse = { players: RankingPlayerDto[] };
@@ -130,6 +131,17 @@ export function importRankings(
 
 export function createEmptyRanking(): Promise<{ rankingId: string }> {
   return request("/rankings/new", { method: "POST" });
+}
+
+/** Saves a new ranking of Sleeper's ADP players in ADP order. Rejects
+ * with a 503 when the ADP data can't be reached. */
+export function createRankingFromAdp(
+  column: AdpColumn,
+): Promise<{ rankingId: string }> {
+  return request("/rankings/from-adp", {
+    method: "POST",
+    ...jsonBody({ column }),
+  });
 }
 
 export function listRankings(): Promise<{ rankings: RankingSummary[] }> {

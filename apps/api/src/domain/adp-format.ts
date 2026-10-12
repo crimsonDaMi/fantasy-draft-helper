@@ -12,6 +12,16 @@ export const ADP_COLUMNS = [
 
 export type AdpColumn = (typeof ADP_COLUMNS)[number];
 
+/** Short label per column, shown next to ADP and in ranking names. */
+export const ADP_FORMAT_LABELS: Record<AdpColumn, string> = {
+  "Redraft PPR ADP": "1QB PPR",
+  "Redraft SF ADP": "SF",
+  "Redraft Half PPR ADP": "1QB Half PPR",
+  "Dynasty PPR ADP": "Dynasty 1QB PPR",
+  "Dynasty SF ADP": "Dynasty SF",
+  "Dynasty Half PPR ADP": "Dynasty 1QB Half PPR",
+};
+
 export interface AdpFormat {
   column: AdpColumn;
   /** Short label shown next to ADP, e.g. `1QB PPR` or `Dynasty SF`. */
@@ -37,8 +47,7 @@ export function adpFormatFor(
       ? "Half PPR"
       : "PPR";
 
-  return {
-    column: `${dynasty ? "Dynasty" : "Redraft"} ${scoring} ADP`,
-    label: `${dynasty ? "Dynasty " : ""}${superflex ? "SF" : `1QB ${scoring}`}`,
-  };
+  const column: AdpColumn = `${dynasty ? "Dynasty" : "Redraft"} ${scoring} ADP`;
+
+  return { column, label: ADP_FORMAT_LABELS[column] };
 }

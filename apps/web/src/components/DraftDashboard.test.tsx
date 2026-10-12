@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   setPlayerFlag: vi.fn(),
   getRecommendations: vi.fn(),
   importRankings: vi.fn(),
+  createRankingFromAdp: vi.fn(),
   findUserDrafts: vi.fn(),
 }));
 
@@ -31,6 +32,7 @@ vi.mock("../api/fantasy-api", () => ({
   setPlayerFlag: mocks.setPlayerFlag,
   getRecommendations: mocks.getRecommendations,
   importRankings: mocks.importRankings,
+  createRankingFromAdp: mocks.createRankingFromAdp,
   findUserDrafts: mocks.findUserDrafts,
 }));
 

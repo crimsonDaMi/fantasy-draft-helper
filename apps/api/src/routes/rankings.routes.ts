@@ -2,6 +2,8 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { rankingParamsSchema } from "./params.schemas.js";
+import { ADP_COLUMNS } from "../domain/adp-format.js";
+import { AdpRankingService } from "../services/adp-ranking.service.js";
 import { RankingImportService } from "../services/ranking-import.service.js";
 import { RankingStoreService } from "../services/ranking-store.service.js";
 import { mapRankingImportResponse } from "../services/ranking-import.mapper.js";
@@ -21,6 +23,10 @@ const ALLOWED_CSV_MIME_TYPES = new Set([
 
 const renameBodySchema = z.object({
   name: rankingNameSchema,
+});
+
+const fromAdpBodySchema = z.object({
+  column: z.enum(ADP_COLUMNS),
 });
 
 const exportQuerySchema = z.object({
@@ -53,6 +59,7 @@ function importedRankingName(
 export function createRankingsRoutes(
   rankingImportService: RankingImportService,
   rankingStoreService: RankingStoreService,
+  adpRankingService: AdpRankingService,
 ) {
   return async function rankingsRoutes(app: FastifyInstance) {
     app.post("/rankings", async (request) => {
@@ -102,6 +109,24 @@ export function createRankingsRoutes(
         userId,
         "New ranking",
       );
+
+      return { rankingId };
+    });
+
+    app.post("/rankings/from-adp", async (request) => {
+      const userId = requireUser(request).id;
+
+      const { column } = fromAdpBodySchema.parse(request.body);
+
+      const rankingId = await adpRankingService.createFromAdp(userId, column);
+
+      if (!rankingId) {
+        throw new HttpError(
+          503,
+          "Sleeper's ADP data can't be reached right now. Try again in a few minutes.",
+          "ADP_UNAVAILABLE",
+        );
+      }
 
       return { rankingId };
     });

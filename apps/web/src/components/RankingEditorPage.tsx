@@ -526,6 +526,7 @@ export function RankingEditorPage() {
         isStarting={createEmptyRankingMutation.isPending}
         error={createEmptyRankingMutation.error}
         onStart={() => createEmptyRankingMutation.mutate()}
+        onCreatedFromAdp={selectRanking}
       />
     );
   }

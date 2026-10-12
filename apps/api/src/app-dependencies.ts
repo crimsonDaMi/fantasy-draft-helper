@@ -6,6 +6,7 @@ import { AuthService } from "./services/auth.service.js";
 import { PlayerCache } from "./cache/player.cache.js";
 import { SleeperClient } from "./clients/sleeper.client.js";
 import { AdpService } from "./services/adp.service.js";
+import { AdpRankingService } from "./services/adp-ranking.service.js";
 import { DraftService } from "./services/draft.service.js";
 import { PlayerService } from "./services/player.service.js";
 import { DraftStateService } from "./services/draft-state.service.js";
@@ -31,6 +32,7 @@ export interface AppDependencies {
   instanceInfo: InstanceInfo;
   announcementPath: string;
   adpService: AdpService;
+  adpRankingService: AdpRankingService;
   draftService: DraftService;
   playerCache: PlayerCache;
   playerService: PlayerService;
@@ -113,6 +115,12 @@ export function createAppDependencies(
     playerService,
   );
 
+  const adpRankingService = new AdpRankingService(
+    adpService,
+    playerService,
+    rankingStoreService,
+  );
+
   const recommendationService = new RecommendationService(
     draftStateService,
     rankingStoreService,
@@ -127,6 +135,7 @@ export function createAppDependencies(
     instanceInfo,
     announcementPath,
     adpService,
+    adpRankingService,
     draftService,
     playerCache,
     playerService,

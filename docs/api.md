@@ -199,6 +199,7 @@ omitted entirely (not `null`) for players not covered by the ADP source.
 
 ```text
 POST   /rankings/new                              create an empty ranking
+POST   /rankings/from-adp                         { "column": "<ADP column>" }: create a ranking in ADP order
 GET    /rankings/export?rankingId=<id>            a ranking as CSV (default: newest)
 GET    /rankings/:rankingId                       players and tiers
 PATCH  /rankings/:rankingId/players/:sleeperId    move or add a player
@@ -210,6 +211,17 @@ PATCH  /rankings/:rankingId/players/:sleeperId/flag   { "flag": "watch" | "avoid
 PATCH  /rankings/:rankingId/unmatched/:rank       { "playerName", "sleeperId" }: resolve a row
 DELETE /rankings/:rankingId/unmatched/:rank?playerName=<name>   delete an unmatched row
 ```
+
+`POST /rankings/from-adp` saves a new ranking named "Sleeper ADP
+(<format>)" that holds every player in the chosen column of Sleeper's ADP
+sheet, in ADP order. Every row is matched by Sleeper ID. A player whose
+Sleeper position isn't a fantasy position (a two-way DB/WR, a fullback) is
+ranked at the first fantasy position Sleeper lists for them. `column` is
+one of `Redraft PPR ADP`, `Redraft Half PPR ADP`, `Redraft SF ADP`,
+`Dynasty PPR ADP`, `Dynasty Half PPR ADP` or `Dynasty SF ADP` (see
+[ADP Data Source](configuration.md#adp-data-source)). It returns
+`{ "rankingId" }`, or `503 ADP_UNAVAILABLE` when the ADP sheet can't be
+reached and no earlier copy is cached.
 
 Rows the import couldn't match (or matched ambiguously) stay in the ranking
 without a player: `GET /rankings/:rankingId` returns them with `player`

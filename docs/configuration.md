@@ -155,7 +155,9 @@ This is a **soft dependency**, not a formal API contract:
   (Sleeper updates the sheet roughly every 1–2 weeks, so this is comfortably
   fresh without over-polling a source with no rate-limit guarantees).
 - If a fetch fails, the app keeps serving the last-known snapshot rather
-  than erroring.
+  than erroring. Starting a ranking from ADP is the one feature that needs
+  the data: with no snapshot loaded yet, it shows an error and saves
+  nothing.
 - If the sheet's format changes in a way the parser can't handle, ADP data
   is silently omitted from recommendations rather than breaking them —
   recommendations always work with or without ADP.

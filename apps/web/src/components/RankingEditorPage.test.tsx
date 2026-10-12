@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   insertTier: vi.fn(),
   removeTier: vi.fn(),
   createEmptyRanking: vi.fn(),
+  createRankingFromAdp: vi.fn(),
   resolveUnmatchedRow: vi.fn(),
   removeUnmatchedRow: vi.fn(),
 }));
@@ -40,6 +41,7 @@ vi.mock("../api/fantasy-api", () => ({
   insertTier: mocks.insertTier,
   removeTier: mocks.removeTier,
   createEmptyRanking: mocks.createEmptyRanking,
+  createRankingFromAdp: mocks.createRankingFromAdp,
   resolveUnmatchedRow: mocks.resolveUnmatchedRow,
   removeUnmatchedRow: mocks.removeUnmatchedRow,
   rankingExportUrl: (rankingId: string) =>
@@ -115,6 +117,7 @@ describe("RankingEditorPage", () => {
 
   it("offers to import or start a new ranking when none exists", async () => {
     mocks.listRankings.mockResolvedValue({ rankings: [] });
+    mocks.createRankingFromAdp.mockResolvedValue({ rankingId: "ranking-1" });
 
     renderWithClient();
 
@@ -125,6 +128,14 @@ describe("RankingEditorPage", () => {
     expect(
       screen.getByRole("button", { name: /start a new ranking/i }),
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Create ranking" }));
+
+    await waitFor(() =>
+      expect(mocks.createRankingFromAdp.mock.calls[0]?.[0]).toBe(
+        "Redraft PPR ADP",
+      ),
+    );
   });
 
   it("renders players grouped by tier and the unranked panel", async () => {
