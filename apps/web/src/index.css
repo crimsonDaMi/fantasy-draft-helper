@@ -1000,6 +1000,14 @@ a {
   white-space: nowrap;
 }
 
+/* On the narrowest phones the team gives way, so names stay readable at
+   the fixed row height; the position badge stays. */
+@media (max-width: 359px) {
+  .ranking-editor__meta {
+    display: none;
+  }
+}
+
 .ranking-editor__toolbar {
   display: flex;
   align-items: center;
@@ -1913,6 +1921,19 @@ a {
 
   .ranking-editor__player-list-inner li {
     cursor: pointer;
+    gap: 6px;
+  }
+
+  /* Rows keep their fixed height (names can't wrap), so tighter padding
+     gives the truncated name more room. */
+  .ranking-editor__tier,
+  .ranking-editor__unranked {
+    padding: 12px 10px;
+  }
+
+  /* Still fits #999. */
+  .ranking-editor__rank {
+    min-width: 2.5em;
   }
 
   /* Tap-sized watch/avoid buttons. Not in the ranking editor: its rows

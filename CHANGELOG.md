@@ -31,6 +31,9 @@ See `RELEASING.md`.
   footer and Privacy page links used the theme's accent, which is too dark
   to read in about half the themes. Links now use a lighter shade of the
   accent where needed.
+- Player names in the ranking editor are no longer cut short on phones.
+  Rows use less padding, and on the narrowest phones (below 360px) the
+  team abbreviation gives way to the name.
 
 ## v2.3.0 — 2026-10-11
 
