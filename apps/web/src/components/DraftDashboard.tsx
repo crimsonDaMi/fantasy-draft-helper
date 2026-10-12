@@ -101,12 +101,15 @@ export function DraftDashboard() {
     ? data?.draft.draftOrder?.[sleeperUserId]
     : undefined;
   const mySlot = sleeperSlot ?? storedDraft?.draftSlot;
+  // Picks count as the user's by their Sleeper user only when the slot is
+  // theirs in the draft order. A slot chosen by hand (e.g. watching a mock
+  // they aren't in) is drafted by bots or others, so it goes by slot.
   const myPicks =
     data && mySlot !== undefined
       ? picksForSlot(
           data.picks,
           mySlot,
-          sleeperUserId,
+          sleeperSlot !== undefined ? sleeperUserId : undefined,
           data.draft.slotToRosterId?.[mySlot],
         )
       : [];

@@ -190,6 +190,68 @@ describe("DraftDashboard", () => {
     ).toBeInTheDocument();
   });
 
+  it("counts a hand-picked slot's picks as My team, whoever made them", async () => {
+    // Found by username, but not in the draft's order (e.g. watching a
+    // mock), so the slot was chosen by hand.
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({
+        draftId: "draft-1",
+        sleeperUserId: "sleeper-user-1",
+        draftSlot: 2,
+      }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        draftStatus: "DRAFTING",
+        draft: {
+          type: "snake",
+          teams: 4,
+          rounds: 3,
+          draftOrder: { "other-user": 1 },
+          rosterSlots: { QB: 1, RB: 1 },
+        },
+        picks: [
+          {
+            pickNo: 1,
+            draftSlot: 1,
+            pickedBy: "other-user",
+            playerId: "10",
+            playerName: "Player Ten",
+            position: "RB",
+          },
+          {
+            pickNo: 2,
+            draftSlot: 2,
+            pickedBy: "",
+            playerId: "11",
+            playerName: "Player Eleven",
+            position: "QB",
+          },
+        ],
+      }),
+    );
+
+    renderWithClient();
+
+    const myTeam = await screen.findByRole("region", { name: "My team" });
+    await waitFor(() =>
+      expect(within(myTeam).getByText("Player Eleven")).toBeInTheDocument(),
+    );
+    expect(within(myTeam).queryByText("Player Ten")).toBeNull();
+  });
+
   it("moves tier counts beside My team on wide screens", async () => {
     window.localStorage.setItem(
       "draft-helper-draft",

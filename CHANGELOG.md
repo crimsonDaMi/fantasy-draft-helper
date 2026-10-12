@@ -32,6 +32,10 @@ See `RELEASING.md`.
 
 ### Fixed
 
+- My team, the recap and the auction budget now show a hand-picked
+  slot's picks. With a draft found by Sleeper username that you aren't in
+  (e.g. a mock you're watching), only picks made by your own account
+  counted, so a slot drafted by bots or others stayed empty.
 - A CSV that lists the same player twice no longer puts them in the
   ranking twice. The later row stays under "Not matched", marked "already
   ranked above", where you can remove it.
