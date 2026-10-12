@@ -15,6 +15,12 @@ See `RELEASING.md`.
   (e.g. `ADP WR15`). Numbered over your whole ranking, so they don't
   shift as players are drafted or filtered out.
 
+### Fixed
+
+- On phone screens, the draft status line wraps instead of making the page
+  scroll sideways, and a long ranking name no longer pushes the ranking
+  editor wider than the screen.
+
 ## v2.3.0 — 2026-10-11
 
 ### Added

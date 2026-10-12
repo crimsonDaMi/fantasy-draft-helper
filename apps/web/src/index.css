@@ -92,8 +92,9 @@ button {
 
 .status-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
   font-size: 14px;
   color: var(--color-text-muted);
 }
@@ -1567,8 +1568,11 @@ button {
   gap: 8px;
 }
 
+/* As a flex item it would otherwise grow to fit a long ranking name. */
 .ranking-editor__rankings .ranking-selector {
   margin: 8px 0;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Info tips: tap-to-reveal explanations (title tooltips don't show on
