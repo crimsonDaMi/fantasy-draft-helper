@@ -82,3 +82,32 @@ export function contrastTextColor(
 ): string {
   return relativeLuminance(bgHex) > 0.45 ? dark : light;
 }
+
+/** WCAG contrast ratio between two colors, from 1 to 21. */
+export function contrastRatio(a: string, b: string): number {
+  const [lighter, darker] = [relativeLuminance(a), relativeLuminance(b)].sort(
+    (x, y) => y - x,
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * `color` lightened just enough to reach `minRatio` contrast against a
+ * dark `background`, keeping its hue; white if even that falls short.
+ */
+export function withContrastOn(
+  color: string,
+  background: string,
+  minRatio = 4.5,
+): string {
+  let candidate = color;
+
+  for (let step = 0; step < 100; step++) {
+    if (contrastRatio(candidate, background) >= minRatio) {
+      return candidate;
+    }
+    candidate = adjustLightness(candidate, 0.01);
+  }
+
+  return "#FFFFFF";
+}

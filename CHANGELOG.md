@@ -26,6 +26,11 @@ See `RELEASING.md`.
 - On phone screens, the draft status line wraps instead of making the page
   scroll sideways, and a long ranking name no longer pushes the ranking
   editor wider than the screen.
+- Links are readable in every theme. Links inside text, like "fix the
+  rest" in Draft setup, used the browser's default dark blue, and the
+  footer and Privacy page links used the theme's accent, which is too dark
+  to read in about half the themes. Links now use a lighter shade of the
+  accent where needed.
 
 ## v2.3.0 — 2026-10-11
 

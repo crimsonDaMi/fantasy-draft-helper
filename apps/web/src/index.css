@@ -18,6 +18,7 @@
   --color-text-muted: #8fa396;
   --color-accent: #ffb612;
   --color-accent-text: #14211b;
+  --color-link: #ffb612;
   --color-danger: #e8623d;
 
   /*
@@ -790,9 +791,8 @@ button {
   padding-left: 20px;
 }
 
-.privacy-page a,
-.app-footer a {
-  color: var(--color-accent);
+a {
+  color: var(--color-link);
 }
 
 .privacy-page__back {
