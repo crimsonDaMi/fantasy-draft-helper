@@ -286,7 +286,11 @@ export function DraftDashboard() {
           />
 
           {draftId && (
-            <button type="button" onClick={() => updateStoredDraft(undefined)}>
+            <button
+              type="button"
+              className="button-secondary"
+              onClick={() => updateStoredDraft(undefined)}
+            >
               Stop monitoring
             </button>
           )}

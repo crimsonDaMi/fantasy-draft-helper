@@ -34,6 +34,11 @@ See `RELEASING.md`.
 - Player names in the ranking editor are no longer cut short on phones.
   Rows use less padding, and on the narrowest phones (below 360px) the
   team abbreviation gives way to the name.
+- Every button, dropdown and text field now follows the theme. The
+  ranking dropdown with Rename and Delete, the Monitor and Stop monitoring
+  buttons, Download CSV in the recap, + New ranking, Choose player… and
+  Remove in the ranking editor, and the draft slot dropdown used the
+  browser's plain white style.
 
 ## v2.3.0 — 2026-10-11
 

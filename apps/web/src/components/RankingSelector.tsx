@@ -61,15 +61,24 @@ export function RankingSelector({
       >
         <input
           type="text"
+          className="text-input"
           value={draftName}
           maxLength={60}
           onChange={(event) => setDraftName(event.target.value)}
           aria-label="Ranking name"
         />
-        <button type="submit" disabled={renameMutation.isPending}>
+        <button
+          type="submit"
+          className="button-secondary"
+          disabled={renameMutation.isPending}
+        >
           Save
         </button>
-        <button type="button" onClick={() => setDraftName(undefined)}>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => setDraftName(undefined)}
+        >
           Cancel
         </button>
         {error && (
@@ -84,6 +93,7 @@ export function RankingSelector({
   return (
     <div className="ranking-selector">
       <select
+        className="select"
         value={selectedRanking.id}
         onChange={(event) => {
           setIsConfirmingDelete(false);
@@ -97,7 +107,11 @@ export function RankingSelector({
           </option>
         ))}
       </select>
-      <button type="button" onClick={() => setDraftName(selectedRanking.name)}>
+      <button
+        type="button"
+        className="button-secondary"
+        onClick={() => setDraftName(selectedRanking.name)}
+      >
         Rename
       </button>
       {isConfirmingDelete ? (
@@ -107,18 +121,26 @@ export function RankingSelector({
           </span>
           <button
             type="button"
-            className="ranking-selector__danger"
+            className="button-secondary ranking-selector__danger"
             onClick={() => deleteMutation.mutate()}
             disabled={deleteMutation.isPending}
           >
             Delete
           </button>
-          <button type="button" onClick={() => setIsConfirmingDelete(false)}>
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => setIsConfirmingDelete(false)}
+          >
             Keep
           </button>
         </>
       ) : (
-        <button type="button" onClick={() => setIsConfirmingDelete(true)}>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => setIsConfirmingDelete(true)}
+        >
           Delete…
         </button>
       )}

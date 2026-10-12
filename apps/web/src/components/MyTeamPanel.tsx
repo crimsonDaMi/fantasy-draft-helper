@@ -88,6 +88,7 @@ export function MyTeamPanel({
     <label className="my-team__slot">
       Slot{" "}
       <select
+        className="select"
         value={slot ?? ""}
         onChange={(event) => onSlotChange(Number(event.target.value))}
       >

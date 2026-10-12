@@ -44,7 +44,7 @@ export function AdpRankingStart({
       <span className="adp-ranking-start__controls">
         <select
           id={selectId}
-          className="adp-ranking-start__format"
+          className="select"
           value={column}
           onChange={(event) => setPickedColumn(event.target.value as AdpColumn)}
         >
@@ -56,7 +56,7 @@ export function AdpRankingStart({
         </select>
         <button
           type="button"
-          className="adp-ranking-start__submit"
+          className="button-secondary"
           onClick={() => createMutation.mutate(column)}
           disabled={createMutation.isPending}
         >

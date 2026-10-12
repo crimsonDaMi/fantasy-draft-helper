@@ -84,6 +84,7 @@ export function UnmatchedRows({
                   <button
                     key={candidate.sleeperId}
                     type="button"
+                    className="button-secondary"
                     disabled={isSaving || isRanked(candidate.sleeperId)}
                     title={
                       isRanked(candidate.sleeperId)
@@ -98,6 +99,7 @@ export function UnmatchedRows({
                 ))}
                 <button
                   type="button"
+                  className="button-secondary"
                   disabled={isSaving}
                   aria-expanded={searchingRank === rank}
                   onClick={() =>
@@ -110,6 +112,7 @@ export function UnmatchedRows({
                 </button>
                 <button
                   type="button"
+                  className="button-secondary"
                   disabled={isSaving}
                   onClick={() => onRemove(row)}
                 >
@@ -132,6 +135,7 @@ export function UnmatchedRows({
                         <li key={player.sleeperId}>
                           <button
                             type="button"
+                            className="button-secondary"
                             disabled={isSaving}
                             onClick={() => pick(row, player)}
                           >

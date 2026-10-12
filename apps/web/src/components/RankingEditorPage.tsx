@@ -561,6 +561,7 @@ export function RankingEditorPage() {
           />
           <button
             type="button"
+            className="button-secondary"
             onClick={() => createEmptyRankingMutation.mutate()}
             disabled={createEmptyRankingMutation.isPending}
           >

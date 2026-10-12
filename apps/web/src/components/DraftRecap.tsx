@@ -66,6 +66,7 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
         {picks.length > 0 && (
           <button
             type="button"
+            className="button-secondary"
             onClick={() => downloadCsv(toRecapCsv(picks, draft.teams))}
           >
             Download CSV

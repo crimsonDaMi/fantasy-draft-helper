@@ -115,6 +115,7 @@ export function DraftForm({ initialDraftId, onSubmit }: DraftFormProps) {
               </span>
               <button
                 type="button"
+                className="button-secondary"
                 onClick={() => {
                   setDraftId(draft.draftId);
                   onSubmit({
