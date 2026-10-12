@@ -1418,6 +1418,11 @@ button {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* Keeps `#14 · WR5` together; the table scrolls on narrow screens. */
+.draft-recap__rank {
+  white-space: nowrap;
+}
+
 .draft-recap__player {
   display: inline-flex;
   align-items: baseline;

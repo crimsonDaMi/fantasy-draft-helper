@@ -114,7 +114,7 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
                         {pick.playerName ?? pick.playerId}
                       </span>
                     </td>
-                    <td>
+                    <td className="draft-recap__rank">
                       {pick.rank === undefined
                         ? "–"
                         : withPositionRank(
@@ -132,7 +132,7 @@ export function DraftRecap({ draft, adpFormat, myPicks }: DraftRecapProps) {
                           : pick.pickNo - pick.rank
                       }
                     />
-                    <td>
+                    <td className="draft-recap__rank">
                       {pick.adp === undefined
                         ? "–"
                         : withPositionRank(

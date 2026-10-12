@@ -40,7 +40,9 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
           <AdpBadge recommendation={recommendation} />
         </>
       )}
-      {adpPositionRank && ` · ADP ${adpPositionRank}`}
+      {/* Non-breaking, so the wrapped phone meta line keeps "ADP WR15"
+          together. */}
+      {adpPositionRank && ` · ADP ${adpPositionRank}`}
     </>
   );
 }
