@@ -1,4 +1,5 @@
 import type {
+  ApiDraft,
   ApiPlayer,
   PlayerFlag,
   RankingDetailResponse,
@@ -207,6 +208,10 @@ export function getRecommendations(
   const recommendationsPath = path`/drafts/${draftId}/recommendations`;
 
   return request(`${recommendationsPath}?${params.toString()}`);
+}
+
+export function getDraft(draftId: string): Promise<ApiDraft> {
+  return request(path`/drafts/${draftId}`);
 }
 
 export function findUserDrafts(

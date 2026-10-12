@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 import { DraftForm } from "./DraftForm";
@@ -17,7 +17,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
 import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
-import { setPlayerFlag } from "../api/fantasy-api";
+import { getDraft, setPlayerFlag } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingImportResponse } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
@@ -48,6 +48,15 @@ export function DraftDashboard() {
   const [setupOpen, setSetupOpen] = useState(draftId === undefined);
 
   const queryClient = useQueryClient();
+  // Only for the draft's ADP format, which doesn't change, so it's
+  // fetched once. It works before any ranking exists, unlike the
+  // recommendations, which also carry it.
+  const draftQuery = useQuery({
+    queryKey: queryKeys.draft(draftId),
+    queryFn: () => getDraft(draftId!),
+    enabled: Boolean(draftId),
+    staleTime: Infinity,
+  });
   const { rankings, selectedRanking, selectRanking } = useSelectedRanking();
   const effectiveRankingId = selectedRanking?.id;
 
@@ -210,6 +219,7 @@ export function DraftDashboard() {
           />
 
           <AdpRankingStart
+            defaultColumn={draftQuery.data?.adpFormat.column}
             onCreated={(rankingId) => {
               setImportResult(undefined);
               selectRanking(rankingId);

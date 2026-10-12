@@ -17,8 +17,9 @@ See `RELEASING.md`.
 - No CSV needed to get started: "Start from Sleeper ADP" in Draft setup,
   and on Edit rankings when you have no ranking yet, creates a ranking of
   every Sleeper ADP player in ADP order, in the format you choose (1QB or
-  Superflex, PPR or half PPR, redraft or dynasty). Rename, edit and export
-  it like any other ranking.
+  Superflex, PPR or half PPR, redraft or dynasty). In Draft setup the
+  format starts on the one your monitored draft uses. Rename, edit and
+  export it like any other ranking.
 
 ### Fixed
 

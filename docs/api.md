@@ -145,7 +145,7 @@ season (default: the current year), newest first. `404` with
 GET /drafts/:draftId
 ```
 
-Returns normalized draft metadata, including `PRE_DRAFT`, `DRAFTING`, `COMPLETE`, or `UNKNOWN` status.
+Returns normalized draft metadata, including `PRE_DRAFT`, `DRAFTING`, `COMPLETE`, or `UNKNOWN` status, and `adpFormat`: the ADP the draft's recommendations use, as `{ "column": "Dynasty SF ADP", "label": "Dynasty SF" }` (see [ADP Data Source](configuration.md#adp-data-source)).
 
 ### Get recommendations
 

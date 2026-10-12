@@ -7,14 +7,26 @@ import { ADP_FORMATS, type AdpColumn } from "../utils/adp-formats";
 import { ErrorMessage } from "./ErrorMessage";
 
 interface AdpRankingStartProps {
+  /** Preselected ADP column, e.g. the monitored draft's; the first format
+   * when omitted or not one of `ADP_FORMATS`. */
+  defaultColumn?: string;
   onCreated: (rankingId: string) => void;
 }
 
 /** Starts a saved ranking from Sleeper's ADP, for users without a CSV. */
-export function AdpRankingStart({ onCreated }: AdpRankingStartProps) {
+export function AdpRankingStart({
+  defaultColumn,
+  onCreated,
+}: AdpRankingStartProps) {
   const queryClient = useQueryClient();
   const selectId = useId();
-  const [column, setColumn] = useState<AdpColumn>(ADP_FORMATS[0].column);
+  // Follows `defaultColumn` (which can arrive after the first render)
+  // until the user picks a format.
+  const [pickedColumn, setPickedColumn] = useState<AdpColumn>();
+  const column =
+    pickedColumn ??
+    ADP_FORMATS.find((format) => format.column === defaultColumn)?.column ??
+    ADP_FORMATS[0].column;
 
   const createMutation = useMutation({
     mutationFn: createRankingFromAdp,
@@ -34,7 +46,7 @@ export function AdpRankingStart({ onCreated }: AdpRankingStartProps) {
           id={selectId}
           className="adp-ranking-start__format"
           value={column}
-          onChange={(event) => setColumn(event.target.value as AdpColumn)}
+          onChange={(event) => setPickedColumn(event.target.value as AdpColumn)}
         >
           {ADP_FORMATS.map((format) => (
             <option key={format.column} value={format.column}>

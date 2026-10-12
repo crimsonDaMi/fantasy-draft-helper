@@ -58,6 +58,12 @@ export interface RecommendationsResponse {
   avoidedCount: number;
 }
 
+/** The parts of `GET /drafts/:draftId` the app uses. */
+export interface ApiDraft {
+  /** The ADP the draft's recommendations use, by sheet column. */
+  adpFormat: { column: string; label: string };
+}
+
 export interface ApiDraftInfo {
   name?: string;
   /** `snake`, `linear`, or `auction`. */

@@ -3,6 +3,7 @@
  * that target it can't drift apart through a typo.
  */
 export const queryKeys = {
+  draft: (draftId: string | undefined) => ["draft", draftId] as const,
   rankingList: () => ["ranking-list"] as const,
   rankingDetail: (rankingId: string | undefined) =>
     ["ranking-detail", rankingId] as const,

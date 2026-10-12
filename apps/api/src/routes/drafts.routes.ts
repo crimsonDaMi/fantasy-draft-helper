@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 
 import { draftParamsSchema } from "./params.schemas.js";
+import { adpFormatFor } from "../domain/adp-format.js";
 import { DraftService } from "../services/draft.service.js";
 import { DraftStateService } from "../services/draft-state.service.js";
 
@@ -50,7 +51,11 @@ export function createDraftsRoutes(
     app.get("/drafts/:draftId", async (request) => {
       const { draftId } = draftParamsSchema.parse(request.params);
 
-      return draftService.getDraft(draftId);
+      const draft = await draftService.getDraft(draftId);
+
+      // The ADP format recommendations use for this draft, so a ranking
+      // can be started from the matching ADP before one exists.
+      return { ...draft, adpFormat: adpFormatFor(draft) };
     });
 
     app.get("/drafts/:draftId/picks", async (request) => {

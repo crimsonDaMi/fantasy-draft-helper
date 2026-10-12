@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
   getRecommendations: vi.fn(),
   importRankings: vi.fn(),
   createRankingFromAdp: vi.fn(),
+  getDraft: vi.fn(async () => ({
+    adpFormat: { column: "Redraft PPR ADP", label: "1QB PPR" },
+  })),
   findUserDrafts: vi.fn(),
 }));
 
@@ -33,6 +36,7 @@ vi.mock("../api/fantasy-api", () => ({
   getRecommendations: mocks.getRecommendations,
   importRankings: mocks.importRankings,
   createRankingFromAdp: mocks.createRankingFromAdp,
+  getDraft: mocks.getDraft,
   findUserDrafts: mocks.findUserDrafts,
 }));
 
@@ -120,6 +124,31 @@ describe("DraftDashboard", () => {
     expect(container.querySelector("details.draft-setup")).toHaveAttribute(
       "open",
     );
+  });
+
+  it("preselects the monitored draft's ADP format for a ranking from ADP", async () => {
+    mocks.listRankings.mockResolvedValue({ rankings: [] });
+    mocks.getDraft.mockResolvedValueOnce({
+      adpFormat: { column: "Dynasty SF ADP", label: "Dynasty SF" },
+    });
+
+    renderWithClient();
+    await waitFor(() => expect(mocks.listRankings).toHaveBeenCalled());
+
+    const format = screen.getByLabelText(/start from sleeper adp/i);
+    expect(format).toHaveValue("Redraft PPR ADP");
+
+    fireEvent.change(screen.getByPlaceholderText("Sleeper draft link or ID"), {
+      target: { value: "draft-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+
+    await waitFor(() => expect(format).toHaveValue("Dynasty SF ADP"));
+    expect(mocks.getDraft).toHaveBeenCalledWith("draft-1");
+
+    // A format the user picks wins over the draft's.
+    fireEvent.change(format, { target: { value: "Redraft SF ADP" } });
+    expect(format).toHaveValue("Redraft SF ADP");
   });
 
   it("resumes a draft stored by an earlier page load", async () => {
