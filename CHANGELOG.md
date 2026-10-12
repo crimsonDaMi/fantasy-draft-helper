@@ -22,6 +22,12 @@ See `RELEASING.md`.
 
 ### Added
 
+- Bye weeks: a `bye` column in your ranking CSV (FantasyPros' `BYE WEEK`
+  works as it is) shows each player's bye next to them in the
+  recommendations, and My team lists weeks where several of your starters
+  are on bye. Information only: byes never change the recommendations.
+  Rankings without bye data look as before, and "Export CSV" now
+  includes the column.
 - Positional ranks next to each player in the recommendations, recent
   picks and draft recap: where the player sits among their position in
   your ranking (e.g. `WR12`) and, when Sleeper has ADP for them, by ADP

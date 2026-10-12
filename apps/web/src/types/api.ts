@@ -13,6 +13,8 @@ export interface ApiRecommendation {
   /** Place among the player's position in your full ranking (12 for WR12). */
   positionRank?: number;
   tier?: string;
+  /** Bye week from the ranking CSV, when it had one. */
+  bye?: number;
   player: ApiPlayer;
   adp?: {
     value: number;
@@ -106,6 +108,7 @@ export interface ApiDraftPick {
   rank?: number;
   positionRank?: number;
   tier?: string;
+  bye?: number;
   adp?: number;
   adpPositionRank?: number;
   /** Winning bid in auctions. */

@@ -135,6 +135,7 @@ WR,CIN
         position: "WR",
         sleeperPlayerId: undefined,
         tier: "1",
+        bye: 5,
       },
       {
         rank: 2,
@@ -143,6 +144,7 @@ WR,CIN
         position: "RB",
         sleeperPlayerId: undefined,
         tier: "2",
+        bye: 7,
       },
       {
         rank: 3,
@@ -151,7 +153,28 @@ WR,CIN
         position: "DEF",
         sleeperPlayerId: undefined,
         tier: "9",
+        bye: 9,
       },
+    ]);
+  });
+
+  it("reads bye weeks from 1 to 18 and treats anything else as no bye", () => {
+    const result = service.parse(`
+rank,player,bye
+1,Player One,18
+2,Player Two,-
+3,Player Three,0
+4,Player Four,19
+5,Player Five,
+`);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rankings.map((ranking) => ranking.bye)).toEqual([
+      18,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
     ]);
   });
 

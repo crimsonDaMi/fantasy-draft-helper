@@ -749,8 +749,9 @@ describe("RecommendationService", () => {
       rank: number,
       position: string,
       tier: string,
+      bye?: number,
     ) => ({
-      ranking: { rank, playerName: `Player ${sleeperId}`, tier },
+      ranking: { rank, playerName: `Player ${sleeperId}`, tier, bye },
       player: { sleeperId, fullName: `Player ${sleeperId}`, position },
       method: "SLEEPER_ID",
     });
@@ -758,7 +759,7 @@ describe("RecommendationService", () => {
     const rankingStoreService = {
       getFlags: () => ({}),
       getRankingMatches: () => [
-        rankedPlayer("1", 1, "QB", "S"),
+        rankedPlayer("1", 1, "QB", "S", 7),
         rankedPlayer("2", 2, "QB", "S"),
         rankedPlayer("3", 3, "WR", "S"),
         rankedPlayer("4", 4, "QB", "A"),
@@ -799,6 +800,7 @@ describe("RecommendationService", () => {
         rank: 1,
         positionRank: 1,
         tier: "S",
+        bye: 7,
         adp: 2.5,
       },
       {

@@ -43,6 +43,7 @@ function mapRecommendation(recommendation: Recommendation) {
     rank: recommendation.ranking.rank,
     positionRank: recommendation.positionRank,
     tier: recommendation.ranking.tier,
+    bye: recommendation.ranking.bye,
     player: {
       sleeperId: recommendation.player.sleeperId,
       fullName: recommendation.player.fullName,
@@ -69,6 +70,7 @@ function mapPick(pick: RankedDraftPick) {
     rank: pick.rank,
     positionRank: pick.positionRank,
     tier: pick.tier,
+    bye: pick.bye,
     adp: pick.adp,
     adpPositionRank: pick.adpPositionRank,
     amount: pick.amount,

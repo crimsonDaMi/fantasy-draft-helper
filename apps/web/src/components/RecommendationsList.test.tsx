@@ -53,6 +53,7 @@ describe("RecommendationsList", () => {
             rank: 20,
             positionRank: 12,
             tier: "B",
+            bye: 7,
             player: {
               sleeperId: "1",
               fullName: "Player One",
@@ -76,7 +77,7 @@ describe("RecommendationsList", () => {
     );
 
     expect(container.querySelector(".hero__meta")).toHaveTextContent(
-      /^AAA · WR12 · Tier B · ▲ 5.0 ADP · ADP WR15$/,
+      /^AAA · WR12 · Tier B · Bye 7 · ▲ 5.0 ADP · ADP WR15$/,
     );
     expect(container.querySelector(".rec-list__meta")).toHaveTextContent(
       /^BBB · RB8$/,

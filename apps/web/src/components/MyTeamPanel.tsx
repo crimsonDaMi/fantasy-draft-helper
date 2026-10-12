@@ -1,4 +1,5 @@
 import type { ApiDraftInfo, ApiDraftPick, DraftStatus } from "../types/api";
+import { byeClashes } from "../utils/bye-clashes";
 import { auctionBudget, formatPick, nextPickFor } from "../utils/draft-order";
 import { POSITIONS } from "../utils/positions";
 import { PositionBadge } from "./PositionBadge";
@@ -186,6 +187,32 @@ function MyTeamRoster({
       )}
 
       <RosterNeeds myPicks={myPicks} rosterSlots={rosterSlots} />
+      <ByeClashes myPicks={myPicks} rosterSlots={rosterSlots} />
     </>
+  );
+}
+
+/** Weeks where several starters share a bye. Information only. */
+function ByeClashes({
+  myPicks,
+  rosterSlots,
+}: {
+  myPicks: ApiDraftPick[];
+  rosterSlots: Record<string, number>;
+}) {
+  const clashes = byeClashes(myPicks, rosterSlots);
+
+  if (clashes.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="my-team__byes" aria-label="Bye clashes among starters">
+      {clashes.map((clash) => (
+        <li key={clash.week}>
+          Week {clash.week} bye: {clash.players.join(", ")}
+        </li>
+      ))}
+    </ul>
   );
 }

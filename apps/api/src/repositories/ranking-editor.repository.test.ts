@@ -231,6 +231,27 @@ describe("RankingRepository editor mutations", () => {
       expect(result[1]?.method).toBe("MANUAL");
     });
 
+    it("keeps the imported bye week of a resolved row", () => {
+      const repository = new RankingRepository(":memory:");
+      const rankingId = repository.create(
+        [
+          {
+            ...unmatched(1, "S", "Nobody"),
+            ranking: { rank: 1, playerName: "Nobody", tier: "S", bye: 11 },
+          },
+        ],
+        USER_ID,
+      );
+
+      const [resolved] = repository.replaceUnmatchedRow(
+        rankingId,
+        1,
+        match(0, "S", "9"),
+      );
+
+      expect(resolved?.ranking.bye).toBe(11);
+    });
+
     it("gives a resolved row the tier above when its own tier no longer fits there", () => {
       const repository = new RankingRepository(":memory:");
       const rankingId = repository.create(

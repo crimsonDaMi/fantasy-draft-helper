@@ -1,6 +1,14 @@
 import { PlayerMatch } from "../domain/player-match.js";
 
-const HEADERS = ["rank", "player", "position", "team", "tier", "player_id"];
+const HEADERS = [
+  "rank",
+  "player",
+  "position",
+  "team",
+  "tier",
+  "player_id",
+  "bye",
+];
 
 /**
  * Serializes a ranking to the canonical import CSV, so a user can back it
@@ -18,6 +26,7 @@ export function toRankingCsv(matches: PlayerMatch[]): string {
     ranking.team ?? "",
     ranking.tier ?? "",
     player?.sleeperId ?? "",
+    ranking.bye === undefined ? "" : String(ranking.bye),
   ]);
 
   return [HEADERS, ...rows]

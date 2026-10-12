@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { ApiDraftPick } from "../types/api";
 import { MyTeamPanel } from "./MyTeamPanel";
 
 const draft = { type: "snake", teams: 4, rounds: 3, rosterSlots: { QB: 1 } };
@@ -29,6 +30,47 @@ describe("MyTeamPanel", () => {
     expect(summary).toHaveTextContent("My team");
     expect(summary).toHaveTextContent("You're on the clock (1.01)");
     expect(summary?.contains(screen.getByRole("combobox"))).toBe(false);
+  });
+
+  it("lists bye weeks shared by several starters, and nothing without byes", () => {
+    const myPicks: ApiDraftPick[] = [
+      {
+        pickNo: 1,
+        playerId: "1",
+        playerName: "Player One",
+        position: "QB",
+        bye: 7,
+      },
+      {
+        pickNo: 8,
+        playerId: "2",
+        playerName: "Player Two",
+        position: "RB",
+        bye: 7,
+      },
+    ];
+    const panel = (picks: ApiDraftPick[]) => (
+      <MyTeamPanel
+        draft={{ ...draft, rosterSlots: { QB: 1, RB: 1 } }}
+        draftStatus="DRAFTING"
+        currentPickNo={9}
+        slot={1}
+        slotFromSleeper
+        myPicks={picks}
+        onSlotChange={vi.fn()}
+      />
+    );
+    const { rerender } = render(panel(myPicks));
+
+    expect(
+      screen.getByRole("list", { name: "Bye clashes among starters" }),
+    ).toHaveTextContent("Week 7 bye: Player One, Player Two");
+
+    rerender(panel(myPicks.map((pick) => ({ ...pick, bye: undefined }))));
+
+    expect(
+      screen.queryByRole("list", { name: "Bye clashes among starters" }),
+    ).not.toBeInTheDocument();
   });
 
   it("marks a next pick acquired by trade", () => {

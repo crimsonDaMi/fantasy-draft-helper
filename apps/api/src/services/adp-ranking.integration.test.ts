@@ -64,7 +64,7 @@ describe("a ranking started from ADP", () => {
       .trim()
       .split("\n")
       .slice(1)
-      .map((line) => line.split(",").at(-1));
+      .map((line) => line.split(",")[5]);
 
     expect(exportedIds).toEqual(["3", "1", "2"]);
   });

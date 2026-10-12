@@ -34,10 +34,28 @@ export function fillRoster(
   positions: (string | undefined)[],
   rosterSlots: Record<string, number>,
 ): RosterSlotFill[] {
-  const remaining = positions.filter(
-    (position): position is string => position !== undefined,
+  return assignSlots(positions, rosterSlots).fills;
+}
+
+/** Indexes (into `positions`) of the players that fill a starting slot,
+ * by the same greedy fill as `fillRoster`; in draft order, the earlier
+ * pick at a position starts. */
+export function starterIndexes(
+  positions: (string | undefined)[],
+  rosterSlots: Record<string, number>,
+): Set<number> {
+  return assignSlots(positions, rosterSlots).starters;
+}
+
+function assignSlots(
+  positions: (string | undefined)[],
+  rosterSlots: Record<string, number>,
+): { fills: RosterSlotFill[]; starters: Set<number> } {
+  const remaining = positions.flatMap((position, index) =>
+    position === undefined ? [] : [{ position, index }],
   );
   const fills: RosterSlotFill[] = [];
+  const starters = new Set<number>();
 
   function take(slot: string, accepts: string[]) {
     const required = rosterSlots[slot] ?? 0;
@@ -49,15 +67,15 @@ export function fillRoster(
     let filled = 0;
 
     while (filled < required) {
-      const index = remaining.findIndex((position) =>
+      const found = remaining.findIndex(({ position }) =>
         accepts.includes(position),
       );
 
-      if (index === -1) {
+      if (found === -1) {
         break;
       }
 
-      remaining.splice(index, 1);
+      starters.add(remaining.splice(found, 1)[0]!.index);
       filled++;
     }
 
@@ -80,5 +98,5 @@ export function fillRoster(
     });
   }
 
-  return fills;
+  return { fills, starters };
 }

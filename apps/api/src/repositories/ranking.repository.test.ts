@@ -5,8 +5,10 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { PlayerMatch } from "../domain/player-match.js";
+import { migrate, openDatabase } from "./database.js";
 import {
   MAX_RANKINGS_PER_USER,
+  RANKING_SCHEMA,
   RankingRepository,
 } from "./ranking.repository.js";
 
@@ -288,6 +290,58 @@ describe("RankingRepository storage", () => {
     expect(matched?.method).toBe("NAME_POSITION");
     expect(ambiguous?.player).toBeUndefined();
     expect(ambiguous?.candidates).toEqual([candidate]);
+  });
+
+  it("stores each row's bye week, matched or not", () => {
+    const repository = new RankingRepository(":memory:");
+    const rankingId = repository.create(
+      [
+        {
+          ...tieredMatch(1, "S", "1"),
+          ranking: { rank: 1, playerName: "Player 1", bye: 7 },
+        },
+        { ranking: { rank: 2, playerName: "Nobody", bye: 9 }, method: "NONE" },
+        tieredMatch(3, "S", "3"),
+      ],
+      "user-a",
+    );
+
+    expect(
+      repository
+        .getMatches(rankingId, "user-a")
+        .map((match) => match.ranking.bye),
+    ).toEqual([7, 9, undefined]);
+  });
+
+  it("upgrades a database from before bye weeks, keeping its rankings", () => {
+    directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-v1-"));
+    const databasePath = join(directory, "test.db");
+    const old = openDatabase(databasePath);
+    migrate(
+      old,
+      { ...RANKING_SCHEMA, migrations: RANKING_SCHEMA.migrations.slice(0, 1) },
+      databasePath,
+    );
+    old.exec(`
+      INSERT INTO rankings (id, user_id, name, created_at)
+        VALUES ('r1', 'user-a', 'Old ranking', '2026-01-01T00:00:00.000Z');
+      INSERT INTO ranking_players (ranking_id, rank, name, sleeper_id, match_method)
+        VALUES ('r1', 1, 'Player 1', '1', 'SLEEPER_ID');
+    `);
+    old.close();
+
+    const repository = new RankingRepository(databasePath);
+    const rankingId = repository.create(
+      [{ ranking: { rank: 1, playerName: "Nobody", bye: 5 }, method: "NONE" }],
+      "user-a",
+    );
+
+    expect(repository.getMatches("r1", "user-a")).toMatchObject([
+      { ranking: { playerName: "Player 1", bye: undefined } },
+    ]);
+    expect(repository.getMatches(rankingId, "user-a")[0]?.ranking.bye).toBe(5);
+
+    repository.close();
   });
 
   it("refuses the same player twice in one ranking", () => {

@@ -79,7 +79,7 @@ Name matching is the expensive step and happens only at import.
 
 ## CSV import
 
-Canonical headers: `rank,player,position,team,tier,notes` (`rank` and
+Canonical headers: `rank,player,position,team,tier,bye,notes` (`rank` and
 `player` required). Legacy headers `Rank`, `Name`, `Position`, `Team`,
 `Tier`, and `player_id` are still accepted; new fixtures and docs use the
 canonical ones. The header row is validated first; missing required

@@ -33,8 +33,9 @@ draft state.
   PPR or half PPR, redraft or dynasty), so you can see where you're higher
   or lower than the field.
 - Injury badges (Q, D, O, IR, …).
-- Your team: when you pick next, your players so far, and how they fill
-  your lineup slots.
+- Your team: when you pick next, your players so far, how they fill
+  your lineup slots, and weeks where several of your starters share a bye.
+- Bye weeks next to each player, when your ranking CSV has them.
 - Recent picks with reaches and steals against your ranking, the
   positional run of the last 8 picks, and how many players are left in
   your best remaining tiers per position.
@@ -99,12 +100,13 @@ rank,player,position,team,tier,notes
 ```
 
 Only `rank` (a positive integer) and `player` are required. `position`
-(`QB`, `RB`, `WR`, `TE`, `K`, or `DEF`), `team`, `tier`, and `notes` are
-optional, and other columns are ignored.
+(`QB`, `RB`, `WR`, `TE`, `K`, or `DEF`), `team`, `tier`, `bye` (the bye
+week, 1–18), and `notes` are optional, and other columns are ignored.
+Sleeper has no bye weeks, so they show only when your CSV has them.
 
 Exports from other sites usually import as they are. Headers are
-case-insensitive, FantasyPros' `RK`, `PLAYER NAME`, `POS`, and `TIERS` are
-recognized, and so are the legacy headers `Rank`, `Name`, `Position`,
+case-insensitive, FantasyPros' `RK`, `PLAYER NAME`, `POS`, `TIERS`, and
+`BYE WEEK` are recognized, and so are the legacy headers `Rank`, `Name`, `Position`,
 `Team`, `Tier`, and `player_id`. A positional rank such as `RB12` is read
 as `RB`, and `DST`/`D/ST` as `DEF`. Team defenses match by full team name
 ("Kansas City Chiefs") or, with a `DEF` position and a team, by

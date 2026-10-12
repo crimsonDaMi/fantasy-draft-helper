@@ -219,6 +219,7 @@ export class RecommendationService {
         rank: match?.ranking.rank,
         positionRank: positionRankBySleeperId.get(pick.playerId),
         tier: match?.ranking.tier,
+        bye: match?.ranking.bye,
         adp: adpBySleeperId.get(pick.playerId),
         adpPositionRank: adpPositionRankBySleeperId.get(pick.playerId),
       };

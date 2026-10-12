@@ -13,4 +13,6 @@ export interface Ranking {
   position?: FantasyPosition;
   sleeperPlayerId?: string;
   tier?: string;
+  /** The player's bye week, from the CSV (Sleeper's API has none). */
+  bye?: number;
 }

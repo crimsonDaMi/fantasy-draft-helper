@@ -9,8 +9,8 @@ import {
 type CsvRow = Record<string, string | undefined>;
 
 // Canonical and legacy headers, plus the column names of common ranking
-// exports (FantasyPros: RK, TIERS, PLAYER NAME, TEAM, POS). Unknown
-// columns are ignored.
+// exports (FantasyPros: RK, TIERS, PLAYER NAME, TEAM, POS, BYE WEEK).
+// Unknown columns are ignored.
 const HEADER_ALIASES: Record<string, keyof NormalizedCsvRow> = {
   rank: "rank",
   rk: "rank",
@@ -23,6 +23,8 @@ const HEADER_ALIASES: Record<string, keyof NormalizedCsvRow> = {
   tier: "tier",
   tiers: "tier",
   player_id: "sleeperPlayerId",
+  bye: "bye",
+  "bye week": "bye",
 };
 
 const DEFENSE_POSITIONS = new Set(["DEF", "DST", "D/ST"]);
@@ -43,6 +45,20 @@ interface NormalizedCsvRow {
   team?: string;
   tier?: string;
   sleeperPlayerId?: string;
+  bye?: string;
+}
+
+/** NFL regular seasons have 18 weeks. */
+const MAX_BYE_WEEK = 18;
+
+/** A bye week from 1 to 18; anything else (blank, "-" for free agents)
+ * is no bye, since the column is informational only. */
+function parseBye(value: string | undefined): number | undefined {
+  const week = Number(value);
+
+  return value && Number.isInteger(week) && week >= 1 && week <= MAX_BYE_WEEK
+    ? week
+    : undefined;
 }
 
 type ParsedRow = { ranking: Ranking } | { error: RankingImportError };
@@ -141,6 +157,7 @@ export class RankingCsvService {
         position,
         sleeperPlayerId: row.sleeperPlayerId || undefined,
         tier: row.tier || undefined,
+        bye: parseBye(row.bye),
       },
     };
   }

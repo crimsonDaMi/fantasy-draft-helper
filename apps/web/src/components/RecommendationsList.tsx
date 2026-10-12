@@ -34,6 +34,7 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
       {recommendation.player.team}
       {positionRank && ` · ${positionRank}`}
       {recommendation.tier && ` · Tier ${recommendation.tier}`}
+      {recommendation.bye !== undefined && ` · Bye ${recommendation.bye}`}
       {recommendation.adp && (
         <>
           {" · "}
@@ -138,6 +139,7 @@ export function RecommendationsList({
             WR12: the player's place among their position in your ranking · ADP
             WR15: the same by ADP
           </li>
+          <li>Bye: the player's bye week, from your ranking CSV.</li>
           <li>ADP is {adpFormat} ADP from Sleeper, matching this draft.</li>
           <li>
             Injury: Q questionable · D doubtful · O out · IR injured reserve

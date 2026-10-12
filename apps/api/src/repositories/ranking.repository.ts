@@ -32,6 +32,7 @@ interface RankingPlayerRow {
   sleeper_id: string | null;
   match_method: PlayerMatch["method"];
   match_details: string | null;
+  bye_week: number | null;
 }
 
 /** What `match_details` holds: the parts of a match only some rows have. */
@@ -57,7 +58,8 @@ const PLAYER_COLUMNS = `
   ranking_players.source_player_id AS source_player_id,
   ranking_players.sleeper_id AS sleeper_id,
   ranking_players.match_method AS match_method,
-  ranking_players.match_details AS match_details`;
+  ranking_players.match_details AS match_details,
+  ranking_players.bye_week AS bye_week`;
 
 const PLAYERS_WITH_TIERS = `
   ranking_players
@@ -79,6 +81,7 @@ function toMatch(row: RankingPlayerRow): PlayerMatch {
         row.tier_position === null
           ? undefined
           : numericTierToLabel(row.tier_position),
+      bye: row.bye_week ?? undefined,
     },
     player: row.sleeper_id === null ? undefined : storedPlayer(row),
     method: row.match_method,
@@ -177,7 +180,7 @@ interface TierRow {
 
 // Add a schema change as a new step at the end; a step that has shipped
 // never changes (see AGENTS.md).
-const RANKING_SCHEMA: VersionedSchema = {
+export const RANKING_SCHEMA: VersionedSchema = {
   name: "rankings",
   migrations: [
     {
@@ -240,6 +243,10 @@ const RANKING_SCHEMA: VersionedSchema = {
   CREATE UNIQUE INDEX ranking_players_ranking_id_sleeper_id
     ON ranking_players (ranking_id, sleeper_id);
       `,
+    },
+    {
+      version: 2,
+      up: `ALTER TABLE ranking_players ADD COLUMN bye_week INTEGER`,
     },
   ],
 };
@@ -462,7 +469,7 @@ export class RankingRepository {
   /**
    * Replaces the unmatched row at `rank` (1-based, counting every row)
    * with `resolved` at the same position, or removes it when `resolved`
-   * is undefined. The row keeps its tier unless edits since the import
+   * is undefined. The row keeps its bye week, and its tier unless edits since the import
    * left it between players of other tiers; it then joins the tier of
    * the matched player above it, so every tier stays one contiguous block.
    */
@@ -495,6 +502,8 @@ export class RankingRepository {
                 rank - 1,
                 row.match.ranking.tier,
               ),
+              // The CSV's bye stays with the row it was imported on.
+              bye: resolved.ranking.bye ?? row.match.ranking.bye,
             },
           },
         };
@@ -726,8 +735,9 @@ export class RankingRepository {
       .prepare(
         `INSERT INTO ranking_players (
            ranking_id, rank, tier_id, name, position, team,
-           source_player_id, sleeper_id, match_method, match_details
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           source_player_id, sleeper_id, match_method, match_details,
+           bye_week
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(rankingId, rank, tierId, ...rowContent(match));
   }
@@ -745,7 +755,7 @@ export class RankingRepository {
         `UPDATE ranking_players SET
            rank = ?, tier_id = ?, name = ?, position = ?, team = ?,
            source_player_id = ?, sleeper_id = ?, match_method = ?,
-           match_details = ?, flag = NULL
+           match_details = ?, bye_week = ?, flag = NULL
          WHERE id = ?`,
       )
       .run(rank, tierId, ...rowContent(match), id);
@@ -846,5 +856,6 @@ function rowContent(match: PlayerMatch) {
     match.player?.sleeperId ?? null,
     match.method,
     matchDetailsJson(match),
+    match.ranking.bye ?? null,
   ] as const;
 }

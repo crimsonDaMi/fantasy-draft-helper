@@ -170,7 +170,8 @@ are applied before `limit`.
 Besides the recommendations, the response carries what the draft-day
 panels need: `draft` (type, teams, rounds, reversal round, draft order,
 and lineup slots), `picks` (every pick made, each with the player's rank,
-`positionRank`, tier, and ADP with `adpPositionRank` when available), `adpFormat` (the ADP format used for the
+`positionRank`, tier, bye week, and ADP with `adpPositionRank` when
+available), `adpFormat` (the ADP format used for the
 draft, e.g. `1QB PPR` or `SF` — see
 [ADP Data Source](configuration.md#adp-data-source)), and `tierCounts`
 (players left in the best two remaining tiers of your ranking, per
@@ -186,6 +187,7 @@ Position data is available for that player:
   "rank": 3,
   "positionRank": 2,
   "tier": "A",
+  "bye": 8,
   "player": {
     "sleeperId": "9221",
     "fullName": "Jahmyr Gibbs",
@@ -195,6 +197,9 @@ Position data is available for that player:
   "adp": { "value": 3.7, "diff": -0.7, "positionRank": 2 }
 }
 ```
+
+`bye` is the player's bye week from the ranking CSV, omitted when the CSV
+had none.
 
 `positionRank` is the player's place among their position in your whole
 ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't

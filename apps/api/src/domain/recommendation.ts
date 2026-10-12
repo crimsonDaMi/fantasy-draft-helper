@@ -24,6 +24,7 @@ export interface RankedDraftPick extends DraftPick {
   rank?: number;
   positionRank?: number;
   tier?: string;
+  bye?: number;
   adp?: number;
   adpPositionRank?: number;
 }
