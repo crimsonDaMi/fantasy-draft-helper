@@ -14,7 +14,12 @@ type PlayerMatchMethod =
   /** Chosen by the user in the ranking editor for an unmatched row. */
   | "MANUAL";
 
-type PlayerMatchWarning = "ID_METADATA_MISMATCH";
+type PlayerMatchWarning =
+  | "ID_METADATA_MISMATCH"
+  /** An earlier row already holds this player; a ranking holds each
+   * player once, so this row stays unmatched with the player as its
+   * only candidate. */
+  | "DUPLICATE_PLAYER";
 
 export interface PlayerMatch {
   ranking: Ranking;

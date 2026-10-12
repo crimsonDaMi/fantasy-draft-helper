@@ -140,7 +140,7 @@ describe("RankingRepository", () => {
   });
 });
 
-describe("RankingRepository storage of rank and tier", () => {
+describe("RankingRepository storage", () => {
   let directory: string | undefined;
 
   afterEach(() => {
@@ -173,72 +173,167 @@ describe("RankingRepository storage of rank and tier", () => {
     };
   }
 
-  it("keeps rank and tier out of match_json, in their columns only", () => {
-    const { repository, rawDatabase } = createFileBackedRepository();
-
-    const rankingId = repository.create(
-      [tieredMatch(1, "S", "1"), tieredMatch(2, "A", "2")],
-      "user-a",
-    );
-    repository.movePlayer(rankingId, "2", 1, "S");
-    repository.insertTier(rankingId, 1);
-
-    const rows = rawDatabase
+  function storedRows(rawDatabase: DatabaseSync, rankingId: string) {
+    return rawDatabase
       .prepare(
-        `SELECT rank, tier, match_json FROM ranking_players
+        `SELECT id, sleeper_id, tier_id FROM ranking_players
          WHERE ranking_id = ? ORDER BY rank`,
       )
       .all(rankingId) as unknown as {
-      rank: number;
-      tier: string;
-      match_json: string;
+      id: number;
+      sleeper_id: string;
+      tier_id: number;
     }[];
+  }
 
-    expect(rows.map((row) => [row.rank, row.tier])).toEqual([
-      [1, "A"],
-      [2, "A"],
-    ]);
+  it("keeps each player's row through moves, tier changes and removals", () => {
+    const { repository, rawDatabase } = createFileBackedRepository();
+    const rankingId = repository.create(
+      [
+        tieredMatch(1, "S", "1"),
+        tieredMatch(2, "S", "2"),
+        tieredMatch(3, "A", "3"),
+      ],
+      "user-a",
+    );
+    const idsBefore = new Map(
+      storedRows(rawDatabase, rankingId).map((row) => [row.sleeper_id, row.id]),
+    );
 
-    for (const row of rows) {
-      const stored = JSON.parse(row.match_json) as {
-        ranking: Record<string, unknown>;
-      };
-      expect(stored.ranking).not.toHaveProperty("rank");
-      expect(stored.ranking).not.toHaveProperty("tier");
-    }
+    repository.movePlayer(rankingId, "3", 1, "S");
+    repository.insertTier(rankingId, 1);
+    repository.removeTier(rankingId, 1);
+    repository.removePlayer(rankingId, "1");
 
     expect(
-      repository
-        .getMatches(rankingId, "user-a")
-        .map((match) => [match.player?.sleeperId, match.ranking]),
+      storedRows(rawDatabase, rankingId).map((row) => [row.sleeper_id, row.id]),
     ).toEqual([
-      ["2", { rank: 1, playerName: "Player 2", tier: "A" }],
-      ["1", { rank: 2, playerName: "Player 1", tier: "A" }],
+      ["3", idsBefore.get("3")],
+      ["2", idsBefore.get("2")],
     ]);
 
     rawDatabase.close();
     repository.close();
   });
 
-  it("reads rank and tier from the columns for rows that still carry them in match_json", () => {
+  it("inserts a tier without touching its players, relabelling them on read", () => {
     const { repository, rawDatabase } = createFileBackedRepository();
+    const rankingId = repository.create(
+      [tieredMatch(1, "S", "1"), tieredMatch(2, "A", "2")],
+      "user-a",
+    );
+    const before = storedRows(rawDatabase, rankingId);
 
-    const rankingId = repository.create([tieredMatch(1, "S", "1")], "user-a");
+    repository.insertTier(rankingId, 1);
 
-    // A row written before rank/tier moved out of match_json, whose JSON
-    // copy no longer matches the columns.
-    rawDatabase
-      .prepare(`UPDATE ranking_players SET match_json = ? WHERE ranking_id = ?`)
-      .run(JSON.stringify(tieredMatch(7, "C", "1")), rankingId);
-
-    expect(repository.getMatches(rankingId, "user-a")[0]?.ranking).toEqual({
-      rank: 1,
-      playerName: "Player 1",
-      tier: "S",
-    });
+    expect(storedRows(rawDatabase, rankingId)).toEqual(before);
+    expect(
+      repository
+        .getMatches(rankingId, "user-a")
+        .map((match) => match.ranking.tier),
+    ).toEqual(["A", "B"]);
 
     rawDatabase.close();
     repository.close();
+  });
+
+  it("stores the row's own player data, not a Sleeper snapshot", () => {
+    const repository = new RankingRepository(":memory:");
+    const candidate = {
+      sleeperId: "9",
+      fullName: "Player Nine",
+      active: true,
+      fantasyPositions: ["WR"],
+    };
+    const rankingId = repository.create(
+      [
+        {
+          ranking: {
+            rank: 1,
+            playerName: "P. One",
+            team: "BUF",
+            position: "QB",
+          },
+          player: {
+            sleeperId: "1",
+            fullName: "Player One",
+            team: "KC",
+            position: "QB",
+            injuryStatus: "Questionable",
+            active: true,
+            fantasyPositions: ["QB"],
+          },
+          method: "NAME_POSITION",
+        },
+        {
+          ranking: { rank: 2, playerName: "Player Nine", position: "WR" },
+          method: "AMBIGUOUS",
+          candidates: [candidate],
+        },
+      ],
+      "user-a",
+    );
+
+    const [matched, ambiguous] = repository.getMatches(rankingId, "user-a");
+
+    // The ranking's own name and team; services overlay the live player.
+    expect(matched?.player).toEqual({
+      sleeperId: "1",
+      fullName: "P. One",
+      team: "BUF",
+      position: "QB",
+      active: true,
+      fantasyPositions: ["QB"],
+    });
+    expect(matched?.method).toBe("NAME_POSITION");
+    expect(ambiguous?.player).toBeUndefined();
+    expect(ambiguous?.candidates).toEqual([candidate]);
+  });
+
+  it("refuses the same player twice in one ranking", () => {
+    const repository = new RankingRepository(":memory:");
+
+    expect(() =>
+      repository.create(
+        [tieredMatch(1, "S", "1"), tieredMatch(2, "S", "1")],
+        "user-a",
+      ),
+    ).toThrow(/UNIQUE/);
+    expect(repository.hasRankings("user-a")).toBe(false);
+  });
+
+  it("refuses to open a database from before the v3 storage redesign", () => {
+    directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-v2-"));
+    const databasePath = join(directory, "test.db");
+    const legacy = new DatabaseSync(databasePath);
+
+    legacy.exec(`
+      CREATE TABLE rankings (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE ranking_players (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ranking_id TEXT NOT NULL,
+        rank INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        position TEXT,
+        team TEXT,
+        tier TEXT,
+        sleeper_id TEXT,
+        match_status TEXT NOT NULL,
+        match_json TEXT NOT NULL,
+        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
+          ON DELETE CASCADE
+      );
+    `);
+    legacy.close();
+
+    expect(() => new RankingRepository(databasePath)).toThrow(
+      /changed tables: ranking_players/,
+    );
   });
 });
 
@@ -303,50 +398,5 @@ describe("RankingRepository player flags", () => {
     repository.delete(rankingId, "user-a");
 
     expect(repository.getFlags(rankingId)).toEqual({});
-  });
-
-  it("opens a v1.1.0 database, which has no flags table yet", () => {
-    directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-flags-"));
-    const databasePath = join(directory, "test.db");
-    const legacy = new DatabaseSync(databasePath);
-
-    legacy.exec(`
-      CREATE TABLE rankings (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-      CREATE TABLE ranking_players (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ranking_id TEXT NOT NULL,
-        rank INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        position TEXT,
-        team TEXT,
-        tier TEXT,
-        sleeper_id TEXT,
-        match_status TEXT NOT NULL,
-        match_json TEXT NOT NULL,
-        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-          ON DELETE CASCADE
-      );
-      CREATE TABLE ranking_tiers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ranking_id TEXT NOT NULL,
-        position INTEGER NOT NULL,
-        FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-          ON DELETE CASCADE
-      );
-      INSERT INTO rankings VALUES ('ranking-1', 'user-a', 'Old', '2026-01-01');
-    `);
-    legacy.close();
-
-    const repository = new RankingRepository(databasePath);
-
-    expect(repository.hasRanking("ranking-1", "user-a")).toBe(true);
-    expect(() => repository.setFlag("ranking-1", "1", "watch")).not.toThrow();
-
-    repository.close();
   });
 });

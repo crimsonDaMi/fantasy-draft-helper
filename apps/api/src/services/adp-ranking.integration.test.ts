@@ -55,7 +55,7 @@ describe("a ranking started from ADP", () => {
     store.renameRanking(rankingId!, TEST_USER_ID, "League A");
     expect(store.listRankings(TEST_USER_ID)[0]?.name).toBe("League A");
 
-    const [tier] = editor.getRanking(rankingId!, TEST_USER_ID).tiers;
+    const [tier] = (await editor.getRanking(rankingId!, TEST_USER_ID)).tiers;
     await editor.movePlayer(rankingId!, TEST_USER_ID, "3", 1, tier!.label);
 
     const csv = toRankingCsv(store.getRankingMatches(rankingId!, TEST_USER_ID));

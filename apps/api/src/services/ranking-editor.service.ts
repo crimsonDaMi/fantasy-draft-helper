@@ -4,7 +4,7 @@ import { PlayerMatch } from "../domain/player-match.js";
 import { Player } from "../domain/player.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { RankingRepository } from "../repositories/ranking.repository.js";
-import { withLiveInjuryStatus } from "../utils/with-live-injury-status.js";
+import { withLivePlayer } from "../utils/with-live-player.js";
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 import { PlayerService } from "./player.service.js";
@@ -162,15 +162,19 @@ export class RankingEditorService {
    * entry state for the ranking editor. Reuses the same repository query
    * as the recommendation flow rather than a second, lighter path.
    */
-  getRanking(
+  async getRanking(
     rankingId: string,
     userId: string,
-  ): {
+  ): Promise<{
     players: PlayerMatch[];
     tiers: RankingTier[];
     flags: Record<string, PlayerFlag>;
-  } {
+  }> {
     this.assertOwnership(rankingId, userId);
+
+    // Best effort: with Sleeper unreachable, the editor still opens with
+    // the ranking's own player data.
+    await this.playerService.ensurePlayersLoaded().catch(() => {});
 
     return {
       players: this.withLiveStatus(
@@ -271,7 +275,7 @@ export class RankingEditorService {
 
   private withLiveStatus(matches: PlayerMatch[]): PlayerMatch[] {
     return matches.map((match) =>
-      withLiveInjuryStatus(match, (sleeperId) =>
+      withLivePlayer(match, (sleeperId) =>
         this.playerService.getPlayerById(sleeperId),
       ),
     );

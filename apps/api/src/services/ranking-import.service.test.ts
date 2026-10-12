@@ -72,4 +72,39 @@ player_id,Rank,Name,Team,Position,Tier,Expert Rank
 
     expect(playerService.ensurePlayersLoaded).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps a player's first row and leaves a duplicate unmatched", async () => {
+    const player = {
+      sleeperId: "9221",
+      fullName: "Player One",
+      active: true,
+      fantasyPositions: ["RB"],
+    };
+    const matchingService = {
+      matchRankings: (rankings: { rank: number; playerName: string }[]) =>
+        rankings.map((ranking) => ({ ranking, player, method: "SLEEPER_ID" })),
+    };
+    const service = new RankingImportService(
+      new RankingCsvService(),
+      matchingService as never,
+      {
+        ensurePlayersLoaded: vi.fn().mockResolvedValue(undefined),
+      } as never,
+    );
+
+    const result = await service.importCsv(`
+player_id,Rank,Name,Team,Position
+9221,1,Player One,DET,RB
+9221,2,Player One,DET,RB
+`);
+
+    expect(result.matches[0]).toMatchObject({ player, method: "SLEEPER_ID" });
+    expect(result.matches[1]).toEqual({
+      ranking: expect.objectContaining({ rank: 2 }),
+      method: "NONE",
+      candidates: [player],
+      warnings: ["DUPLICATE_PLAYER"],
+    });
+    expect(result.summary).toMatchObject({ matched: 1, unmatched: 1 });
+  });
 });

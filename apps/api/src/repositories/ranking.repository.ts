@@ -3,7 +3,9 @@ import { DatabaseSync } from "node:sqlite";
 
 import { applySchema, openDatabase, runInTransaction } from "./database.js";
 import { PlayerFlag } from "../domain/player-flag.js";
+import { Player } from "../domain/player.js";
 import { PlayerMatch } from "../domain/player-match.js";
+import { FantasyPosition } from "../domain/ranking.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
 import {
@@ -13,9 +15,97 @@ import {
 } from "../utils/tier.js";
 
 interface RankingPlayerRow {
+  id: number;
   rank: number;
-  tier: string | null;
-  match_json: string;
+  tier_id: number | null;
+  tier_position: number | null;
+  name: string;
+  position: string | null;
+  team: string | null;
+  source_player_id: string | null;
+  sleeper_id: string | null;
+  match_method: PlayerMatch["method"];
+  match_details: string | null;
+}
+
+/** What `match_details` holds: the parts of a match only some rows have. */
+type MatchDetails = Pick<PlayerMatch, "candidates" | "warnings">;
+
+/** A player row in rank order. `id` is unset until the row is stored;
+ * `replaced` marks a stored row whose content (not just rank or tier)
+ * changed, e.g. a resolved unmatched row. */
+interface StoredRow {
+  id?: number;
+  replaced?: boolean;
+  match: PlayerMatch;
+}
+
+const PLAYER_COLUMNS = `
+  ranking_players.id AS id,
+  ranking_players.rank AS rank,
+  ranking_players.tier_id AS tier_id,
+  ranking_tiers.position AS tier_position,
+  ranking_players.name AS name,
+  ranking_players.position AS position,
+  ranking_players.team AS team,
+  ranking_players.source_player_id AS source_player_id,
+  ranking_players.sleeper_id AS sleeper_id,
+  ranking_players.match_method AS match_method,
+  ranking_players.match_details AS match_details`;
+
+const PLAYERS_WITH_TIERS = `
+  ranking_players
+  LEFT JOIN ranking_tiers ON ranking_tiers.id = ranking_players.tier_id`;
+
+function toMatch(row: RankingPlayerRow): PlayerMatch {
+  const details = row.match_details
+    ? (JSON.parse(row.match_details) as MatchDetails)
+    : {};
+
+  return {
+    ranking: {
+      rank: row.rank,
+      playerName: row.name,
+      team: row.team ?? undefined,
+      position: (row.position ?? undefined) as FantasyPosition | undefined,
+      sleeperPlayerId: row.source_player_id ?? undefined,
+      tier:
+        row.tier_position === null
+          ? undefined
+          : numericTierToLabel(row.tier_position),
+    },
+    player: row.sleeper_id === null ? undefined : storedPlayer(row),
+    method: row.match_method,
+    ...details,
+  };
+}
+
+/** The row's own data as a player. Rankings don't snapshot Sleeper's
+ * player data; services overlay the live player (`withLivePlayer`), and
+ * this stands in when the player cache doesn't know the player. */
+function storedPlayer(row: RankingPlayerRow): Player {
+  return {
+    sleeperId: row.sleeper_id!,
+    fullName: row.name,
+    position: row.position ?? undefined,
+    team: row.team ?? undefined,
+    active: true,
+    fantasyPositions: row.position ? [row.position] : [],
+  };
+}
+
+function matchDetailsJson(match: PlayerMatch): string | null {
+  const details: MatchDetails = {};
+
+  if (match.candidates?.length) {
+    details.candidates = match.candidates;
+  }
+
+  if (match.warnings?.length) {
+    details.warnings = match.warnings;
+  }
+
+  return Object.keys(details).length > 0 ? JSON.stringify(details) : null;
 }
 
 /** Keeps a user's storage bounded; each ranking holds a few hundred rows. */
@@ -74,34 +164,11 @@ function fittingTier(
   return above ?? below ?? preferred;
 }
 
-interface TierPositionRow {
+interface TierRow {
+  id: number;
   position: number;
 }
 
-/**
- * `rank` and `tier` live only in their columns; `match_json` holds the rest
- * of the match. Rows written before that split still carry rank/tier in
- * their JSON too, so the columns always win.
- */
-function parseMatchRows(rows: RankingPlayerRow[]): PlayerMatch[] {
-  return rows.map((row) => {
-    const match = JSON.parse(row.match_json) as PlayerMatch;
-
-    return {
-      ...match,
-      ranking: {
-        ...match.ranking,
-        rank: row.rank,
-        tier: row.tier ?? undefined,
-      },
-    };
-  });
-}
-
-// ranking_players.name/position/team/match_status are denormalized copies
-// of what match_json holds. Nothing reads them; they keep the table
-// readable when inspecting the database with sqlite3. Dropping them is a
-// schema change (major release), so they stay.
 const RANKING_SCHEMA = `
   PRAGMA foreign_keys = ON;
 
@@ -112,27 +179,12 @@ const RANKING_SCHEMA = `
     created_at TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS ranking_players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ranking_id TEXT NOT NULL,
-    rank INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    position TEXT,
-    team TEXT,
-    tier TEXT,
-    sleeper_id TEXT,
-    match_status TEXT NOT NULL,
-    match_json TEXT NOT NULL,
-    FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-      ON DELETE CASCADE
-  );
-
-  CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
-    ON ranking_players (ranking_id, rank, id);
-
   CREATE INDEX IF NOT EXISTS rankings_user_id_created_at
     ON rankings (user_id, created_at);
 
+  -- A tier's label (S, A, B, ...) comes from its position, so inserting or
+  -- removing a tier only renumbers positions here; players keep their
+  -- tier_id.
   CREATE TABLE IF NOT EXISTS ranking_tiers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ranking_id TEXT NOT NULL,
@@ -144,18 +196,38 @@ const RANKING_SCHEMA = `
   CREATE UNIQUE INDEX IF NOT EXISTS ranking_tiers_ranking_id_position
     ON ranking_tiers (ranking_id, position);
 
-  -- Added after v1.1.0. A new table (not a column on ranking_players) so
-  -- existing databases pick it up without a reset, and so flags survive
-  -- replaceAllPlayers, which rewrites every ranking_players row on each
-  -- editor move.
-  CREATE TABLE IF NOT EXISTS ranking_player_flags (
+  -- One row per ranked player or unmatched import row. Editor changes
+  -- update rows in place, so a row (and its flag) keeps its id.
+  CREATE TABLE IF NOT EXISTS ranking_players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     ranking_id TEXT NOT NULL,
-    sleeper_id TEXT NOT NULL,
-    flag TEXT NOT NULL CHECK (flag IN ('watch', 'avoid')),
-    PRIMARY KEY (ranking_id, sleeper_id),
+    rank INTEGER NOT NULL,
+    -- NULL when the import gave no tier; the editor shows such rows in
+    -- the first tier.
+    tier_id INTEGER,
+    -- The row as imported (or as added in the editor).
+    name TEXT NOT NULL,
+    position TEXT,
+    team TEXT,
+    -- The CSV's player ID, as given.
+    source_player_id TEXT,
+    -- The matched Sleeper player; NULL for unmatched and ambiguous rows.
+    sleeper_id TEXT,
+    match_method TEXT NOT NULL,
+    -- JSON: a row's match candidates and warnings, when it has any.
+    match_details TEXT,
+    flag TEXT CHECK (flag IN ('watch', 'avoid')),
     FOREIGN KEY (ranking_id) REFERENCES rankings(id)
-      ON DELETE CASCADE
+      ON DELETE CASCADE,
+    FOREIGN KEY (tier_id) REFERENCES ranking_tiers(id)
   );
+
+  CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
+    ON ranking_players (ranking_id, rank, id);
+
+  -- A ranking holds each player once (unmatched rows have no sleeper_id).
+  CREATE UNIQUE INDEX IF NOT EXISTS ranking_players_ranking_id_sleeper_id
+    ON ranking_players (ranking_id, sleeper_id);
 `;
 
 export class RankingRepository {
@@ -196,8 +268,18 @@ export class RankingRepository {
         )
         .run(rankingId, userId, name, createdAt);
 
-      this.insertPlayerRows(rankingId, matches);
-      this.seedTiersFromMatches(rankingId, matches);
+      const tierIds = this.seedTiersFromMatches(rankingId, matches);
+
+      // Imported ranks are kept as given (gaps and ties included); the
+      // first editor change renumbers them 1..N.
+      for (const match of matches) {
+        this.insertRow(
+          rankingId,
+          match,
+          match.ranking.rank,
+          tierIdFor(match, tierIds),
+        );
+      }
     });
 
     return rankingId;
@@ -206,17 +288,15 @@ export class RankingRepository {
   getMatches(rankingId: string, userId: string): PlayerMatch[] {
     const rows = this.database
       .prepare(
-        `SELECT ranking_players.rank AS rank,
-                ranking_players.tier AS tier,
-                ranking_players.match_json AS match_json
-         FROM ranking_players
+        `SELECT ${PLAYER_COLUMNS}
+         FROM ${PLAYERS_WITH_TIERS}
          JOIN rankings ON rankings.id = ranking_players.ranking_id
          WHERE ranking_players.ranking_id = ? AND rankings.user_id = ?
          ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
       )
       .all(rankingId, userId) as unknown as RankingPlayerRow[];
 
-    return parseMatchRows(rows);
+    return rows.map(toMatch);
   }
 
   hasRanking(rankingId: string, userId: string): boolean {
@@ -321,16 +401,16 @@ export class RankingRepository {
     newMatch?: PlayerMatch,
   ): PlayerMatch[] {
     runInTransaction(this.database, () => {
-      const ordered = this.getOrderedMatches(rankingId);
+      const rows = this.getOrderedRows(rankingId);
 
-      const currentIndex = ordered.findIndex(
-        (match) => match.player?.sleeperId === sleeperId,
+      const currentIndex = rows.findIndex(
+        (row) => row.match.player?.sleeperId === sleeperId,
       );
 
-      let entry: PlayerMatch;
+      let entry: StoredRow;
 
       if (currentIndex !== -1) {
-        [entry] = ordered.splice(currentIndex, 1);
+        [entry] = rows.splice(currentIndex, 1);
       } else {
         if (!newMatch) {
           throw new NotFoundError(
@@ -338,17 +418,27 @@ export class RankingRepository {
             "PLAYER_NOT_RANKED",
           );
         }
-        entry = newMatch;
+        entry = { match: newMatch };
       }
 
       entry = {
         ...entry,
-        ranking: { ...entry.ranking, tier: targetTier },
+        match: {
+          ...entry.match,
+          ranking: { ...entry.match.ranking, tier: targetTier },
+        },
       };
 
-      ordered.splice(indexOfMatchedRank(ordered, targetRank), 0, entry);
+      rows.splice(
+        indexOfMatchedRank(
+          rows.map((row) => row.match),
+          targetRank,
+        ),
+        0,
+        entry,
+      );
 
-      this.replaceAllPlayers(rankingId, ordered);
+      this.saveOrder(rankingId, rows);
     });
 
     return this.getOrderedMatches(rankingId);
@@ -367,10 +457,10 @@ export class RankingRepository {
     resolved: PlayerMatch | undefined,
   ): PlayerMatch[] {
     runInTransaction(this.database, () => {
-      const ordered = this.getOrderedMatches(rankingId);
-      const row = ordered[rank - 1];
+      const rows = this.getOrderedRows(rankingId);
+      const row = rows[rank - 1];
 
-      if (!row || row.player) {
+      if (!row || row.match.player) {
         throw new NotFoundError(
           "No unmatched row at this rank",
           "UNMATCHED_ROW_NOT_FOUND",
@@ -378,67 +468,65 @@ export class RankingRepository {
       }
 
       if (resolved) {
-        ordered[rank - 1] = {
-          ...resolved,
-          ranking: {
-            ...resolved.ranking,
-            tier: fittingTier(ordered, rank - 1, row.ranking.tier),
+        rows[rank - 1] = {
+          id: row.id,
+          replaced: true,
+          match: {
+            ...resolved,
+            ranking: {
+              ...resolved.ranking,
+              tier: fittingTier(
+                rows.map((stored) => stored.match),
+                rank - 1,
+                row.match.ranking.tier,
+              ),
+            },
           },
         };
       } else {
-        ordered.splice(rank - 1, 1);
+        rows.splice(rank - 1, 1);
       }
 
-      this.replaceAllPlayers(rankingId, ordered);
+      this.saveOrder(rankingId, rows);
     });
 
     return this.getOrderedMatches(rankingId);
   }
 
+  /** Removes a player, with their flag, and closes the rank gap. */
   removePlayer(rankingId: string, sleeperId: string): PlayerMatch[] {
     runInTransaction(this.database, () => {
-      const ordered = this.getOrderedMatches(rankingId).filter(
-        (match) => match.player?.sleeperId !== sleeperId,
+      this.saveOrder(
+        rankingId,
+        this.getOrderedRows(rankingId).filter(
+          (row) => row.match.player?.sleeperId !== sleeperId,
+        ),
       );
-
-      this.replaceAllPlayers(rankingId, ordered);
-      this.setFlag(rankingId, sleeperId, undefined);
     });
 
     return this.getOrderedMatches(rankingId);
   }
 
-  /** Sets a player's flag, or clears it with `undefined`. */
+  /** Sets a ranked player's flag, or clears it with `undefined`. */
   setFlag(
     rankingId: string,
     sleeperId: string,
     flag: PlayerFlag | undefined,
   ): void {
-    if (flag === undefined) {
-      this.database
-        .prepare(
-          `DELETE FROM ranking_player_flags
-           WHERE ranking_id = ? AND sleeper_id = ?`,
-        )
-        .run(rankingId, sleeperId);
-
-      return;
-    }
-
     this.database
       .prepare(
-        `INSERT INTO ranking_player_flags (ranking_id, sleeper_id, flag)
-         VALUES (?, ?, ?)
-         ON CONFLICT (ranking_id, sleeper_id) DO UPDATE SET flag = excluded.flag`,
+        `UPDATE ranking_players SET flag = ?
+         WHERE ranking_id = ? AND sleeper_id = ?`,
       )
-      .run(rankingId, sleeperId, flag);
+      .run(flag ?? null, rankingId, sleeperId);
   }
 
   /** Sleeper ID → flag, for the flagged players of a ranking. */
   getFlags(rankingId: string): Record<string, PlayerFlag> {
     const rows = this.database
       .prepare(
-        `SELECT sleeper_id, flag FROM ranking_player_flags WHERE ranking_id = ?`,
+        `SELECT sleeper_id, flag FROM ranking_players
+         WHERE ranking_id = ? AND flag IS NOT NULL`,
       )
       .all(rankingId) as unknown as { sleeper_id: string; flag: PlayerFlag }[];
 
@@ -446,35 +534,32 @@ export class RankingRepository {
   }
 
   getTiers(rankingId: string): RankingTier[] {
-    const positions = this.readTierPositions(rankingId);
-
     const counts = this.database
       .prepare(
-        `SELECT tier, COUNT(*) AS count
+        `SELECT tier_id, COUNT(*) AS count
          FROM ranking_players
-         WHERE ranking_id = ?
-         GROUP BY tier`,
+         WHERE ranking_id = ? AND tier_id IS NOT NULL
+         GROUP BY tier_id`,
       )
-      .all(rankingId) as unknown as { tier: string; count: number }[];
+      .all(rankingId) as unknown as { tier_id: number; count: number }[];
 
-    const countByLabel = new Map(counts.map((row) => [row.tier, row.count]));
+    const countByTierId = new Map(
+      counts.map((row) => [row.tier_id, row.count]),
+    );
 
-    return positions.map((position) => {
-      const label = numericTierToLabel(position)!;
-      return {
-        position,
-        label,
-        playerCount: countByLabel.get(label) ?? 0,
-      };
-    });
+    return this.readTiers(rankingId).map((tier) => ({
+      position: tier.position,
+      label: numericTierToLabel(tier.position)!,
+      playerCount: countByTierId.get(tier.id) ?? 0,
+    }));
   }
 
   /** Inserts a new, empty tier at 1-based `position`, shifting that tier
-   * and every one after it (and their players) one step worse. */
+   * and every one after it one step worse. Players keep their tiers. */
   insertTier(rankingId: string, position: number): RankingTier[] {
     runInTransaction(this.database, () => {
-      const positions = this.readTierPositions(rankingId);
-      const maxPosition = positions.length > 0 ? Math.max(...positions) : 0;
+      const tiers = this.readTiers(rankingId);
+      const maxPosition = tiers.at(-1)?.position ?? 0;
       const clamped = Math.max(1, Math.min(position, maxPosition + 1));
 
       if (maxPosition + 1 > MAX_TIERS) {
@@ -500,34 +585,37 @@ export class RankingRepository {
    * next tier down — or, if it's the last (worst) tier, the tier above. */
   removeTier(rankingId: string, position: number): RankingTier[] {
     runInTransaction(this.database, () => {
-      const positions = this.readTierPositions(rankingId);
+      const tiers = this.readTiers(rankingId);
+      const index = tiers.findIndex((tier) => tier.position === position);
 
-      if (!positions.includes(position)) {
+      if (index === -1) {
         throw new NotFoundError(
           `Tier at position ${position} does not exist`,
           "TIER_NOT_FOUND",
         );
       }
 
-      if (positions.length <= 1) {
+      if (tiers.length <= 1) {
         throw new ConflictError(
           "Cannot remove the only remaining tier",
           "LAST_TIER",
         );
       }
 
-      // `positions` is sorted ascending.
-      const below = positions.find((p) => p > position);
-      const above = positions.filter((p) => p < position).at(-1);
-      const mergeTarget = below ?? above;
-
-      this.relabelPlayersAtPosition(rankingId, position, mergeTarget!);
+      // `tiers` is sorted by position.
+      const removed = tiers[index]!;
+      const mergeTarget = tiers[index + 1] ?? tiers[index - 1]!;
 
       this.database
         .prepare(
-          `DELETE FROM ranking_tiers WHERE ranking_id = ? AND position = ?`,
+          `UPDATE ranking_players SET tier_id = ?
+           WHERE ranking_id = ? AND tier_id = ?`,
         )
-        .run(rankingId, position);
+        .run(mergeTarget.id, rankingId, removed.id);
+
+      this.database
+        .prepare(`DELETE FROM ranking_tiers WHERE id = ?`)
+        .run(removed.id);
 
       this.shiftTiersFrom(rankingId, position + 1, -1);
     });
@@ -539,63 +627,121 @@ export class RankingRepository {
   // Internal helpers
   // ---------------------------------------------------------------------
 
-  private getOrderedMatches(rankingId: string): PlayerMatch[] {
+  private getOrderedRows(rankingId: string): StoredRow[] {
     const rows = this.database
       .prepare(
-        `SELECT rank, tier, match_json
-         FROM ranking_players
-         WHERE ranking_id = ?
-         ORDER BY rank ASC, id ASC`,
+        `SELECT ${PLAYER_COLUMNS}
+         FROM ${PLAYERS_WITH_TIERS}
+         WHERE ranking_players.ranking_id = ?
+         ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
       )
       .all(rankingId) as unknown as RankingPlayerRow[];
 
-    return parseMatchRows(rows);
+    return rows.map((row) => ({ id: row.id, match: toMatch(row) }));
   }
 
-  /** Deletes and re-inserts every ranking_players row for `rankingId` in
-   * the given order, renumbering rank 1..N. */
-  private replaceAllPlayers(rankingId: string, matches: PlayerMatch[]): void {
-    this.database
-      .prepare(`DELETE FROM ranking_players WHERE ranking_id = ?`)
-      .run(rankingId);
-
-    const renumbered = matches.map((match, index) => ({
-      ...match,
-      ranking: { ...match.ranking, rank: index + 1 },
-    }));
-
-    this.insertPlayerRows(rankingId, renumbered);
+  private getOrderedMatches(rankingId: string): PlayerMatch[] {
+    return this.getOrderedRows(rankingId).map((row) => row.match);
   }
 
-  private insertPlayerRows(rankingId: string, matches: PlayerMatch[]): void {
-    const insertPlayer = this.database.prepare(
-      `INSERT INTO ranking_players (
-         ranking_id, rank, name, position, team, tier,
-         sleeper_id, match_status, match_json
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  /**
+   * Stores `rows` as the ranking's players, in this order, ranked 1..N:
+   * deletes stored rows that are missing, inserts new ones, and updates a
+   * stored row only where its rank, tier or content changed — so rows
+   * keep their id (and flag) through edits.
+   */
+  private saveOrder(rankingId: string, rows: StoredRow[]): void {
+    const tierIds = this.tierIdsByLabel(rankingId);
+
+    const stored = new Map(
+      (
+        this.database
+          .prepare(
+            `SELECT id, rank, tier_id FROM ranking_players WHERE ranking_id = ?`,
+          )
+          .all(rankingId) as unknown as {
+          id: number;
+          rank: number;
+          tier_id: number | null;
+        }[]
+      ).map((row) => [row.id, row]),
     );
 
-    for (const match of matches) {
-      const { rank, tier, ...ranking } = match.ranking;
+    const keptIds = new Set(rows.map((row) => row.id));
 
-      insertPlayer.run(
-        rankingId,
-        rank,
-        ranking.playerName,
-        ranking.position ?? null,
-        ranking.team ?? null,
-        tier ?? null,
-        match.player?.sleeperId ?? null,
-        this.getMatchStatus(match),
-        JSON.stringify({ ...match, ranking }),
-      );
+    // Deletes first, so a removed player can't collide with the
+    // one-row-per-player index.
+    for (const id of stored.keys()) {
+      if (!keptIds.has(id)) {
+        this.database
+          .prepare(`DELETE FROM ranking_players WHERE id = ?`)
+          .run(id);
+      }
+    }
+
+    for (const [index, row] of rows.entries()) {
+      const rank = index + 1;
+      const tierId = tierIdFor(row.match, tierIds);
+
+      if (row.id === undefined) {
+        this.insertRow(rankingId, row.match, rank, tierId);
+      } else if (row.replaced) {
+        this.updateRow(row.id, row.match, rank, tierId);
+      } else {
+        const current = stored.get(row.id)!;
+
+        if (current.rank !== rank || current.tier_id !== tierId) {
+          this.database
+            .prepare(
+              `UPDATE ranking_players SET rank = ?, tier_id = ? WHERE id = ?`,
+            )
+            .run(rank, tierId, row.id);
+        }
+      }
     }
   }
 
+  private insertRow(
+    rankingId: string,
+    match: PlayerMatch,
+    rank: number,
+    tierId: number | null,
+  ): void {
+    this.database
+      .prepare(
+        `INSERT INTO ranking_players (
+           ranking_id, rank, tier_id, name, position, team,
+           source_player_id, sleeper_id, match_method, match_details
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(rankingId, rank, tierId, ...rowContent(match));
+  }
+
+  /** Rewrites a row's content (a resolved unmatched row); its flag is
+   * cleared, since the row now holds a different player. */
+  private updateRow(
+    id: number,
+    match: PlayerMatch,
+    rank: number,
+    tierId: number | null,
+  ): void {
+    this.database
+      .prepare(
+        `UPDATE ranking_players SET
+           rank = ?, tier_id = ?, name = ?, position = ?, team = ?,
+           source_player_id = ?, sleeper_id = ?, match_method = ?,
+           match_details = ?, flag = NULL
+         WHERE id = ?`,
+      )
+      .run(rank, tierId, ...rowContent(match), id);
+  }
+
+  /** Creates the tiers the imported rows use (or a single "S" tier) and
+   * returns their ids by label. */
   private seedTiersFromMatches(
     rankingId: string,
     matches: PlayerMatch[],
-  ): void {
+  ): Map<string, number> {
     const positions = new Set<number>();
 
     for (const match of matches) {
@@ -619,79 +765,71 @@ export class RankingRepository {
     for (const position of positions) {
       insertTier.run(rankingId, position);
     }
+
+    return this.tierIdsByLabel(rankingId);
   }
 
-  private readTierPositions(rankingId: string): number[] {
-    const rows = this.database
+  /** The ranking's tiers, best first. */
+  private readTiers(rankingId: string): TierRow[] {
+    return this.database
       .prepare(
-        `SELECT position FROM ranking_tiers
+        `SELECT id, position FROM ranking_tiers
          WHERE ranking_id = ? ORDER BY position ASC`,
       )
-      .all(rankingId) as unknown as TierPositionRow[];
-
-    return rows.map((row) => row.position);
+      .all(rankingId) as unknown as TierRow[];
   }
 
-  /** Shifts every tier (row in ranking_tiers, plus the tier column of
-   * every affected player) at or past `fromPosition` by `delta`. */
+  private tierIdsByLabel(rankingId: string): Map<string, number> {
+    return new Map(
+      this.readTiers(rankingId).map((tier) => [
+        numericTierToLabel(tier.position)!,
+        tier.id,
+      ]),
+    );
+  }
+
+  /** Shifts every tier at or past `fromPosition` by `delta`. Players
+   * reference tiers by id, so they move along without being touched. */
   private shiftTiersFrom(
     rankingId: string,
     fromPosition: number,
     delta: number,
   ): void {
-    const positions = this.readTierPositions(rankingId).filter(
-      (position) => position >= fromPosition,
+    const tiers = this.readTiers(rankingId).filter(
+      (tier) => tier.position >= fromPosition,
     );
 
     // Walk in the direction that avoids colliding with the unique
-    // (ranking_id, position) index while shifting; `positions` is
-    // ascending.
-    const ordered = delta > 0 ? positions.reverse() : positions;
+    // (ranking_id, position) index while shifting; `tiers` is ascending.
+    const ordered = delta > 0 ? tiers.reverse() : tiers;
 
-    for (const position of ordered) {
-      const newPosition = position + delta;
-
+    for (const tier of ordered) {
       this.database
-        .prepare(
-          `UPDATE ranking_tiers SET position = ?
-           WHERE ranking_id = ? AND position = ?`,
-        )
-        .run(newPosition, rankingId, position);
-
-      this.relabelPlayersAtPosition(rankingId, position, newPosition);
+        .prepare(`UPDATE ranking_tiers SET position = ? WHERE id = ?`)
+        .run(tier.position + delta, tier.id);
     }
   }
+}
 
-  /** Moves every player whose tier currently maps to `fromPosition` so it
-   * maps to `toPosition` instead. */
-  private relabelPlayersAtPosition(
-    rankingId: string,
-    fromPosition: number,
-    toPosition: number,
-  ): void {
-    this.database
-      .prepare(
-        `UPDATE ranking_players SET tier = ?
-         WHERE ranking_id = ? AND tier = ?`,
-      )
-      .run(
-        numericTierToLabel(toPosition)!,
-        rankingId,
-        numericTierToLabel(fromPosition)!,
-      );
-  }
+/** The id of the match's tier, or null for a row without one. */
+function tierIdFor(
+  match: PlayerMatch,
+  tierIds: Map<string, number>,
+): number | null {
+  return match.ranking.tier === undefined
+    ? null
+    : (tierIds.get(match.ranking.tier) ?? null);
+}
 
-  private getMatchStatus(
-    match: PlayerMatch,
-  ): "MATCHED" | "AMBIGUOUS" | "UNMATCHED" {
-    if (match.player !== undefined) {
-      return "MATCHED";
-    }
-
-    if (match.method === "AMBIGUOUS") {
-      return "AMBIGUOUS";
-    }
-
-    return "UNMATCHED";
-  }
+/** A row's content columns, in insertRow/updateRow order. */
+function rowContent(match: PlayerMatch) {
+  return [
+    match.ranking.playerName,
+    match.ranking.position ?? null,
+    match.ranking.team ?? null,
+    match.ranking.sleeperPlayerId ?? null,
+    match.player?.sleeperId ?? null,
+    match.method,
+    matchDetailsJson(match),
+  ] as const;
 }

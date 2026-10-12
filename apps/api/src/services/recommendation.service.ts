@@ -9,7 +9,7 @@ import { DraftPick } from "../domain/draft.js";
 import { FANTASY_POSITIONS } from "../domain/ranking.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { Player } from "../domain/player.js";
-import { withLiveInjuryStatus } from "../utils/with-live-injury-status.js";
+import { withLivePlayer } from "../utils/with-live-player.js";
 import { normalizePlayerName } from "../utils/normalize-player-name.js";
 import { AdpService } from "./adp.service.js";
 import { DraftStateService } from "./draft-state.service.js";
@@ -146,10 +146,15 @@ export class RecommendationService {
 
     const draftedPlayerIds = draftState.draftedPlayerIds;
 
-    const matches = this.rankingStoreService.getRankingMatches(
-      rankingId,
-      userId,
-    );
+    // Live player data for every row, not just the shown ones: filters,
+    // search and position ranks read the player's position and name.
+    const matches = this.rankingStoreService
+      .getRankingMatches(rankingId, userId)
+      .map((match) =>
+        withLivePlayer(match, (sleeperId) =>
+          this.playerService.getPlayerById(sleeperId),
+        ),
+      );
 
     const adpFormat = adpFormatFor(draftState.draft);
 
@@ -189,11 +194,6 @@ export class RecommendationService {
       .filter((match) => isInPositions(match.player, positions))
       .filter((match) => matchesQuery(match.player, query))
       .slice(0, limit)
-      .map((match) =>
-        withLiveInjuryStatus(match, (sleeperId) =>
-          this.playerService.getPlayerById(sleeperId),
-        ),
-      )
       .map((match): Recommendation => ({
         ranking: match.ranking,
         player: match.player,

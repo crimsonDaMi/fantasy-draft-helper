@@ -15,6 +15,8 @@ export function mapRankingImportResponse(
         name: match.ranking.playerName,
         team: match.ranking.team,
         position: match.ranking.position,
+        // Matched a player an earlier row already holds.
+        duplicate: match.warnings?.includes("DUPLICATE_PLAYER") || undefined,
       })),
     ambiguousPlayers: result.matches
       .filter((match) => match.method === "AMBIGUOUS")

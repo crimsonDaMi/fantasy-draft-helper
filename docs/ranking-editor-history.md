@@ -202,9 +202,14 @@ same ranking-detail query.
   (`useSelectedRanking`, remembered in `localStorage`, falling back to the
   newest). The Draft tab uses the same selection, so there is no server-side
   "active ranking".
-- Watch/avoid flags live in their own table, `ranking_player_flags`, not in
-  `ranking_players`, because `replaceAllPlayers` rewrites every player row
-  on each move. In the editor they're baked into `EditorPlayer.flag` on
+- Since v3.0.0, editor changes update `ranking_players` rows in place
+  (`RankingRepository.saveOrder`), so a row keeps its id and its
+  watch/avoid flag (a column on the row) through moves. Before, every move
+  rewrote all rows, which is why flags used to live in a separate table.
+  Tiers have stable ids too: inserting or removing one only renumbers
+  `ranking_tiers`, and labels come from that order. A ranking holds each
+  player once (unique index); the import keeps a repeated player's later
+  row as unmatched. In the editor flags are baked into `EditorPlayer.flag` on
   each server sync, like `globalRank`, and the toggle buttons stop
   pointer-down propagation so clicking them doesn't start a drag.
 - The "drag players in" / "add more tiers" hints are derived state, so

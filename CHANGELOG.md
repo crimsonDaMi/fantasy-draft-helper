@@ -7,6 +7,15 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Upgrading
+
+- **This release changes the database schema, so existing data can't be
+  kept.** Before updating, ask everyone to download each ranking they want
+  to keep with "Export CSV" (watch and avoid flags aren't part of the
+  export and need setting again). Then run `docker compose down -v` and
+  `docker compose up -d`. Everyone registers again and re-imports their
+  CSV files.
+
 ### Added
 
 - Positional ranks next to each player in the recommendations, recent
@@ -23,6 +32,9 @@ See `RELEASING.md`.
 
 ### Fixed
 
+- A CSV that lists the same player twice no longer puts them in the
+  ranking twice. The later row stays under "Not matched", marked "already
+  ranked above", where you can remove it.
 - On phone screens, the draft status line wraps instead of making the page
   scroll sideways, and a long ranking name no longer pushes the ranking
   editor wider than the screen.

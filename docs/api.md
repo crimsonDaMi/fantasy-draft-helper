@@ -67,7 +67,13 @@ unmatched and ambiguous players:
   },
   "validationErrors": [{ "row": 12, "message": "string" }],
   "unmatchedPlayers": [
-    { "rank": 5, "name": "string", "team": "string", "position": "string" }
+    {
+      "rank": 5,
+      "name": "string",
+      "team": "string",
+      "position": "string",
+      "duplicate": true
+    }
   ],
   "ambiguousPlayers": [
     {
@@ -78,6 +84,11 @@ unmatched and ambiguous players:
   ]
 }
 ```
+
+A ranking holds each player once. `duplicate` marks an unmatched row
+whose player an earlier row already holds; it's omitted otherwise. The
+row stays in the ranking without a player, with that player as its only
+candidate.
 
 ### Rankings status
 

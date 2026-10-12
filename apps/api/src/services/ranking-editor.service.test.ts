@@ -158,7 +158,7 @@ describe("RankingEditorService", () => {
   });
 
   describe("getRanking", () => {
-    it("returns players and tiers for the owning user", () => {
+    it("returns players and tiers for the owning user", async () => {
       const repository = new RankingRepository(":memory:");
 
       const rankingId = repository.create(
@@ -173,7 +173,7 @@ describe("RankingEditorService", () => {
         playerService as never,
       );
 
-      const result = service.getRanking(rankingId, USER_ID);
+      const result = await service.getRanking(rankingId, USER_ID);
 
       expect(result.players.map((m) => m.player?.sleeperId)).toEqual([
         "1",
@@ -182,7 +182,7 @@ describe("RankingEditorService", () => {
       expect(result.tiers.map((t) => t.label)).toEqual(["S", "A"]);
     });
 
-    it("throws 404 when the ranking does not belong to the user", () => {
+    it("throws 404 when the ranking does not belong to the user", async () => {
       const repository = new RankingRepository(":memory:");
 
       const rankingId = repository.create([match(1, "S", "1")], USER_ID);
@@ -194,12 +194,12 @@ describe("RankingEditorService", () => {
         playerService as never,
       );
 
-      expect(() => service.getRanking(rankingId, OTHER_USER_ID)).toThrow(
-        "Ranking was not found",
-      );
+      await expect(
+        service.getRanking(rankingId, OTHER_USER_ID),
+      ).rejects.toThrow("Ranking was not found");
     });
 
-    it("reports the live injury status, not the imported snapshot", () => {
+    it("reports the live injury status, not the imported snapshot", async () => {
       const repository = new RankingRepository(":memory:");
 
       const stale = match(1, "S", "1");
@@ -223,7 +223,7 @@ describe("RankingEditorService", () => {
         playerService as never,
       );
 
-      const result = service.getRanking(rankingId, USER_ID);
+      const result = await service.getRanking(rankingId, USER_ID);
 
       expect(result.players.map((m) => m.player?.injuryStatus)).toEqual([
         undefined,
@@ -401,7 +401,7 @@ describe("RankingEditorService", () => {
   });
 
   describe("setFlag", () => {
-    it("flags ranked players only, for the owning user", () => {
+    it("flags ranked players only, for the owning user", async () => {
       const repository = new RankingRepository(":memory:");
 
       const rankingId = repository.create([match(1, "S", "1")], USER_ID);
@@ -414,7 +414,7 @@ describe("RankingEditorService", () => {
       expect(service.setFlag(rankingId, USER_ID, "1", "watch")).toEqual({
         "1": "watch",
       });
-      expect(service.getRanking(rankingId, USER_ID).flags).toEqual({
+      expect((await service.getRanking(rankingId, USER_ID)).flags).toEqual({
         "1": "watch",
       });
       expect(() => service.setFlag(rankingId, USER_ID, "9", "watch")).toThrow(

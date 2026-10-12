@@ -12,6 +12,31 @@ export interface ProcessedRankingImport {
   summary: RankingImportSummary;
 }
 
+/** A ranking holds each player once. A later row matched to a player an
+ * earlier row already holds stays unmatched, with that player as its
+ * only candidate, so the user sees it in the editor rather than losing it. */
+function keepFirstOfEachPlayer(matches: PlayerMatch[]): PlayerMatch[] {
+  const seen = new Set<string>();
+
+  return matches.map((match) => {
+    if (!match.player) {
+      return match;
+    }
+
+    if (!seen.has(match.player.sleeperId)) {
+      seen.add(match.player.sleeperId);
+      return match;
+    }
+
+    return {
+      ranking: match.ranking,
+      method: "NONE",
+      candidates: [match.player],
+      warnings: [...(match.warnings ?? []), "DUPLICATE_PLAYER"],
+    };
+  });
+}
+
 export class RankingImportService {
   constructor(
     private readonly csvService: RankingCsvService,
@@ -29,7 +54,9 @@ export class RankingImportService {
 
     await this.playerService.ensurePlayersLoaded();
 
-    const matches = this.matchingService.matchRankings(importResult.rankings);
+    const matches = keepFirstOfEachPlayer(
+      this.matchingService.matchRankings(importResult.rankings),
+    );
 
     const summary = this.createSummary(importResult, matches);
 

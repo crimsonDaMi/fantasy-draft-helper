@@ -54,4 +54,17 @@ describe("ImportIssues", () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("says when a row repeats a player ranked above", () => {
+    renderIssues({
+      unmatchedPlayers: [
+        { rank: 8, name: "Test Twice", position: "RB", duplicate: true },
+      ],
+      ambiguousPlayers: [],
+    });
+
+    expect(screen.getByRole("listitem")).toHaveTextContent(
+      "already ranked above",
+    );
+  });
 });

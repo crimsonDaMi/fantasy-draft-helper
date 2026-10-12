@@ -69,8 +69,8 @@ function createSetup(retentionDays = 730) {
       countRows("sessions", "user_id", userId),
       countRows("rankings", "user_id", userId),
       countRows("ranking_players", "ranking_id", rankingId),
+      // Flags are a ranking_players column, so they go with those rows.
       countRows("ranking_tiers", "ranking_id", rankingId),
-      countRows("ranking_player_flags", "ranking_id", rankingId),
     ];
   }
 
@@ -107,7 +107,7 @@ describe("AccountService", () => {
       await setup.accountService.deleteAccount(alice.user, PASSWORD, CLIENT_IP);
 
       expect(setup.countUserData(alice.user.id, alice.rankingId)).toEqual([
-        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
       ]);
       expect(setup.countUserData(bob.user.id, bob.rankingId)).toEqual(
         bobBefore,
@@ -172,7 +172,7 @@ describe("AccountService", () => {
         ),
       ).toBe(1);
       expect(setup.countUserData(alice.user.id, alice.rankingId)).toEqual([
-        0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
       ]);
 
       setup.cleanUp();

@@ -18,7 +18,7 @@ export function ImportIssues({
       rank: row.rank,
       name: row.name,
       details: [row.position, row.team].filter(Boolean).join(", "),
-      reason: "no match",
+      reason: row.duplicate ? "already ranked above" : "no match",
     })),
     ...ambiguousPlayers.map((row) => ({
       rank: row.rank,

@@ -149,6 +149,8 @@ export interface RankingImportResponse {
     name: string;
     team?: string;
     position?: string;
+    /** Matched a player an earlier row already holds. */
+    duplicate?: boolean;
   }[];
   ambiguousPlayers: {
     rank: number;

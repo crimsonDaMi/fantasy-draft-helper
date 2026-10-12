@@ -76,9 +76,11 @@ export function UnmatchedRows({
                 #{rank} {playerName}
                 {describePlayer(row.ranking)}
                 {tier && ` · ${tierHeading(tier)}`} —{" "}
-                {candidates.length > 0
-                  ? `${candidates.length} possible players`
-                  : "no match"}
+                {row.warnings?.includes("DUPLICATE_PLAYER")
+                  ? "already ranked above"
+                  : candidates.length > 0
+                    ? `${candidates.length} possible players`
+                    : "no match"}
               </span>
               <span className="unmatched-rows__actions">
                 {candidates.map((candidate) => (
