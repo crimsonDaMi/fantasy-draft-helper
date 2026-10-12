@@ -50,6 +50,21 @@ describe("mapSleeperDraftPick", () => {
     });
   });
 
+  it("treats a mock draft's null roster ID as missing", () => {
+    // Mock drafts send roster_id null on every pick, even with a
+    // slot_to_roster_id map; "null" as a roster ID matched no slot.
+    const result = mapSleeperDraftPick({
+      player_id: "123",
+      pick_no: 1,
+      draft_slot: 1,
+      roster_id: null,
+      picked_by: "",
+    });
+
+    expect(result?.rosterId).toBeUndefined();
+    expect(result?.draftSlot).toBe(1);
+  });
+
   it("returns null without player ID", () => {
     const result = mapSleeperDraftPick({
       pick_no: 1,

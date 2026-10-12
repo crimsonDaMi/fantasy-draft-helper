@@ -32,6 +32,9 @@ See `RELEASING.md`.
 
 ### Fixed
 
+- My team, the recap and the auction budget stayed empty in Sleeper mock
+  drafts. Mock picks carry no roster, which the app misread as a roster
+  called "null", so none of your slot's picks matched.
 - My team, the recap and the auction budget now show a hand-picked
   slot's picks. With a draft found by Sleeper username that you aren't in
   (e.g. a mock you're watching), only picks made by your own account

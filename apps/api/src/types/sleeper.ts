@@ -33,7 +33,8 @@ export interface SleeperUser {
 export interface SleeperDraftPick {
   player_id?: string;
   picked_by?: string;
-  roster_id?: number | string;
+  /** null in mock drafts, even when the draft has `slot_to_roster_id`. */
+  roster_id?: number | string | null;
   round?: number;
   draft_slot?: number;
   pick_no: number;

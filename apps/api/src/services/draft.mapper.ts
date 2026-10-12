@@ -129,7 +129,10 @@ export function mapSleeperDraftPick(pick: SleeperDraftPick): DraftPick | null {
     pickNo: pick.pick_no,
     round: pick.round,
     draftSlot: pick.draft_slot,
-    rosterId: pick.roster_id !== undefined ? String(pick.roster_id) : undefined,
+    rosterId:
+      pick.roster_id === undefined || pick.roster_id === null
+        ? undefined
+        : String(pick.roster_id),
     pickedBy: pick.picked_by,
     playerName:
       [pick.metadata?.first_name, pick.metadata?.last_name]
