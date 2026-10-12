@@ -11,12 +11,11 @@ requires a manual step and never loses data.**
 
 - **patch** (`v1.0.1`) — bug fixes, no behavior change
 - **minor** (`v1.1.0`) — new feature or noticeable change
-- **major** (`v2.0.0`) — anything that breaks that promise. In particular,
-  **any SQLite schema change** (a new/altered column, table, or foreign
-  key in a repository's `CREATE TABLE`) is a major bump, since without a
-  migration system it means wiping the database (see "Telling league
-  mates about an update" below). So is a manual deployment step such as
-  a changed volume path or environment variable.
+- **major** (`v2.0.0`) — anything that breaks that promise, such as a
+  manual deployment step (a changed volume path or environment variable)
+  or a database change that can't be migrated and needs a reset. Since
+  v3.0.0 a schema change is normally a migration step the app applies at
+  startup, so it fits in a minor release (see "Schema changes" below).
 
 Every release's user-facing changes go in `CHANGELOG.md` under
 `## Unreleased`, in the same commit as the change itself.
@@ -154,19 +153,19 @@ services:
     image: ghcr.io/crimsondami/fantasy-draft-helper:v1.0.0
 ```
 
-**Schema changes.** There's no migration system, so a release that
-changes the SQLite schema (a new/altered column, table, or foreign key in
-any `repositories/*.ts` file's schema) can't reuse an existing database.
-Such a release must be a major version (see "Versioning" above), and its
-`CHANGELOG.md` entry must say so under "Upgrading". The app enforces this
-at startup: `applySchema` (`apps/api/src/repositories/database.ts`)
-compares every existing table against the schema the code expects and
-refuses to start with a `Database schema does not match` message naming
-the changed tables, rather than crashing later with `no such column`.
-When announcing such a release, ask everyone to use "Export CSV" in the
-ranking editor **before** the update, since the volume must be dropped
-(`docker compose down -v`, not just `down`) and everyone has to
-re-register and re-import (see `deploy/server/README.md`'s Operational notes).
+**Schema changes.** Since v3.0.0 the app upgrades its database at
+startup: each repository's schema is a list of numbered migration steps,
+and the pending ones run in order, each in a transaction. Before
+upgrading an existing database file, the app copies it next to itself as
+`<file>.backup-v<version>-<time>` (inside the Docker volume), so a
+failed upgrade can be undone by restoring that copy. Updating needs no
+manual step, so a schema change can go in a minor release.
+
+The app refuses to start, with a message, against a database from before
+v3.0.0 (those have to be reset once: export rankings with "Export CSV",
+`docker compose down -v`, re-register, re-import), and against a
+database newer than the app. Going back to an older release after an
+upgrade isn't supported; restore the backup copy instead.
 
 When a new version is ready:
 

@@ -15,6 +15,10 @@ See `RELEASING.md`.
   export and need setting again). Then run `docker compose down -v` and
   `docker compose up -d`. Everyone registers again and re-imports their
   CSV files.
+- **This is the last reset.** From now on the app upgrades its database
+  by itself when it starts, keeping a backup copy of the previous version
+  next to it (`<file>.backup-v<version>-<time>` in the data volume), so
+  future schema changes need no manual step.
 
 ### Added
 

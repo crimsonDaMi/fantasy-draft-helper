@@ -9,7 +9,13 @@ import {
 import { DatabaseSync } from "node:sqlite";
 import { promisify } from "node:util";
 
-import { applySchema, openDatabase, runInTransaction } from "./database.js";
+import {
+  migrate,
+  openDatabase,
+  resolveDatabasePath,
+  runInTransaction,
+  VersionedSchema,
+} from "./database.js";
 import { DAY_MS } from "../utils/time.js";
 
 const SCRYPT_KEY_LENGTH = 64;
@@ -90,10 +96,15 @@ export interface SessionLookup {
   renewedExpiresAt?: string;
 }
 
-const USER_SCHEMA = `
-  PRAGMA foreign_keys = ON;
-
-  CREATE TABLE IF NOT EXISTS users (
+// Add a schema change as a new step at the end; a step that has shipped
+// never changes (see AGENTS.md).
+const USER_SCHEMA: VersionedSchema = {
+  name: "users",
+  migrations: [
+    {
+      version: 1,
+      up: `
+  CREATE TABLE users (
     id TEXT PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_salt TEXT NOT NULL,
@@ -104,7 +115,7 @@ const USER_SCHEMA = `
     last_active_at TEXT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS sessions (
+  CREATE TABLE sessions (
     token TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     created_at TEXT NOT NULL,
@@ -113,9 +124,12 @@ const USER_SCHEMA = `
       ON DELETE CASCADE
   );
 
-  CREATE INDEX IF NOT EXISTS sessions_user_id
+  CREATE INDEX sessions_user_id
     ON sessions (user_id);
-`;
+      `,
+    },
+  ],
+};
 
 export class UserRepository {
   private readonly database: DatabaseSync;
@@ -126,9 +140,10 @@ export class UserRepository {
     databasePath?: string,
     private readonly scryptCost: ScryptCost = SCRYPT_COST,
   ) {
-    this.database = openDatabase(databasePath);
+    const path = resolveDatabasePath(databasePath);
+    this.database = openDatabase(path);
 
-    applySchema(this.database, USER_SCHEMA);
+    migrate(this.database, USER_SCHEMA, path);
 
     this.deleteExpiredSessions();
   }

@@ -124,8 +124,9 @@ error. Sleeper's pick propagation delay is an accepted limitation (see
 successful refresh time. No WebSockets.
 
 API contracts are documented in [`api.md`](api.md);
-the database schema is the `CREATE TABLE` statements in
-`apps/api/src/repositories/`.
+the database schema is the migration steps (`USER_SCHEMA`,
+`RANKING_SCHEMA`) in `apps/api/src/repositories/`; see `AGENTS.md` for
+how to add one.
 
 ## Error handling
 

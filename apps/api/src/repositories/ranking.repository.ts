@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 
-import { applySchema, openDatabase, runInTransaction } from "./database.js";
+import {
+  migrate,
+  openDatabase,
+  resolveDatabasePath,
+  runInTransaction,
+  VersionedSchema,
+} from "./database.js";
 import { PlayerFlag } from "../domain/player-flag.js";
 import { Player } from "../domain/player.js";
 import { PlayerMatch } from "../domain/player-match.js";
@@ -169,23 +175,28 @@ interface TierRow {
   position: number;
 }
 
-const RANKING_SCHEMA = `
-  PRAGMA foreign_keys = ON;
-
-  CREATE TABLE IF NOT EXISTS rankings (
+// Add a schema change as a new step at the end; a step that has shipped
+// never changes (see AGENTS.md).
+const RANKING_SCHEMA: VersionedSchema = {
+  name: "rankings",
+  migrations: [
+    {
+      version: 1,
+      up: `
+  CREATE TABLE rankings (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
 
-  CREATE INDEX IF NOT EXISTS rankings_user_id_created_at
+  CREATE INDEX rankings_user_id_created_at
     ON rankings (user_id, created_at);
 
   -- A tier's label (S, A, B, ...) comes from its position, so inserting or
   -- removing a tier only renumbers positions here; players keep their
   -- tier_id.
-  CREATE TABLE IF NOT EXISTS ranking_tiers (
+  CREATE TABLE ranking_tiers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ranking_id TEXT NOT NULL,
     position INTEGER NOT NULL,
@@ -193,12 +204,12 @@ const RANKING_SCHEMA = `
       ON DELETE CASCADE
   );
 
-  CREATE UNIQUE INDEX IF NOT EXISTS ranking_tiers_ranking_id_position
+  CREATE UNIQUE INDEX ranking_tiers_ranking_id_position
     ON ranking_tiers (ranking_id, position);
 
   -- One row per ranked player or unmatched import row. Editor changes
   -- update rows in place, so a row (and its flag) keeps its id.
-  CREATE TABLE IF NOT EXISTS ranking_players (
+  CREATE TABLE ranking_players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ranking_id TEXT NOT NULL,
     rank INTEGER NOT NULL,
@@ -222,21 +233,25 @@ const RANKING_SCHEMA = `
     FOREIGN KEY (tier_id) REFERENCES ranking_tiers(id)
   );
 
-  CREATE INDEX IF NOT EXISTS ranking_players_ranking_id_rank
+  CREATE INDEX ranking_players_ranking_id_rank
     ON ranking_players (ranking_id, rank, id);
 
   -- A ranking holds each player once (unmatched rows have no sleeper_id).
-  CREATE UNIQUE INDEX IF NOT EXISTS ranking_players_ranking_id_sleeper_id
+  CREATE UNIQUE INDEX ranking_players_ranking_id_sleeper_id
     ON ranking_players (ranking_id, sleeper_id);
-`;
+      `,
+    },
+  ],
+};
 
 export class RankingRepository {
   private readonly database: DatabaseSync;
 
   constructor(databasePath?: string) {
-    this.database = openDatabase(databasePath);
+    const path = resolveDatabasePath(databasePath);
+    this.database = openDatabase(path);
 
-    applySchema(this.database, RANKING_SCHEMA);
+    migrate(this.database, RANKING_SCHEMA, path);
   }
 
   create(

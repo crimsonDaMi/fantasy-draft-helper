@@ -36,9 +36,11 @@ the API's working directory (`apps/api/data/` under `pnpm dev`). Set
 RANKINGS_DATABASE_PATH=/path/to/rankings.db pnpm --filter @fantasy-draft-helper/api dev
 ```
 
-There is no migration system (see [`RELEASING.md`](../RELEASING.md#telling-league-mates-about-an-update)).
-If the API refuses to start with `Database schema does not match`, delete
-the local database file and restart — a fresh one is created automatically,
+The API upgrades its database at startup through numbered migration steps
+(see `AGENTS.md` and [`RELEASING.md`](../RELEASING.md#telling-league-mates-about-an-update)),
+keeping a backup copy next to the file. If it refuses to start with
+`Database schema does not match`, the database predates v3.0.0: delete
+the local database file and restart; a fresh one is created automatically,
 and you'll need to re-register and re-import your rankings.
 
 ## Local Development Scripts

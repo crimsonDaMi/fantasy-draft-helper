@@ -101,19 +101,22 @@ merging a Dependabot PR. Details in `RELEASING.md`.
 
 ## Infrastructure gotchas
 
-- **No migration system, on purpose.** A schema change (new/altered
-  column in any repository's `CREATE TABLE`) breaks any existing SQLite
-  file, since `CREATE TABLE IF NOT EXISTS` is a no-op against an
-  already-existing table with the old schema. Accepted policy for both
-  environments: delete the database file and let it recreate from
-  scratch (prod: `docker compose down -v` + re-register/re-import; local
-  dev: delete `apps/api/data/fantasy-draft-helper.db`, which is
-  `process.cwd()`-relative, i.e. inside `apps/api/`, not the repo root).
-  Do not build a migration system without an explicit request. Repositories
-  run their schema through `applySchema`
-  (`apps/api/src/repositories/database.ts`), which refuses to start against
-  a database whose existing tables differ from the expected schema. Any
-  schema change is a **major** version bump (see `RELEASING.md`).
+- **Schema changes are migration steps (since v3.0.0).** Each repository
+  defines its tables as numbered steps (`USER_SCHEMA`, `RANKING_SCHEMA`),
+  and `migrate` (`apps/api/src/repositories/database.ts`) applies the
+  pending ones at startup, each in a transaction, after copying an
+  existing database file to `<file>.backup-v<version>-<time>`. To change
+  the schema, **append a step**; never edit one that has shipped (startup
+  checks the tables against what the steps build and refuses on a
+  mismatch). Prefer `ALTER TABLE ... ADD COLUMN`; a step that must
+  rebuild a table (SQLite can't alter most column definitions in place)
+  sets `rebuildsTables: true` so foreign keys are off while it runs and
+  checked afterwards. A function step also runs on empty throwaway
+  databases, so it must cope with no rows. Test a new step by upgrading a
+  database built with the previous steps (see `database.test.ts`). A
+  database from before v3.0.0, or one newer than the app, is refused at
+  startup. The local dev database is `apps/api/data/fantasy-draft-helper.db`,
+  relative to `process.cwd()` (inside `apps/api/`, not the repo root).
 - **`pnpm dev` is cross-origin.** The web dev server (5173) calls the
   API (3000) directly, so every non-simple request goes through CORS
   preflight. `@fastify/cors` only allows GET/HEAD/POST by default; the

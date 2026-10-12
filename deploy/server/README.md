@@ -151,14 +151,15 @@ docker compose up -d
   copy is kept (in days), so the privacy notice tells users how long data
   of deleted accounts survives in backups.
 
-- **Schema changes require a volume drop.** No migration system exists (a
-  deliberate choice), so a schema change is a major version bump (see
-  [`RELEASING.md`](../../RELEASING.md)), and its release notes say so. If a
-  schema-changing version starts against an existing volume anyway, it
-  refuses to start and logs `Database schema does not match this version
-of the app` with the changed tables (a crash loop under
-  `restart: unless-stopped`). Fix: ask league mates to export their
-  rankings first ("Export CSV" works on the old version), then
-  `docker compose down -v` (not just `down`) and `docker compose up -d` —
-  this discards all existing rankings/users/sessions, so everyone
-  re-registers and re-imports their exported CSV afterward.
+- **Schema changes upgrade in place (since v3.0.0).** On start, the app
+  applies any pending database migration steps and first copies the
+  database to `fantasy-draft-helper.db.backup-v<version>-<time>` in the
+  same volume. To undo a failed upgrade, stop the container, replace the
+  database with that copy, and run the previous release. Delete old
+  copies after your backup retention period, like other backups.
+  Two cases refuse to start and log `Database schema does not match`
+  (a crash loop under `restart: unless-stopped`): a volume from before
+  v3.0.0, which needs a one-time reset (export rankings with "Export
+  CSV", `docker compose down -v`, `docker compose up -d`, re-register,
+  re-import), and a database newer than the running release after a
+  downgrade, which needs the newer release or the backup copy.
