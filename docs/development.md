@@ -19,6 +19,13 @@ pnpm dev
 
 Open the web app at [http://localhost:5173](http://localhost:5173).
 
+`pnpm dev` doesn't pass keyboard input to the two servers, so Vite's
+keyboard shortcuts (`h + enter`) are off; stop everything with Ctrl+C.
+`pnpm --parallel` runs each server in its own process group, outside the
+terminal's foreground, and the terminal stops a background process that
+reads from it. With input attached, typing anything there froze both
+servers.
+
 The API listens on port `3000`. Its health endpoint is available at [http://localhost:3000/health](http://localhost:3000/health).
 
 The default SQLite database is `data/fantasy-draft-helper.db`, relative to

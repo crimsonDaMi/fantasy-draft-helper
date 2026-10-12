@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev",
+    "dev": "pnpm --parallel --filter @fantasy-draft-helper/api --filter @fantasy-draft-helper/web dev < /dev/null",
     "build": "pnpm --recursive build",
     "test": "pnpm --recursive test",
     "lint": "pnpm --filter @fantasy-draft-helper/web lint && pnpm --filter @fantasy-draft-helper/api lint && knip",
