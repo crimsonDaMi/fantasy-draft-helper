@@ -40,7 +40,7 @@ function createService(snapshot: Map<string, number>) {
 }
 
 describe("AdpRankingService", () => {
-  it("ranks every known ADP player in ADP order, matched by Sleeper ID", async () => {
+  it("ranks every known ADP player in ADP order, matched by Sleeper ID, tiered by ADP", async () => {
     const { service, createRanking } = createService(
       new Map([
         ["3", 140.2],
@@ -68,22 +68,32 @@ describe("AdpRankingService", () => {
             team: "KC",
             position: "WR",
             sleeperPlayerId: "1",
+            tier: "S",
           },
           player: expect.objectContaining({ sleeperId: "1" }),
           method: "SLEEPER_ID",
         }),
         expect.objectContaining({
-          ranking: expect.objectContaining({ rank: 2, sleeperPlayerId: "2" }),
+          ranking: expect.objectContaining({
+            rank: 2,
+            sleeperPlayerId: "2",
+            tier: "A",
+          }),
         }),
         expect.objectContaining({
           ranking: expect.objectContaining({
             rank: 3,
             sleeperPlayerId: "5",
             position: "WR",
+            tier: "B",
           }),
         }),
         expect.objectContaining({
-          ranking: expect.objectContaining({ rank: 4, sleeperPlayerId: "3" }),
+          ranking: expect.objectContaining({
+            rank: 4,
+            sleeperPlayerId: "3",
+            tier: "C",
+          }),
         }),
       ],
       TEST_USER_ID,

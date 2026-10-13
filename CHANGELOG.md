@@ -61,8 +61,10 @@ See `RELEASING.md`.
   and on Edit rankings when you have no ranking yet, creates a ranking of
   every Sleeper ADP player in ADP order, in the format you choose (1QB or
   Superflex, PPR or half PPR, redraft or dynasty). In Draft setup the
-  format starts on the one your monitored draft uses. Rename, edit and
-  export it like any other ranking.
+  format starts on the one your monitored draft uses. It comes split into
+  20 tiers where ADP drops off (a handful of players per tier at the top,
+  growing later in the draft) instead of one tier of everyone. Rename,
+  edit and export it like any other ranking.
 
 ### Fixed
 

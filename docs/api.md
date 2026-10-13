@@ -241,9 +241,13 @@ DELETE /rankings/:rankingId/unmatched/:rank?playerName=<name>   delete an unmatc
 
 `POST /rankings/from-adp` saves a new ranking named "Sleeper ADP
 (<format>)" that holds every player in the chosen column of Sleeper's ADP
-sheet, in ADP order. Every row is matched by Sleeper ID. A player whose
-Sleeper position isn't a fantasy position (a two-way DB/WR, a fullback) is
-ranked at the first fantasy position Sleeper lists for them. `column` is
+sheet, in ADP order, split into tiers. The tiers are the natural breaks
+(Jenks) in log(ADP + 12): at most 20 tiers, with the smallest total
+variance within them, so boundaries fall on the widest ADP gaps relative
+to draft position and players with the same ADP share a tier. Every row
+is matched by Sleeper ID. A player whose Sleeper position isn't a fantasy
+position (a two-way DB/WR, a fullback) is ranked at the first fantasy
+position Sleeper lists for them. `column` is
 one of `Redraft PPR ADP`, `Redraft Half PPR ADP`, `Redraft SF ADP`,
 `Dynasty PPR ADP`, `Dynasty Half PPR ADP` or `Dynasty SF ADP` (see
 [ADP Data Source](configuration.md#adp-data-source)). It returns

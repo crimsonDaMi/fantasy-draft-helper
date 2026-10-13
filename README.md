@@ -54,7 +54,9 @@ draft state.
   match.
 - No CSV? Start a ranking from Sleeper ADP in any format (1QB or
   Superflex, PPR or half PPR, redraft or dynasty) and adjust it in the
-  editor.
+  editor. It comes split into 20 tiers at the natural breaks in ADP: a
+  new tier starts where ADP jumps, judged relative to draft position, so
+  tiers are a handful of players at the top and grow later in the draft.
 - A drag-and-drop ranking editor: reorder players, move them between
   tiers, add and remove tiers, start from scratch, and export as a CSV.
   Filters by position and rookies, and search, help find players.
