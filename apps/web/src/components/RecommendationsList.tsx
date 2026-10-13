@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { ApiRecommendation, PlayerFlag } from "../types/api";
 import { FlagButtons } from "./FlagButtons";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
@@ -48,6 +50,51 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
           together. */}
       {adpPositionRank && ` · ADP ${adpPositionRank}`}
     </>
+  );
+}
+
+/** A list row's note, behind a ✎ toggle so rows without one stay as they
+ * are; the top pick shows its note outright. */
+function RecommendationRow({
+  recommendation,
+  flagButtons,
+}: {
+  recommendation: ApiRecommendation;
+  flagButtons: ReactNode;
+}) {
+  const noteTip = useInfoTip();
+  const { note } = recommendation;
+
+  return (
+    <li className={`rec-list__row${flagClass(recommendation)}`}>
+      <span className="rec-list__rank">#{recommendation.rank}</span>
+      <PositionBadge position={recommendation.player.position} />
+      <span className="rec-list__name">
+        {recommendation.player.fullName}{" "}
+        <RookieBadge rookie={recommendation.player.rookie} />
+        <InjuryBadge status={recommendation.player.injuryStatus} />
+        {note && (
+          <button
+            type="button"
+            className="info-tip__button"
+            aria-label={`Note on ${recommendation.player.fullName}`}
+            title={note}
+            {...noteTip.buttonProps}
+          >
+            ✎
+          </button>
+        )}
+      </span>
+      <span className="rec-list__meta">
+        <PlayerMeta recommendation={recommendation} />
+      </span>
+      {flagButtons}
+      {note && (
+        <InfoTipPanel id={noteTip.panelId} open={noteTip.open}>
+          <p className="player-note">{note}</p>
+        </InfoTipPanel>
+      )}
+    </li>
   );
 }
 
@@ -113,6 +160,9 @@ export function RecommendationsList({
           <span className="hero__meta">
             <PlayerMeta recommendation={topPick} />
           </span>
+          {topPick.note && (
+            <span className="hero__note player-note">{topPick.note}</span>
+          )}
         </div>
         <span className="hero__info">
           <InfoTipButton
@@ -144,6 +194,7 @@ export function RecommendationsList({
             WR15: the same by ADP
           </li>
           <li>Bye: the player's bye week, from your ranking CSV.</li>
+          <li>✎ shows your note on the player, from your ranking.</li>
           <li>
             <span className="rookie-badge">R</span> rookie · Age: the player's
             age, from Sleeper
@@ -158,22 +209,11 @@ export function RecommendationsList({
       {rest.length > 0 && (
         <ol className="rec-list">
           {rest.map((recommendation) => (
-            <li
-              className={`rec-list__row${flagClass(recommendation)}`}
+            <RecommendationRow
               key={recommendation.player.sleeperId}
-            >
-              <span className="rec-list__rank">#{recommendation.rank}</span>
-              <PositionBadge position={recommendation.player.position} />
-              <span className="rec-list__name">
-                {recommendation.player.fullName}{" "}
-                <RookieBadge rookie={recommendation.player.rookie} />
-                <InjuryBadge status={recommendation.player.injuryStatus} />
-              </span>
-              <span className="rec-list__meta">
-                <PlayerMeta recommendation={recommendation} />
-              </span>
-              {flagButtons(recommendation)}
-            </li>
+              recommendation={recommendation}
+              flagButtons={flagButtons(recommendation)}
+            />
           ))}
         </ol>
       )}

@@ -174,6 +174,18 @@ export function setPlayerFlag(
   });
 }
 
+/** Sets a ranked player's note; `null` or a blank note clears it. */
+export function setPlayerNote(
+  rankingId: string,
+  sleeperId: string,
+  note: string | null,
+): Promise<{ note: string | null }> {
+  return request(path`/rankings/${rankingId}/players/${sleeperId}/note`, {
+    method: "PATCH",
+    ...jsonBody({ note }),
+  });
+}
+
 export interface GetRecommendationsOptions {
   limit?: number;
   positions?: string[];

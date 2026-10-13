@@ -207,6 +207,25 @@ export class RankingEditorService {
     return this.repository.getFlags(rankingId);
   }
 
+  /** Sets a ranked player's note, or clears it with `undefined`. */
+  setNote(
+    rankingId: string,
+    userId: string,
+    sleeperId: string,
+    note: string | undefined,
+  ): void {
+    this.assertOwnership(rankingId, userId);
+
+    if (!this.isRanked(rankingId, userId, sleeperId)) {
+      throw new NotFoundError(
+        "Player is not part of this ranking",
+        "PLAYER_NOT_RANKED",
+      );
+    }
+
+    this.repository.setNote(rankingId, sleeperId, note);
+  }
+
   /** A ranking entry for a player chosen in the editor, named after the
    * Sleeper player. `rank` is a placeholder; the repository renumbers. */
   private async matchForPlayer(

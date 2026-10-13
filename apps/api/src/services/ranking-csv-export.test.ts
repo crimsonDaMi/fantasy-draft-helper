@@ -15,6 +15,7 @@ const MATCHES: PlayerMatch[] = [
       sleeperPlayerId: "1",
       tier: "S",
       bye: 7,
+      note: 'New OC, "target share" up\nInjury risk',
     },
     player: {
       sleeperId: "1",
@@ -36,15 +37,15 @@ const MATCHES: PlayerMatch[] = [
 describe("toRankingCsv", () => {
   it("writes the canonical headers and one row per ranked player", () => {
     expect(toRankingCsv(MATCHES)).toBe(
-      "rank,player,position,team,tier,player_id,bye\n" +
-        "1,Player One,QB,BUF,S,1,7\n" +
-        '2,"Player ""Two"", Jr.",,,A,,\n',
+      "rank,player,position,team,tier,player_id,bye,notes\n" +
+        '1,Player One,QB,BUF,S,1,7,"New OC, ""target share"" up\nInjury risk"\n' +
+        '2,"Player ""Two"", Jr.",,,A,,,\n',
     );
   });
 
   it("writes only the header for an empty ranking", () => {
     expect(toRankingCsv([])).toBe(
-      "rank,player,position,team,tier,player_id,bye\n",
+      "rank,player,position,team,tier,player_id,bye,notes\n",
     );
   });
 
@@ -61,6 +62,7 @@ describe("toRankingCsv", () => {
         sleeperPlayerId: "1",
         tier: "S",
         bye: 7,
+        note: 'New OC, "target share" up\nInjury risk',
       },
       {
         rank: 2,
@@ -70,6 +72,7 @@ describe("toRankingCsv", () => {
         sleeperPlayerId: undefined,
         tier: "A",
         bye: undefined,
+        note: undefined,
       },
     ]);
   });

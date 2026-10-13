@@ -31,6 +31,7 @@ import { EditorHints } from "./ranking-editor/EditorHints";
 import { EditorToolbar } from "./ranking-editor/EditorToolbar";
 import { PlayerLabel } from "./ranking-editor/PlayerLabel";
 import { PlayerMoveMenu } from "./ranking-editor/PlayerMoveMenu";
+import { PlayerNoteDialog } from "./ranking-editor/PlayerNoteDialog";
 import { SegmentedToggle } from "./ranking-editor/SegmentedToggle";
 import { StartRankingPrompt } from "./ranking-editor/StartRankingPrompt";
 import { UnmatchedRows } from "./ranking-editor/UnmatchedRows";
@@ -160,6 +161,7 @@ export function RankingEditorPage() {
   const [phoneView, setPhoneView] =
     useState<(typeof PHONE_VIEWS)[number]["value"]>("tiers");
   const [menuPlayerId, setMenuPlayerId] = useState<string>();
+  const [notePlayerId, setNotePlayerId] = useState<string>();
   // Focus returns to the row after a menu opened from the keyboard.
   const menuOpenedByKeyboard = useRef(false);
   // The row to focus once it's (re)mounted, e.g. in the tier it moved to.
@@ -178,6 +180,7 @@ export function RankingEditorPage() {
     removeTierMutation,
     createEmptyRankingMutation,
     flagMutation,
+    noteMutation,
     saveError,
     hasPendingPlayerEdits,
   } = useRankingEditorMutations(rankingId, {
@@ -304,6 +307,15 @@ export function RankingEditorPage() {
       player &&
       matchesFilters(player, search)
     ) {
+      setFocusRequestId(player.sleeperId);
+    }
+  }
+
+  // Focus goes back to the row, which a resync may have remounted.
+  function closeNoteDialog() {
+    const player = notePlayerId ? findPlayer(notePlayerId) : undefined;
+    setNotePlayerId(undefined);
+    if (player && matchesFilters(player, rankedSearch)) {
       setFocusRequestId(player.sleeperId);
     }
   }
@@ -520,6 +532,7 @@ export function RankingEditorPage() {
     ? resolveContainer(menuPlayerId)
     : undefined;
   const menuPlayer = menuPlayerId ? findPlayer(menuPlayerId) : undefined;
+  const notePlayer = notePlayerId ? findPlayer(notePlayerId) : undefined;
 
   if (isLoadingRankings) {
     return <p className="status-bar">Loading…</p>;
@@ -690,6 +703,7 @@ export function RankingEditorPage() {
                     onFlagChange={(sleeperId, flag) =>
                       flagMutation.mutate({ sleeperId, flag })
                     }
+                    onEditNote={setNotePlayerId}
                     onSelectPlayer={isPhone ? handleSelectPlayer : undefined}
                     focusRequestId={focusRequestId}
                     onRequestFocus={setFocusRequestId}
@@ -772,6 +786,16 @@ export function RankingEditorPage() {
           onMoveToTier={(tier) => handleMoveToTier(menuPlayer.sleeperId, tier)}
           onRemove={() => handleRemoveFromRanking(menuPlayer.sleeperId)}
           onClose={() => closeMenu(menuContainer)}
+        />
+      )}
+
+      {notePlayer && (
+        <PlayerNoteDialog
+          player={notePlayer}
+          onSave={(note) =>
+            noteMutation.mutate({ sleeperId: notePlayer.sleeperId, note })
+          }
+          onClose={closeNoteDialog}
         />
       )}
 

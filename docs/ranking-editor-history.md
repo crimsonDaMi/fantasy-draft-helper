@@ -16,7 +16,8 @@ complexity until you remove one.
 - `components/ranking-editor/` — `DroppableContainer` (virtualized list,
   plus `TierRemoveControl`), `SortablePlayer`, `PlayerLabel` (rows and
   drag overlay; renders the shared `components/PositionBadge`),
-  `PlayerMoveMenu`, and presentational pieces with no drag state:
+  `PlayerMoveMenu`, `PlayerNoteDialog` (opened by a ranked row's
+  `NoteButton`), and presentational pieces with no drag state:
   `EditorToolbar`, `EditorHints`, `StartRankingPrompt`, `AddTierButton`,
   `UnmatchedRows`,
   `SegmentedToggle` (used by `TierModeToggle` and the phone view switch).
@@ -82,9 +83,9 @@ Any change to how containers render must preserve all of this.
   scroll on a swipe; `TouchSensor` blocks scrolling once a drag starts.
   `-webkit-touch-callout: none` stops iOS from opening its long-press
   callout.
-- `FlagButtons` stops `touchstart` as well as `pointerdown` propagation —
-  `TouchSensor` listens to touch events, so a long press on ★/⊘ would
-  otherwise start a drag.
+- `FlagButtons` and `NoteButton` stop `touchstart` as well as
+  `pointerdown` propagation — `TouchSensor` listens to touch events, so a
+  long press on ★/⊘/✎ would otherwise start a drag.
 - `useEdgeAutoscroll` also listens to `touchmove`: not every browser keeps
   firing `pointermove` during a touch drag that has blocked scrolling.
 
@@ -102,8 +103,8 @@ column, and dragging between far-apart containers stops being practical.
   long-press drag within the tier afterwards. `appendPlayerToTier` handles
   the same-tier case that `movePlayerToContainer` doesn't.
 - A click right after a drag ends (a touch release can produce one) is
-  ignored, and `FlagButtons` stops click propagation so ★/⊘ don't also
-  open the menu.
+  ignored, and `FlagButtons` and `NoteButton` stop click propagation so
+  ★/⊘/✎ don't also open the menu.
 - Rows keep their fixed `PLAYER_ROW_HEIGHT` on phones — virtualization
   depends on it — so the whole row is the tap target rather than a larger
   button.
@@ -128,7 +129,7 @@ row has commands that reuse the existing move path (`stepPlayer` /
   of the tier below; Alt+Home/End moves to the top/bottom of the tier.
 - Under a position or name filter a slot is a _visible_ row, like a mouse
   drop; `stepPlayer` steps over hidden rows.
-- Roving tabindex: one tab stop per container (plus that row's ★/⊘).
+- Roving tabindex: one tab stop per container (plus that row's ✎/★/⊘).
   `useSortable` spreads `tabIndex=0` on every row, so `SortablePlayer`
   overrides it after the spread.
 - Focus survives virtualization and moves: the container's tab-stop row
@@ -156,9 +157,13 @@ row has commands that reuse the existing move path (`stepPlayer` /
   player in a different tier, remounting the row. `DroppableContainer` therefore notes the focused player during
   render (before the commit) and refocuses their row in a layout effect if
   focus ended up on `<body>`, keeping that row mounted too.
-- The row's key handler ignores keys from its ★/⊘ buttons
+- The row's key handler ignores keys from its ✎/★/⊘ buttons
   (`event.target !== event.currentTarget`), so Enter on ★ doesn't also
   open the menu.
+- A player's note is edited in `PlayerNoteDialog`, not in the row: rows
+  have a fixed height, so the row only shows ✎ (accented when there is a
+  note, with the note as its `title`). Closing the dialog refocuses the
+  row, which a resync after the save may have remounted.
 - dnd-kit's default screen-reader text ("press space to pick up") is
   replaced via `DndContext accessibility`, and its announcements name
   players rather than sleeperIds. Keyboard moves are announced in a
@@ -205,7 +210,7 @@ same ranking-detail query.
   "active ranking".
 - Since v3.0.0, editor changes update `ranking_players` rows in place
   (`RankingRepository.saveOrder`), so a row keeps its id and its
-  watch/avoid flag (a column on the row) through moves. Before, every move
+  watch/avoid flag and note (columns on the row) through moves. Before, every move
   rewrote all rows, which is why flags used to live in a separate table.
   Tiers have stable ids too: inserting or removing one only renumbers
   `ranking_tiers`, and labels come from that order. A ranking holds each

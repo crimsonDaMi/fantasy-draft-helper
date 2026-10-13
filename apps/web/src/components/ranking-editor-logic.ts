@@ -40,6 +40,8 @@ export interface EditorPlayer {
   /** Watch/avoid flag, baked in on each server sync like `globalRank`.
    * Ranked players only. */
   flag?: PlayerFlag;
+  /** The user's note, baked in on each server sync. Ranked players only. */
+  note?: string;
 }
 
 export type Containers = Record<string, EditorPlayer[]>;
@@ -48,6 +50,7 @@ function toEditorPlayer(
   player: ApiPlayer,
   globalRank?: number,
   flag?: PlayerFlag,
+  note?: string,
 ): EditorPlayer {
   return {
     sleeperId: player.sleeperId,
@@ -58,6 +61,7 @@ function toEditorPlayer(
     rookie: player.rookie,
     globalRank,
     flag,
+    note,
   };
 }
 
@@ -93,6 +97,7 @@ export function buildContainers(
         entry.player,
         entry.ranking.rank,
         flags[entry.player.sleeperId],
+        entry.ranking.note,
       ),
     );
     rankedIds.add(entry.player.sleeperId);

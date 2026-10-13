@@ -231,13 +231,19 @@ describe("RankingRepository editor mutations", () => {
       expect(result[1]?.method).toBe("MANUAL");
     });
 
-    it("keeps the imported bye week of a resolved row", () => {
+    it("keeps the imported bye week and note of a resolved row", () => {
       const repository = new RankingRepository(":memory:");
       const rankingId = repository.create(
         [
           {
             ...unmatched(1, "S", "Nobody"),
-            ranking: { rank: 1, playerName: "Nobody", tier: "S", bye: 11 },
+            ranking: {
+              rank: 1,
+              playerName: "Nobody",
+              tier: "S",
+              bye: 11,
+              note: "Injury risk",
+            },
           },
         ],
         USER_ID,
@@ -250,6 +256,7 @@ describe("RankingRepository editor mutations", () => {
       );
 
       expect(resolved?.ranking.bye).toBe(11);
+      expect(resolved?.ranking.note).toBe("Injury risk");
     });
 
     it("gives a resolved row the tier above when its own tier no longer fits there", () => {

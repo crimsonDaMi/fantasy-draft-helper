@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { rankingParamsSchema } from "./params.schemas.js";
 import { PLAYER_FLAGS } from "../domain/player-flag.js";
+import { MAX_NOTE_LENGTH } from "../domain/ranking.js";
 import { RankingEditorService } from "../services/ranking-editor.service.js";
 import { requireUser } from "../utils/require-user.js";
 
@@ -33,6 +34,11 @@ const movePlayerBodySchema = z.object({
 
 const setFlagBodySchema = z.object({
   flag: z.enum(PLAYER_FLAGS).nullable(),
+});
+
+// A blank note clears it.
+const setNoteBodySchema = z.object({
+  note: z.string().trim().max(MAX_NOTE_LENGTH).nullable(),
 });
 
 const insertTierBodySchema = z.object({
@@ -92,6 +98,29 @@ export function createRankingEditorRoutes(
         );
 
         return { flags };
+      },
+    );
+
+    // Set a ranked player's note, or clear it with `null` or a blank one.
+    app.patch(
+      "/rankings/:rankingId/players/:sleeperId/note",
+      async (request) => {
+        const userId = requireUser(request).id;
+
+        const { rankingId, sleeperId } = playerParamsSchema.parse(
+          request.params,
+        );
+
+        const { note } = setNoteBodySchema.parse(request.body);
+
+        rankingEditorService.setNote(
+          rankingId,
+          userId,
+          sleeperId,
+          note || undefined,
+        );
+
+        return { note: note || null };
       },
     );
 

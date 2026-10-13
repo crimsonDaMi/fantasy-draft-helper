@@ -20,6 +20,8 @@ export interface ApiRecommendation {
   tier?: string;
   /** Bye week from the ranking CSV, when it had one. */
   bye?: number;
+  /** The user's note on the player, from the CSV or the ranking editor. */
+  note?: string;
   player: ApiPlayer;
   adp?: {
     value: number;
@@ -183,6 +185,8 @@ export interface RankingPlayerDto {
     position?: string;
     sleeperPlayerId?: string;
     tier?: string;
+    bye?: number;
+    note?: string;
   };
   player?: ApiPlayer;
   method: string;

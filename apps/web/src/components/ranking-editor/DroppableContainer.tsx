@@ -38,6 +38,7 @@ interface DroppableContainerProps {
   activeId?: string;
   registerScrollElement?: (id: string, node: HTMLDivElement | null) => void;
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
+  onEditNote?: (sleeperId: string) => void;
   onSelectPlayer?: (sleeperId: string) => void;
   /** The row the page wants focused next (keyboard navigation or a move). */
   focusRequestId?: string;
@@ -66,6 +67,7 @@ export function DroppableContainer({
   activeId,
   registerScrollElement,
   onFlagChange,
+  onEditNote,
   onSelectPlayer,
   focusRequestId,
   onRequestFocus,
@@ -244,6 +246,7 @@ export function DroppableContainer({
                     handleRowKeyDown(event, virtualRow.index)
                   }
                   onFlagChange={onFlagChange}
+                  onEditNote={onEditNote}
                   onSelect={onSelectPlayer}
                 />
               );

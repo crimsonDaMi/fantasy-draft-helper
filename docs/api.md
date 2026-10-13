@@ -189,6 +189,7 @@ Position data is available for that player:
   "positionRank": 2,
   "tier": "A",
   "bye": 8,
+  "note": "New OC, target share up",
   "player": {
     "sleeperId": "9221",
     "fullName": "Jahmyr Gibbs",
@@ -202,7 +203,8 @@ Position data is available for that player:
 ```
 
 `bye` is the player's bye week from the ranking CSV, omitted when the CSV
-had none.
+had none. `note` is the user's note on the player (from the CSV's `notes`
+column or the ranking editor), omitted when there is none.
 
 `player.age` and `player.rookie` come from Sleeper's player data (`age`,
 and `years_exp` of 0 for a rookie); each is omitted when Sleeper has no
@@ -232,6 +234,7 @@ POST   /rankings/:rankingId/tiers                 insert an empty tier
 DELETE /rankings/:rankingId/tiers/:position       remove a tier, merging its players
 GET    /rankings/:rankingId/unranked-players      fantasy-relevant players not ranked
 PATCH  /rankings/:rankingId/players/:sleeperId/flag   { "flag": "watch" | "avoid" | null }
+PATCH  /rankings/:rankingId/players/:sleeperId/note   { "note": "<text>" | null }
 PATCH  /rankings/:rankingId/unmatched/:rank       { "playerName", "sleeperId" }: resolve a row
 DELETE /rankings/:rankingId/unmatched/:rank?playerName=<name>   delete an unmatched row
 ```
@@ -256,6 +259,13 @@ counts every row, and `playerName` must still match the row (`409
 ROW_CHANGED` otherwise). The `rank` in `PATCH .../players/:sleeperId`
 counts matched players only, as the editor shows them, so unmatched rows
 keep their place.
+
+A note is at most 500 characters and trimmed; `null` or a blank note
+clears it. The route returns `{ "note" }` as saved (`null` when cleared),
+or `404 PLAYER_NOT_RANKED` for a player not in the ranking. Players carry
+their note as `ranking.note` in `GET /rankings/:rankingId`, unmatched rows
+included, and a resolved unmatched row keeps it. The CSV export writes
+notes to its `notes` column.
 
 `GET /rankings/:rankingId` also returns `flags` (Sleeper ID → flag).
 Recommendations leave out `avoid`-flagged players unless

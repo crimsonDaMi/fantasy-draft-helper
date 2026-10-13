@@ -33,6 +33,7 @@ interface RankingPlayerRow {
   match_method: PlayerMatch["method"];
   match_details: string | null;
   bye_week: number | null;
+  note: string | null;
 }
 
 /** What `match_details` holds: the parts of a match only some rows have. */
@@ -59,7 +60,8 @@ const PLAYER_COLUMNS = `
   ranking_players.sleeper_id AS sleeper_id,
   ranking_players.match_method AS match_method,
   ranking_players.match_details AS match_details,
-  ranking_players.bye_week AS bye_week`;
+  ranking_players.bye_week AS bye_week,
+  ranking_players.note AS note`;
 
 const PLAYERS_WITH_TIERS = `
   ranking_players
@@ -82,6 +84,7 @@ function toMatch(row: RankingPlayerRow): PlayerMatch {
           ? undefined
           : numericTierToLabel(row.tier_position),
       bye: row.bye_week ?? undefined,
+      note: row.note ?? undefined,
     },
     player: row.sleeper_id === null ? undefined : storedPlayer(row),
     method: row.match_method,
@@ -247,6 +250,10 @@ export const RANKING_SCHEMA: VersionedSchema = {
     {
       version: 2,
       up: `ALTER TABLE ranking_players ADD COLUMN bye_week INTEGER`,
+    },
+    {
+      version: 3,
+      up: `ALTER TABLE ranking_players ADD COLUMN note TEXT`,
     },
   ],
 };
@@ -469,7 +476,7 @@ export class RankingRepository {
   /**
    * Replaces the unmatched row at `rank` (1-based, counting every row)
    * with `resolved` at the same position, or removes it when `resolved`
-   * is undefined. The row keeps its bye week, and its tier unless edits since the import
+   * is undefined. The row keeps its bye week and note, and its tier unless edits since the import
    * left it between players of other tiers; it then joins the tier of
    * the matched player above it, so every tier stays one contiguous block.
    */
@@ -502,8 +509,10 @@ export class RankingRepository {
                 rank - 1,
                 row.match.ranking.tier,
               ),
-              // The CSV's bye stays with the row it was imported on.
+              // The CSV's bye and the note stay with the row they were
+              // imported on.
               bye: resolved.ranking.bye ?? row.match.ranking.bye,
+              note: resolved.ranking.note ?? row.match.ranking.note,
             },
           },
         };
@@ -543,6 +552,20 @@ export class RankingRepository {
          WHERE ranking_id = ? AND sleeper_id = ?`,
       )
       .run(flag ?? null, rankingId, sleeperId);
+  }
+
+  /** Sets a ranked player's note, or clears it with `undefined`. */
+  setNote(
+    rankingId: string,
+    sleeperId: string,
+    note: string | undefined,
+  ): void {
+    this.database
+      .prepare(
+        `UPDATE ranking_players SET note = ?
+         WHERE ranking_id = ? AND sleeper_id = ?`,
+      )
+      .run(note ?? null, rankingId, sleeperId);
   }
 
   /** Sleeper ID → flag, for the flagged players of a ranking. */
@@ -736,8 +759,8 @@ export class RankingRepository {
         `INSERT INTO ranking_players (
            ranking_id, rank, tier_id, name, position, team,
            source_player_id, sleeper_id, match_method, match_details,
-           bye_week
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           bye_week, note
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(rankingId, rank, tierId, ...rowContent(match));
   }
@@ -755,7 +778,7 @@ export class RankingRepository {
         `UPDATE ranking_players SET
            rank = ?, tier_id = ?, name = ?, position = ?, team = ?,
            source_player_id = ?, sleeper_id = ?, match_method = ?,
-           match_details = ?, bye_week = ?, flag = NULL
+           match_details = ?, bye_week = ?, note = ?, flag = NULL
          WHERE id = ?`,
       )
       .run(rank, tierId, ...rowContent(match), id);
@@ -857,5 +880,6 @@ function rowContent(match: PlayerMatch) {
     match.method,
     matchDetailsJson(match),
     match.ranking.bye ?? null,
+    match.ranking.note ?? null,
   ] as const;
 }

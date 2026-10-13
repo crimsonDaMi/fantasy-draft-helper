@@ -160,4 +160,38 @@ describe("RecommendationsList", () => {
     expect(metas[1]).toHaveTextContent(/^CCC$/);
     expect(screen.getAllByLabelText("Rookie")).toHaveLength(1);
   });
+
+  it("shows the top pick's note and reveals others' notes on tap", () => {
+    const { container } = render(
+      <RecommendationsList
+        adpFormat="SF"
+        recommendations={[
+          {
+            rank: 1,
+            note: "Injury risk",
+            player: { sleeperId: "1", fullName: "Player One" },
+          },
+          {
+            rank: 2,
+            note: "New OC, target share up",
+            player: { sleeperId: "2", fullName: "Player Two" },
+          },
+          { rank: 3, player: { sleeperId: "3", fullName: "Player Three" } },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector(".hero__note")).toHaveTextContent(
+      "Injury risk",
+    );
+    // Only the row with a note gets a toggle.
+    expect(
+      screen.queryByRole("button", { name: "Note on Player Three" }),
+    ).toBeNull();
+    expect(screen.queryByText("New OC, target share up")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Note on Player Two" }));
+
+    expect(screen.getByText("New OC, target share up")).toBeInTheDocument();
+  });
 });

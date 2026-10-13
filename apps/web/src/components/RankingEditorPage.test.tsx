@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   renameRanking: vi.fn(),
   deleteRanking: vi.fn(),
   setPlayerFlag: vi.fn(),
+  setPlayerNote: vi.fn(),
   getRanking: vi.fn(),
   getUnrankedPlayers: vi.fn(),
   moveRankingPlayer: vi.fn(),
@@ -34,6 +35,7 @@ vi.mock("../api/fantasy-api", () => ({
   renameRanking: mocks.renameRanking,
   deleteRanking: mocks.deleteRanking,
   setPlayerFlag: mocks.setPlayerFlag,
+  setPlayerNote: mocks.setPlayerNote,
   getRanking: mocks.getRanking,
   getUnrankedPlayers: mocks.getUnrankedPlayers,
   moveRankingPlayer: mocks.moveRankingPlayer,
@@ -303,6 +305,100 @@ describe("RankingEditorPage", () => {
         screen.getByRole("button", { name: "Watch Player One" }),
       ).toHaveAttribute("aria-pressed", "true"),
     );
+  });
+
+  it("adds, edits and clears a ranked player's note", async () => {
+    mockTwoTierRanking();
+    mocks.setPlayerNote.mockImplementation(
+      async (_rankingId: string, sleeperId: string, note: string) => {
+        // The server's refetched detail includes the saved note.
+        const detail = await mocks.getRanking();
+        mocks.getRanking.mockResolvedValue({
+          ...detail,
+          players: detail.players.map(
+            (entry: ReturnType<typeof rankedPlayer>) =>
+              entry.player.sleeperId === sleeperId
+                ? { ...entry, ranking: { ...entry.ranking, note } }
+                : entry,
+          ),
+        });
+        return { note: note || null };
+      },
+    );
+    renderWithClient();
+    await screen.findByText("Player One");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add note on Player One" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Note on Player One" });
+    fireEvent.change(within(dialog).getByRole("textbox"), {
+      target: { value: "  Injury risk " },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save note" }));
+
+    await waitFor(() =>
+      expect(mocks.setPlayerNote).toHaveBeenCalledWith(
+        "ranking-1",
+        "1",
+        "Injury risk",
+      ),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const editButton = await screen.findByRole("button", {
+      name: "Edit note on Player One",
+    });
+    expect(editButton).toHaveAttribute("title", "Injury risk");
+
+    // Ctrl+Enter saves from the keyboard.
+    fireEvent.click(editButton);
+    const textbox = within(screen.getByRole("dialog")).getByRole("textbox");
+    expect(textbox).toHaveValue("Injury risk");
+    fireEvent.change(textbox, { target: { value: "New OC" } });
+    fireEvent.keyDown(textbox, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() =>
+      expect(mocks.setPlayerNote).toHaveBeenLastCalledWith(
+        "ranking-1",
+        "1",
+        "New OC",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Edit note on Player One" }),
+      ).toHaveAttribute("title", "New OC"),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit note on Player One" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Clear note" }));
+
+    await waitFor(() =>
+      expect(mocks.setPlayerNote).toHaveBeenLastCalledWith(
+        "ranking-1",
+        "1",
+        "",
+      ),
+    );
+    expect(
+      await screen.findByRole("button", { name: "Add note on Player One" }),
+    ).toBeInTheDocument();
+  });
+
+  it("closes the note dialog without saving an unchanged note", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+    await screen.findByText("Player One");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add note on Player One" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(mocks.setPlayerNote).not.toHaveBeenCalled();
   });
 
   it("edits the ranking remembered from an earlier visit", async () => {

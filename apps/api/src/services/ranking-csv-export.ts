@@ -8,6 +8,7 @@ const HEADERS = [
   "tier",
   "player_id",
   "bye",
+  "notes",
 ];
 
 /**
@@ -27,6 +28,7 @@ export function toRankingCsv(matches: PlayerMatch[]): string {
     ranking.tier ?? "",
     player?.sleeperId ?? "",
     ranking.bye === undefined ? "" : String(ranking.bye),
+    ranking.note ?? "",
   ]);
 
   return [HEADERS, ...rows]

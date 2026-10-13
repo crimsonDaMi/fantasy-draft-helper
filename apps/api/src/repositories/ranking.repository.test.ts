@@ -344,6 +344,63 @@ describe("RankingRepository storage", () => {
     repository.close();
   });
 
+  it("stores each row's note, matched or not, and sets or clears it", () => {
+    const repository = new RankingRepository(":memory:");
+    const rankingId = repository.create(
+      [
+        {
+          ...tieredMatch(1, "S", "1"),
+          ranking: { rank: 1, playerName: "Player 1", note: "Injury risk" },
+        },
+        {
+          ranking: { rank: 2, playerName: "Nobody", note: "Rookie" },
+          method: "NONE",
+        },
+        tieredMatch(3, "S", "3"),
+      ],
+      "user-a",
+    );
+    const notes = () =>
+      repository
+        .getMatches(rankingId, "user-a")
+        .map((match) => match.ranking.note);
+
+    expect(notes()).toEqual(["Injury risk", "Rookie", undefined]);
+
+    repository.setNote(rankingId, "1", undefined);
+    repository.setNote(rankingId, "3", "Sleeper");
+
+    expect(notes()).toEqual([undefined, "Rookie", "Sleeper"]);
+  });
+
+  it("upgrades a database from before notes, keeping its rankings", () => {
+    directory = mkdtempSync(join(tmpdir(), "fantasy-draft-helper-v2-"));
+    const databasePath = join(directory, "test.db");
+    const old = openDatabase(databasePath);
+    migrate(
+      old,
+      { ...RANKING_SCHEMA, migrations: RANKING_SCHEMA.migrations.slice(0, 2) },
+      databasePath,
+    );
+    old.exec(`
+      INSERT INTO rankings (id, user_id, name, created_at)
+        VALUES ('r1', 'user-a', 'Old ranking', '2026-01-01T00:00:00.000Z');
+      INSERT INTO ranking_players
+          (ranking_id, rank, name, sleeper_id, match_method, bye_week)
+        VALUES ('r1', 1, 'Player 1', '1', 'SLEEPER_ID', 7);
+    `);
+    old.close();
+
+    const repository = new RankingRepository(databasePath);
+    repository.setNote("r1", "1", "Injury risk");
+
+    expect(repository.getMatches("r1", "user-a")).toMatchObject([
+      { ranking: { playerName: "Player 1", bye: 7, note: "Injury risk" } },
+    ]);
+
+    repository.close();
+  });
+
   it("refuses the same player twice in one ranking", () => {
     const repository = new RankingRepository(":memory:");
 

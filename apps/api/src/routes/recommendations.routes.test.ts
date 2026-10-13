@@ -474,4 +474,29 @@ describe("recommendations routes", () => {
 
     await app.close();
   });
+
+  it("returns a recommendation's note when the ranking has one", async () => {
+    const [recommendation] = recommendationResult.recommendations;
+    const app = createTestApp({
+      ...recommendationResult,
+      recommendations: [
+        {
+          ...recommendation,
+          ranking: { ...recommendation.ranking, note: "Injury risk" },
+        },
+        recommendation,
+      ],
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts/draft-1/recommendations?rankingId=ranking-1",
+    });
+
+    expect(
+      response.json().recommendations.map((r: { note?: string }) => r.note),
+    ).toEqual(["Injury risk", undefined]);
+
+    await app.close();
+  });
 });

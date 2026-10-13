@@ -37,6 +37,7 @@ draft state.
 - Your team: when you pick next, your players so far, how they fill
   your lineup slots, and weeks where several of your starters share a bye.
 - Bye weeks next to each player, when your ranking CSV has them.
+- Your own notes on players, from your ranking CSV or the ranking editor.
 - Recent picks with reaches and steals against your ranking, the
   positional run of the last 8 picks, and how many players are left in
   your best remaining tiers per position.
@@ -56,7 +57,7 @@ draft state.
   Filters by position and rookies, and search, help find players.
 - Several saved rankings, e.g. one per league.
 - Watch (★) players to highlight them, or avoid (⊘) them to hide them from
-  the board.
+  the board, and keep a note (✎) on any player for draft day.
 
 **For a shared instance**
 
@@ -103,8 +104,9 @@ rank,player,position,team,tier,notes
 
 Only `rank` (a positive integer) and `player` are required. `position`
 (`QB`, `RB`, `WR`, `TE`, `K`, or `DEF`), `team`, `tier`, `bye` (the bye
-week, 1–18), and `notes` are optional, and other columns are ignored.
-Sleeper has no bye weeks, so they show only when your CSV has them.
+week, 1–18), and `notes` (up to 500 characters, shown with the player on
+draft day) are optional, and other columns are ignored. Sleeper has no bye
+weeks, so they show only when your CSV has them.
 
 Exports from other sites usually import as they are. Headers are
 case-insensitive, FantasyPros' `RK`, `PLAYER NAME`, `POS`, `TIERS`, and

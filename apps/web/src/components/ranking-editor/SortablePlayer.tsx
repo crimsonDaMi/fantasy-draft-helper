@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { PlayerFlag } from "../../types/api";
 import { FlagButtons } from "../FlagButtons";
 import type { EditorPlayer } from "../ranking-editor-logic";
+import { NoteButton } from "./NoteButton";
 import { PlayerLabel } from "./PlayerLabel";
 
 interface SortablePlayerProps {
@@ -20,6 +21,8 @@ interface SortablePlayerProps {
   onKeyDown: (event: React.KeyboardEvent<HTMLLIElement>) => void;
   /** Shows watch/avoid toggles (ranked rows only). */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
+  /** Shows the note button (ranked rows only). */
+  onEditNote?: (sleeperId: string) => void;
   /** Tap handler (phones only: opens the move menu). */
   onSelect?: (sleeperId: string) => void;
 }
@@ -34,6 +37,7 @@ export function SortablePlayer({
   onFocus,
   onKeyDown,
   onFlagChange,
+  onEditNote,
   onSelect,
 }: SortablePlayerProps) {
   const {
@@ -99,6 +103,14 @@ export function SortablePlayer({
         <span className="ranking-editor__rank">#{rank}</span>
       )}
       <PlayerLabel player={player} showNameTitle />
+      {onEditNote && (
+        <NoteButton
+          playerName={player.fullName}
+          note={player.note}
+          tabIndex={isTabStop ? undefined : -1}
+          onClick={() => onEditNote(player.sleeperId)}
+        />
+      )}
       {onFlagChange && (
         <FlagButtons
           playerName={player.fullName}

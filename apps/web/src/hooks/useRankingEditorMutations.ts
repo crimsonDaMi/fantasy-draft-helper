@@ -14,6 +14,7 @@ import {
   removeUnmatchedRow,
   resolveUnmatchedRow,
   setPlayerFlag,
+  setPlayerNote,
 } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingDetailResponse } from "../types/api";
@@ -122,7 +123,7 @@ export function useRankingEditorMutations(
     useIsMutating({ mutationKey: playerEditKey }) > 0;
 
   function settleDetailQuery() {
-    // Tier boundary and flag changes stay within the ranking — the
+    // Tier boundary, flag and note changes stay within the ranking — the
     // unranked pool is untouched, so only ranking-detail needs to
     // reconcile.
     void queryClient.invalidateQueries({
@@ -236,6 +237,31 @@ export function useRankingEditorMutations(
     onSettled: settleDetailQuery,
   });
 
+  // Notes, like flags, are saved optimistically into the detail query.
+  const noteMutation = useMutation({
+    mutationFn: ({ sleeperId, note }: { sleeperId: string; note: string }) =>
+      setPlayerNote(rankingId!, sleeperId, note),
+    onMutate: ({ sleeperId, note }) => {
+      queryClient.setQueryData<RankingDetailResponse>(
+        queryKeys.rankingDetail(rankingId),
+        (detail) =>
+          detail && {
+            ...detail,
+            players: detail.players.map((entry) =>
+              entry.player?.sleeperId === sleeperId
+                ? {
+                    ...entry,
+                    ranking: { ...entry.ranking, note: note || undefined },
+                  }
+                : entry,
+            ),
+          },
+      );
+    },
+    ...saveCallbacks,
+    onSettled: settleDetailQuery,
+  });
+
   return {
     moveMutation,
     removeMutation,
@@ -245,6 +271,7 @@ export function useRankingEditorMutations(
     removeTierMutation,
     createEmptyRankingMutation,
     flagMutation,
+    noteMutation,
     saveError,
     hasPendingPlayerEdits,
   };

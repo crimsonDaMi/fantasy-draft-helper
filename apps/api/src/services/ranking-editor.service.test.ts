@@ -426,6 +426,41 @@ describe("RankingEditorService", () => {
     });
   });
 
+  describe("setNote", () => {
+    it("notes ranked players only, keeping the note through moves", async () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create(
+        [match(1, "S", "1"), match(2, "S", "2")],
+        USER_ID,
+      );
+
+      const service = new RankingEditorService(
+        repository,
+        createFixturePlayerService() as never,
+      );
+      const noteOf = async (sleeperId: string) =>
+        (await service.getRanking(rankingId, USER_ID)).players.find(
+          (entry) => entry.player?.sleeperId === sleeperId,
+        )?.ranking.note;
+
+      service.setNote(rankingId, USER_ID, "1", "Injury risk");
+      await service.movePlayer(rankingId, USER_ID, "1", 2, "S");
+
+      expect(await noteOf("1")).toBe("Injury risk");
+
+      service.setNote(rankingId, USER_ID, "1", undefined);
+
+      expect(await noteOf("1")).toBeUndefined();
+      expect(() => service.setNote(rankingId, USER_ID, "9", "Sleeper")).toThrow(
+        "Player is not part of this ranking",
+      );
+      expect(() =>
+        service.setNote(rankingId, OTHER_USER_ID, "1", "Sleeper"),
+      ).toThrow("Ranking was not found");
+    });
+  });
+
   describe("unmatched rows", () => {
     function createRankingWithUnmatchedRow() {
       const repository = new RankingRepository(":memory:");

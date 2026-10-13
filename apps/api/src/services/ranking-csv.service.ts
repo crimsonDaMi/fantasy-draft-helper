@@ -1,6 +1,10 @@
 import { parse } from "csv-parse/sync";
 
-import { Ranking, isFantasyPosition } from "../domain/ranking.js";
+import {
+  MAX_NOTE_LENGTH,
+  Ranking,
+  isFantasyPosition,
+} from "../domain/ranking.js";
 import {
   RankingImportError,
   RankingImportResult,
@@ -25,6 +29,8 @@ const HEADER_ALIASES: Record<string, keyof NormalizedCsvRow> = {
   player_id: "sleeperPlayerId",
   bye: "bye",
   "bye week": "bye",
+  notes: "note",
+  note: "note",
 };
 
 const DEFENSE_POSITIONS = new Set(["DEF", "DST", "D/ST"]);
@@ -46,6 +52,7 @@ interface NormalizedCsvRow {
   tier?: string;
   sleeperPlayerId?: string;
   bye?: string;
+  note?: string;
 }
 
 /** NFL regular seasons have 18 weeks. */
@@ -149,6 +156,13 @@ export class RankingCsvService {
       return rowError(rowNumber, `Invalid position: ${row.position}`);
     }
 
+    if (row.note !== undefined && row.note.length > MAX_NOTE_LENGTH) {
+      return rowError(
+        rowNumber,
+        `Notes must be at most ${MAX_NOTE_LENGTH} characters`,
+      );
+    }
+
     return {
       ranking: {
         rank,
@@ -158,6 +172,7 @@ export class RankingCsvService {
         sleeperPlayerId: row.sleeperPlayerId || undefined,
         tier: row.tier || undefined,
         bye: parseBye(row.bye),
+        note: row.note,
       },
     };
   }

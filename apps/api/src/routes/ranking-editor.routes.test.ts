@@ -14,6 +14,7 @@ function createTestApp(rankingEditorService: {
   removeTier?: (...args: unknown[]) => unknown;
   getUnrankedPlayers?: (...args: unknown[]) => unknown;
   setFlag?: (...args: unknown[]) => unknown;
+  setNote?: (...args: unknown[]) => unknown;
   resolveUnmatchedRow?: (...args: unknown[]) => unknown;
   removeUnmatchedRow?: (...args: unknown[]) => unknown;
 }) {
@@ -274,6 +275,50 @@ describe("ranking editor routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(setFlag).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it.each([
+    ["  New OC, target share up ", "New OC, target share up"],
+    ["   ", undefined],
+    [null, undefined],
+  ])("sets a player's note to %j", async (note, expected) => {
+    const setNote = vi.fn();
+
+    const app = createTestApp({ setNote });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/players/1/note",
+      payload: { note },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ note: expected ?? null });
+    expect(setNote).toHaveBeenCalledWith(
+      "ranking-1",
+      TEST_USER.id,
+      "1",
+      expected,
+    );
+
+    await app.close();
+  });
+
+  it("rejects a note over 500 characters", async () => {
+    const setNote = vi.fn();
+
+    const app = createTestApp({ setNote });
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/rankings/ranking-1/players/1/note",
+      payload: { note: "x".repeat(501) },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(setNote).not.toHaveBeenCalled();
 
     await app.close();
   });

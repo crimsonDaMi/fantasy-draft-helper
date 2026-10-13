@@ -230,7 +230,7 @@ describe("rankings routes", () => {
       'attachment; filename="rankings.csv"',
     );
     expect(response.body).toBe(
-      "rank,player,position,team,tier,player_id,bye\n1,Player One,,,S,1,\n",
+      "rank,player,position,team,tier,player_id,bye,notes\n1,Player One,,,S,1,,\n",
     );
 
     await app.close();

@@ -81,6 +81,7 @@ rank,player,position,team,tier,notes
         position: "WR",
         tier: "1",
         sleeperPlayerId: undefined,
+        note: "Target share leader",
       },
       {
         rank: 2,
@@ -175,6 +176,35 @@ rank,player,bye
       undefined,
       undefined,
       undefined,
+    ]);
+  });
+
+  it("reads notes, leaving a blank one out", () => {
+    const result = service.parse(`
+rank,player,notes
+1,Player One, Injury risk 
+2,Player Two,
+`);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rankings.map((ranking) => ranking.note)).toEqual([
+      "Injury risk",
+      undefined,
+    ]);
+  });
+
+  it("rejects a row whose note is over 500 characters", () => {
+    const result = service.parse(`
+rank,player,notes
+1,Player One,${"x".repeat(501)}
+2,Player Two,${"x".repeat(500)}
+`);
+
+    expect(result.errors).toEqual([
+      { row: 2, message: "Notes must be at most 500 characters" },
+    ]);
+    expect(result.rankings.map((ranking) => ranking.playerName)).toEqual([
+      "Player Two",
     ]);
   });
 

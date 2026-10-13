@@ -44,6 +44,7 @@ function mapRecommendation(recommendation: Recommendation) {
     positionRank: recommendation.positionRank,
     tier: recommendation.ranking.tier,
     bye: recommendation.ranking.bye,
+    note: recommendation.ranking.note,
     player: {
       sleeperId: recommendation.player.sleeperId,
       fullName: recommendation.player.fullName,
