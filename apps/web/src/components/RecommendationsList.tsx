@@ -4,6 +4,7 @@ import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
 import { InjuryBadge } from "./InjuryBadge";
 import { PositionBadge } from "./PositionBadge";
+import { RookieBadge } from "./RookieBadge";
 import { formatPositionRank } from "../utils/position-rank";
 
 interface RecommendationsListProps {
@@ -47,18 +48,6 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
           together. */}
       {adpPositionRank && ` · ADP ${adpPositionRank}`}
     </>
-  );
-}
-
-function RookieBadge({ rookie }: { rookie?: boolean }) {
-  if (!rookie) {
-    return null;
-  }
-
-  return (
-    <span className="rookie-badge" title="Rookie" aria-label="Rookie">
-      R
-    </span>
   );
 }
 

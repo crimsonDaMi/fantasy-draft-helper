@@ -245,7 +245,7 @@ describe("RankingEditorPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows only rookies, ranked and unranked, with the Rookies pill", async () => {
+  it("marks rookies and shows only them with the Rookies pill", async () => {
     mockTwoTierRanking();
     const detail = await mocks.getRanking();
     detail.players[1].player.rookie = true;
@@ -269,6 +269,7 @@ describe("RankingEditorPage", () => {
     renderWithClient();
 
     await screen.findByText("Player Five");
+    expect(screen.getAllByLabelText("Rookie")).toHaveLength(2);
     fireEvent.click(screen.getByLabelText("Rookies"));
 
     await waitFor(() => expect(screen.queryByText("Player One")).toBeNull());

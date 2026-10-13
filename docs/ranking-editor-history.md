@@ -110,7 +110,7 @@ column, and dragging between far-apart containers stops being practical.
 - For the same reason a name can't wrap, so phones buy it width instead:
   tighter tier padding, row gaps and rank column, and below 360px the
   team abbreviation is hidden (the position badge stays). At 320px only a
-  long name with an injury badge still loses a couple of letters.
+  long name with an injury or rookie badge still loses a couple of letters.
 
 ## Keyboard
 

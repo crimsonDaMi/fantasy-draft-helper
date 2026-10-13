@@ -1,5 +1,6 @@
 import { InjuryBadge } from "../InjuryBadge";
 import { PositionBadge } from "../PositionBadge";
+import { RookieBadge } from "../RookieBadge";
 import type { EditorPlayer } from "../ranking-editor-logic";
 
 /** Position badge, name and team — shared by sortable rows and the drag
@@ -20,6 +21,7 @@ export function PlayerLabel({
       >
         {player.fullName}
       </span>
+      <RookieBadge rookie={player.rookie} />
       <InjuryBadge status={player.injuryStatus} />
       <span className="ranking-editor__meta">{player.team}</span>
     </>

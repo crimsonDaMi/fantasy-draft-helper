@@ -29,8 +29,9 @@ See `RELEASING.md`.
   Rankings without bye data look as before, and "Export CSV" now
   includes the column.
 - Age and rookies, for dynasty startups and rookie drafts: each
-  recommended player shows their age and, for rookies, an "R" badge, both
-  from Sleeper's player data and left out where Sleeper has none. A
+  recommended player shows their age and, for rookies, an "R" badge (the
+  badge also shows in the ranking editor), both from Sleeper's player
+  data and left out where Sleeper has none. A
   "Rookies" pill next to the position filter limits the recommendations,
   and the ranking editor's tiers and unranked players, to rookies,
   together with the position filter and search.
