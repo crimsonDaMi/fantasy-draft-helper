@@ -22,6 +22,15 @@ See `RELEASING.md`.
 
 ### Added
 
+- On-the-clock alerts: while you're in another tab, the browser tab's
+  title shows how close your pick is, `(Up in 2)` up to five picks
+  ahead and `(ON THE CLOCK)` on your turn, and goes back to normal once
+  you've picked. Under My team you can also turn on a sound and a
+  browser notification, fired once per pick when you're on the clock or
+  up to five picks before (two by default). Both are off until you turn
+  them on, the browser only asks for notification permission then, and
+  the settings are remembered in your browser. Snake and linear drafts
+  only; auctions have no pick order.
 - Player notes: your research ("injury risk", "new OC, target share up")
   now comes with you to the draft. The `notes` column of your ranking CSV,
   which used to be ignored, is kept, and the ranking editor's ✎ button

@@ -36,6 +36,9 @@ draft state.
   player's age, from Sleeper's player data.
 - Your team: when you pick next, your players so far, how they fill
   your lineup slots, and weeks where several of your starters share a bye.
+- On-the-clock alerts: the browser tab's title counts down to your pick,
+  and an optional sound or browser notification a few picks before it
+  (snake and linear drafts).
 - Bye weeks next to each player, when your ranking CSV has them.
 - Your own notes on players, from your ranking CSV or the ranking editor.
 - Recent picks with reaches and steals against your ranking, the

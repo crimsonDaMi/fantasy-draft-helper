@@ -6,6 +6,7 @@ import { DraftForm } from "./DraftForm";
 import { DraftRecap } from "./DraftRecap";
 import { ImportIssues } from "./ImportIssues";
 import { MyTeamPanel } from "./MyTeamPanel";
+import { PickAlertSettings } from "./PickAlertSettings";
 import { RankingSelector } from "./RankingSelector";
 import { RecentPicks } from "./RecentPicks";
 import { TierCounts } from "./TierCounts";
@@ -16,6 +17,7 @@ import { RecommendationsList } from "./RecommendationsList";
 import { SearchField } from "./SearchField";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDraftRecommendations } from "../hooks/useDraftRecommendations";
+import { useOnTheClockAlerts } from "../hooks/useOnTheClockAlerts";
 import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
 import { getDraft, setPlayerFlag } from "../api/fantasy-api";
@@ -23,7 +25,12 @@ import { queryKeys } from "../api/query-keys";
 import type { PlayerFlag, RankingImportResponse } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { isDebugUi } from "../config";
-import { currentPickNo, picksForSlot } from "../utils/draft-order";
+import { currentPickNo, nextPickFor, picksForSlot } from "../utils/draft-order";
+import {
+  type PickAlertSettings as AlertSettings,
+  readPickAlertSettings,
+  writePickAlertSettings,
+} from "../utils/pick-alerts";
 import {
   clearStoredDraft,
   readStoredDraft,
@@ -51,6 +58,7 @@ export function DraftDashboard() {
   const [showNotes, setShowNotes] = useState(
     () => readStorage(SHOW_NOTES_STORAGE_KEY) === "true",
   );
+  const [alertSettings, setAlertSettings] = useState(readPickAlertSettings);
   const debouncedSearch = useDebouncedValue(search.trim(), 250);
   // A draft restored from a previous page load resumes monitoring, so
   // setup starts collapsed just like after pressing Start.
@@ -123,6 +131,18 @@ export function DraftDashboard() {
         )
       : [];
 
+  // Auctions have no pick order, so no next pick and no alerts.
+  const nextPick =
+    data?.draftStatus === "DRAFTING" && mySlot !== undefined
+      ? nextPickFor(mySlot, currentPickNo(data.picks), data.draft)
+      : undefined;
+  useOnTheClockAlerts(nextPick, data?.draft.teams, alertSettings);
+
+  function updateAlertSettings(next: AlertSettings) {
+    setAlertSettings(next);
+    writePickAlertSettings(next);
+  }
+
   // Side columns only fit on wide screens (see .draft-board in
   // index.css); there tier counts move beside My team instead of
   // sitting above the recommendations.
@@ -164,6 +184,16 @@ export function DraftDashboard() {
                 storedDraft && updateStoredDraft({ ...storedDraft, draftSlot })
               }
               collapsible={isPhone}
+              alertSettings={
+                data.draft.type !== "auction" &&
+                data.draftStatus !== "COMPLETE" &&
+                mySlot !== undefined && (
+                  <PickAlertSettings
+                    settings={alertSettings}
+                    onChange={updateAlertSettings}
+                  />
+                )
+              }
             />
             {isWide && data.draftStatus !== "COMPLETE" && tierCounts}
           </div>

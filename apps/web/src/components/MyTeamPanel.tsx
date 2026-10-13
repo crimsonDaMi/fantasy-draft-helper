@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { ApiDraftInfo, ApiDraftPick, DraftStatus } from "../types/api";
 import { byeClashes } from "../utils/bye-clashes";
 import { auctionBudget, formatPick, nextPickFor } from "../utils/draft-order";
@@ -17,6 +19,8 @@ interface MyTeamPanelProps {
   onSlotChange: (slot: number) => void;
   /** Collapsed to the heading and next pick until opened (phones). */
   collapsible?: boolean;
+  /** On-the-clock alert settings, shown below the roster. */
+  alertSettings?: ReactNode;
 }
 
 function NextPickLine({
@@ -79,6 +83,7 @@ export function MyTeamPanel({
   myPicks,
   onSlotChange,
   collapsible = false,
+  alertSettings,
 }: MyTeamPanelProps) {
   const teams = draft.teams ?? 0;
   const canPickSlot = !slotFromSleeper && teams > 0;
@@ -135,6 +140,7 @@ export function MyTeamPanel({
         </summary>
         {slotSelect}
         {body}
+        {alertSettings}
       </details>
     );
   }
@@ -147,6 +153,7 @@ export function MyTeamPanel({
       </div>
       {nextPick}
       {body}
+      {alertSettings}
     </section>
   );
 }

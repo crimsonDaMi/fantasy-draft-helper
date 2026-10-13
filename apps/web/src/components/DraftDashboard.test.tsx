@@ -252,6 +252,54 @@ describe("DraftDashboard", () => {
     expect(within(myTeam).queryByText("Player Ten")).toBeNull();
   });
 
+  it("counts down to the user's pick in the tab title, except in auctions", async () => {
+    document.title = "Draft helper";
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1", draftSlot: 3 }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 2,
+          matchedCount: 2,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({ draftStatus: "DRAFTING" }),
+    );
+
+    renderWithClient();
+
+    await waitFor(() => expect(document.title).toBe("(Up in 2) Draft helper"));
+    expect(screen.getByRole("group", { name: "Alert me" })).toBeInTheDocument();
+    cleanup();
+    expect(document.title).toBe("Draft helper");
+
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        draftStatus: "DRAFTING",
+        draft: {
+          type: "auction",
+          teams: 4,
+          rounds: 3,
+          budget: 200,
+          rosterSlots: { QB: 1 },
+        },
+      }),
+    );
+
+    renderWithClient();
+
+    await screen.findByText(/\$200 of \$200 left/);
+    expect(document.title).toBe("Draft helper");
+    expect(screen.queryByRole("group", { name: "Alert me" })).toBeNull();
+  });
+
   it("moves tier counts beside My team on wide screens", async () => {
     window.localStorage.setItem(
       "draft-helper-draft",
