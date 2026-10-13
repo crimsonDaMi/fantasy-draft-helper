@@ -12,18 +12,18 @@
     "lint": "oxlint --type-aware src"
   },
   "dependencies": {
-    "@fastify/cookie": "^11.0.2",
-    "@fastify/cors": "^11.3.0",
-    "@fastify/multipart": "^10.1.2",
-    "@fastify/static": "^10.1.4",
+    "@fastify/cookie": "^11.1.3",
+    "@fastify/cors": "^11.3.1",
+    "@fastify/multipart": "^10.1.3",
+    "@fastify/static": "^10.1.6",
     "csv-parse": "^7.0.3",
     "fastify": "^5.12.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^24.19.1",
+    "@types/node": "^24.19.2",
     "oxlint": "^1.86.0",
-    "oxlint-tsgolint": "^7.0.2003",
+    "oxlint-tsgolint": "^7.0.2004",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",
     "vitest": "^5.0.3"
