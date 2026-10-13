@@ -30,6 +30,9 @@ import {
   type StoredDraft,
   writeStoredDraft,
 } from "../utils/stored-draft";
+import { readStorage, writeStorage } from "../utils/storage";
+
+const SHOW_NOTES_STORAGE_KEY = "draft-helper-show-notes";
 
 /** Keep in sync with the .draft-board media query in index.css. */
 const WIDE_DRAFT_BOARD_QUERY = "(min-width: 1200px)";
@@ -44,6 +47,10 @@ export function DraftDashboard() {
   const [search, setSearch] = useState("");
   const [rookies, setRookies] = useState(false);
   const [showAvoided, setShowAvoided] = useState(false);
+  // Remembered, so a reload mid-draft keeps the notes open.
+  const [showNotes, setShowNotes] = useState(
+    () => readStorage(SHOW_NOTES_STORAGE_KEY) === "true",
+  );
   const debouncedSearch = useDebouncedValue(search.trim(), 250);
   // A draft restored from a previous page load resumes monitoring, so
   // setup starts collapsed just like after pressing Start.
@@ -195,9 +202,29 @@ export function DraftDashboard() {
                     Show hidden players ({data.avoidedCount})
                   </label>
                 )}
+                {(showNotes ||
+                  data.recommendations.some(
+                    (recommendation) => recommendation.note,
+                  )) && (
+                  <label className="recommendation-filters__avoided">
+                    <input
+                      type="checkbox"
+                      checked={showNotes}
+                      onChange={(event) => {
+                        setShowNotes(event.target.checked);
+                        writeStorage(
+                          SHOW_NOTES_STORAGE_KEY,
+                          String(event.target.checked),
+                        );
+                      }}
+                    />{" "}
+                    Show all notes
+                  </label>
+                )}
                 <RecommendationsList
                   recommendations={data.recommendations}
                   adpFormat={data.adpFormat}
+                  showAllNotes={showNotes}
                   onFlagChange={(sleeperId, flag) =>
                     flagMutation.mutate({ sleeperId, flag })
                   }

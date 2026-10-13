@@ -27,7 +27,8 @@ See `RELEASING.md`.
   which used to be ignored, is kept, and the ranking editor's ✎ button
   next to ★/⊘ adds, edits or clears a ranked player's note (Ctrl+Enter
   saves). On draft day the top pick shows its note, and other
-  recommendations with one get a ✎ that reveals it; players without a
+  recommendations with one get a ✎ that reveals it, or "Show all notes"
+  (remembered across reloads) opens every note at once; players without a
   note look as before. "Export CSV" includes the notes.
 - Bye weeks: a `bye` column in your ranking CSV (FantasyPros' `BYE WEEK`
   works as it is) shows each player's bye next to them in the

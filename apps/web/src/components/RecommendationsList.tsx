@@ -13,6 +13,8 @@ interface RecommendationsListProps {
   recommendations: ApiRecommendation[];
   /** ADP format the badges compare against, e.g. `1QB PPR`. */
   adpFormat: string;
+  /** Shows every row's note, instead of behind its ✎ toggle. */
+  showAllNotes?: boolean;
   /** Omit to render the list without watch/avoid controls. */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
 }
@@ -53,13 +55,15 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
   );
 }
 
-/** A list row's note, behind a ✎ toggle so rows without one stay as they
- * are; the top pick shows its note outright. */
+/** A list row's note, behind a ✎ toggle (unless `showNote`) so rows
+ * without one stay as they are; the top pick shows its note outright. */
 function RecommendationRow({
   recommendation,
+  showNote,
   flagButtons,
 }: {
   recommendation: ApiRecommendation;
+  showNote: boolean;
   flagButtons: ReactNode;
 }) {
   const noteTip = useInfoTip();
@@ -73,7 +77,7 @@ function RecommendationRow({
         {recommendation.player.fullName}{" "}
         <RookieBadge rookie={recommendation.player.rookie} />
         <InjuryBadge status={recommendation.player.injuryStatus} />
-        {note && (
+        {note && !showNote && (
           <button
             type="button"
             className="info-tip__button"
@@ -90,7 +94,7 @@ function RecommendationRow({
       </span>
       {flagButtons}
       {note && (
-        <InfoTipPanel id={noteTip.panelId} open={noteTip.open}>
+        <InfoTipPanel id={noteTip.panelId} open={showNote || noteTip.open}>
           <p className="player-note">{note}</p>
         </InfoTipPanel>
       )}
@@ -123,6 +127,7 @@ function AdpBadge({ recommendation }: { recommendation: ApiRecommendation }) {
 export function RecommendationsList({
   recommendations,
   adpFormat,
+  showAllNotes = false,
   onFlagChange,
 }: RecommendationsListProps) {
   const legend = useInfoTip();
@@ -194,7 +199,10 @@ export function RecommendationsList({
             WR15: the same by ADP
           </li>
           <li>Bye: the player's bye week, from your ranking CSV.</li>
-          <li>✎ shows your note on the player, from your ranking.</li>
+          <li>
+            ✎ shows your note on the player, from your ranking ("Show all notes"
+            opens every one).
+          </li>
           <li>
             <span className="rookie-badge">R</span> rookie · Age: the player's
             age, from Sleeper
@@ -212,6 +220,7 @@ export function RecommendationsList({
             <RecommendationRow
               key={recommendation.player.sleeperId}
               recommendation={recommendation}
+              showNote={showAllNotes}
               flagButtons={flagButtons(recommendation)}
             />
           ))}

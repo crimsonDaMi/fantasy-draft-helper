@@ -538,6 +538,80 @@ describe("DraftDashboard", () => {
     );
   });
 
+  it("shows all notes at once, and remembers the choice", async () => {
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1" }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 3,
+          matchedCount: 3,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        draftStatus: "DRAFTING",
+        recommendations: [
+          { rank: 1, player: { sleeperId: "1", fullName: "Player One" } },
+          {
+            rank: 2,
+            note: "Injury risk",
+            player: { sleeperId: "2", fullName: "Player Two" },
+          },
+          { rank: 3, player: { sleeperId: "3", fullName: "Player Three" } },
+        ],
+      }),
+    );
+
+    renderWithClient();
+
+    fireEvent.click(await screen.findByLabelText("Show all notes"));
+
+    expect(screen.getByText("Injury risk")).toBeInTheDocument();
+    // The row's own toggle isn't needed while every note shows.
+    expect(
+      screen.queryByRole("button", { name: "Note on Player Two" }),
+    ).toBeNull();
+    expect(window.localStorage.getItem("draft-helper-show-notes")).toBe("true");
+  });
+
+  it("leaves out the notes toggle when no recommendation has a note", async () => {
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1" }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 1,
+          matchedCount: 1,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({
+        draftStatus: "DRAFTING",
+        recommendations: [
+          { rank: 1, player: { sleeperId: "1", fullName: "Player One" } },
+        ],
+      }),
+    );
+
+    renderWithClient();
+
+    await screen.findByText("Player One");
+    expect(screen.queryByLabelText("Show all notes")).toBeNull();
+  });
+
   it("monitors a draft from a pasted Sleeper draft link", async () => {
     mocks.listRankings.mockResolvedValue({ rankings: [] });
 
