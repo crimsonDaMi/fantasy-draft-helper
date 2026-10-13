@@ -40,6 +40,7 @@ export function useDraftRecommendations(
   positions?: string[],
   searchQuery?: string,
   showAvoided = false,
+  rookies = false,
 ): UseDraftRecommendationsResult {
   const isEnabled = Boolean(draftId && rankingId);
 
@@ -50,12 +51,14 @@ export function useDraftRecommendations(
       positions,
       searchQuery,
       showAvoided,
+      rookies,
     ),
     queryFn: () =>
       getRecommendations(draftId!, rankingId!, {
         positions,
         query: searchQuery,
         showAvoided,
+        rookies,
       }),
     enabled: isEnabled,
     placeholderData: keepPreviousData,

@@ -504,6 +504,40 @@ describe("DraftDashboard", () => {
     );
   });
 
+  it("limits the recommendations to rookies with the Rookies pill", async () => {
+    window.localStorage.setItem(
+      "draft-helper-draft",
+      JSON.stringify({ draftId: "draft-1" }),
+    );
+    mocks.listRankings.mockResolvedValue({
+      rankings: [
+        {
+          id: "ranking-1",
+          name: "Test ranking",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          playerCount: 1,
+          matchedCount: 1,
+        },
+      ],
+    });
+    mocks.getRecommendations.mockResolvedValue(
+      recommendationsResponse({ draftStatus: "DRAFTING" }),
+    );
+
+    renderWithClient();
+
+    fireEvent.click(await screen.findByLabelText("WR"));
+    fireEvent.click(screen.getByLabelText("Rookies"));
+
+    await waitFor(() =>
+      expect(mocks.getRecommendations).toHaveBeenLastCalledWith(
+        "draft-1",
+        "ranking-1",
+        expect.objectContaining({ positions: ["WR"], rookies: true }),
+      ),
+    );
+  });
+
   it("monitors a draft from a pasted Sleeper draft link", async () => {
     mocks.listRankings.mockResolvedValue({ rankings: [] });
 

@@ -3,9 +3,17 @@ import { POSITIONS } from "../utils/positions";
 interface PositionFilterProps {
   selected: string[];
   onChange: (positions: string[]) => void;
+  rookies?: boolean;
+  /** Omit to leave out the Rookies pill. */
+  onRookiesChange?: (rookies: boolean) => void;
 }
 
-export function PositionFilter({ selected, onChange }: PositionFilterProps) {
+export function PositionFilter({
+  selected,
+  onChange,
+  rookies = false,
+  onRookiesChange,
+}: PositionFilterProps) {
   const toggle = (position: string) => {
     if (selected.includes(position)) {
       onChange(selected.filter((p) => p !== position));
@@ -31,6 +39,17 @@ export function PositionFilter({ selected, onChange }: PositionFilterProps) {
           <label htmlFor={`position-${position}`}>{position}</label>
         </span>
       ))}
+      {onRookiesChange && (
+        <span className="position-filter__pill">
+          <input
+            type="checkbox"
+            id="position-filter-rookies"
+            checked={rookies}
+            onChange={(event) => onRookiesChange(event.target.checked)}
+          />
+          <label htmlFor="position-filter-rookies">Rookies</label>
+        </span>
+      )}
     </div>
   );
 }

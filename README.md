@@ -22,8 +22,8 @@ draft state.
 **On draft day**
 
 - The top available players in your ranking order, refreshed every few
-  seconds while the draft runs, with filters by position and search by
-  name or team.
+  seconds while the draft runs, with filters by position and rookies, and
+  search by name or team.
 - Positional ranks (e.g. `WR12`) from your ranking next to each player in
   the recommendations, recent picks and recap, plus the positional rank by
   ADP (e.g. `ADP WR15`) where ADP exists.
@@ -32,7 +32,8 @@ draft state.
 - ADP next to each player, in your league's format (1QB or Superflex,
   PPR or half PPR, redraft or dynasty), so you can see where you're higher
   or lower than the field.
-- Injury badges (Q, D, O, IR, …).
+- Injury badges (Q, D, O, IR, …), a rookie badge (R), and each
+  player's age, from Sleeper's player data.
 - Your team: when you pick next, your players so far, how they fill
   your lineup slots, and weeks where several of your starters share a bye.
 - Bye weeks next to each player, when your ranking CSV has them.

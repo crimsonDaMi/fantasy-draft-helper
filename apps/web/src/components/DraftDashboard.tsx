@@ -42,6 +42,7 @@ export function DraftDashboard() {
   const rankingSummary = importResult?.summary;
   const [positions, setPositions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [rookies, setRookies] = useState(false);
   const [showAvoided, setShowAvoided] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim(), 250);
   // A draft restored from a previous page load resumes monitoring, so
@@ -68,6 +69,7 @@ export function DraftDashboard() {
       positions,
       debouncedSearch,
       showAvoided,
+      rookies,
     );
 
   const flagMutation = useMutation({
@@ -171,6 +173,8 @@ export function DraftDashboard() {
                   <PositionFilter
                     selected={positions}
                     onChange={setPositions}
+                    rookies={rookies}
+                    onRookiesChange={setRookies}
                   />
                   <SearchField
                     className="recommendation-filters__search"

@@ -32,6 +32,8 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
   return (
     <>
       {recommendation.player.team}
+      {recommendation.player.age !== undefined &&
+        ` · Age ${recommendation.player.age}`}
       {positionRank && ` · ${positionRank}`}
       {recommendation.tier && ` · Tier ${recommendation.tier}`}
       {recommendation.bye !== undefined && ` · Bye ${recommendation.bye}`}
@@ -45,6 +47,18 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
           together. */}
       {adpPositionRank && ` · ADP ${adpPositionRank}`}
     </>
+  );
+}
+
+function RookieBadge({ rookie }: { rookie?: boolean }) {
+  if (!rookie) {
+    return null;
+  }
+
+  return (
+    <span className="rookie-badge" title="Rookie" aria-label="Rookie">
+      R
+    </span>
   );
 }
 
@@ -103,6 +117,7 @@ export function RecommendationsList({
           <span className="hero__title">
             <PositionBadge position={topPick.player.position} />
             <span className="hero__name">{topPick.player.fullName}</span>
+            <RookieBadge rookie={topPick.player.rookie} />
             <InjuryBadge status={topPick.player.injuryStatus} />
             {flagButtons(topPick)}
           </span>
@@ -140,6 +155,10 @@ export function RecommendationsList({
             WR15: the same by ADP
           </li>
           <li>Bye: the player's bye week, from your ranking CSV.</li>
+          <li>
+            <span className="rookie-badge">R</span> rookie · Age: the player's
+            age, from Sleeper
+          </li>
           <li>ADP is {adpFormat} ADP from Sleeper, matching this draft.</li>
           <li>
             Injury: Q questionable · D doubtful · O out · IR injured reserve
@@ -158,6 +177,7 @@ export function RecommendationsList({
               <PositionBadge position={recommendation.player.position} />
               <span className="rec-list__name">
                 {recommendation.player.fullName}{" "}
+                <RookieBadge rookie={recommendation.player.rookie} />
                 <InjuryBadge status={recommendation.player.injuryStatus} />
               </span>
               <span className="rec-list__meta">

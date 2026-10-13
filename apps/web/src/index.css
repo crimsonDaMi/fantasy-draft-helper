@@ -410,6 +410,26 @@ input[type="number"] {
   );
 }
 
+/* Rookie badge */
+
+.rookie-badge {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  vertical-align: middle;
+}
+
+/* In list rows the badges sit inline; the hero's flex gap spaces them. */
+.rec-list__name .rookie-badge + .injury-badge {
+  margin-left: 4px;
+}
+
 /* Position filter */
 
 .position-filter {

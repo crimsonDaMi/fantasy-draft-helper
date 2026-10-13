@@ -9,4 +9,7 @@ export interface Player {
   injuryStatus?: string;
   active: boolean;
   fantasyPositions: string[];
+  age?: number;
+  /** Seasons in the NFL; 0 for a rookie. */
+  yearsExp?: number;
 }

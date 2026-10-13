@@ -884,4 +884,90 @@ describe("RecommendationService", () => {
       undefined,
     ]);
   });
+
+  it("keeps only rookies when asked, alongside the other filters", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING", rosterSlots: {} },
+        picks: [],
+        draftedPlayerIds: new Set(),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const players = [
+      {
+        sleeperId: "1",
+        fullName: "Rookie Runner",
+        position: "RB",
+        yearsExp: 0,
+      },
+      {
+        sleeperId: "2",
+        fullName: "Rookie Catcher",
+        position: "WR",
+        yearsExp: 0,
+      },
+      {
+        sleeperId: "3",
+        fullName: "Veteran Runner",
+        position: "RB",
+        yearsExp: 5,
+      },
+      { sleeperId: "4", fullName: "Unknown Runner", position: "RB" },
+      {
+        sleeperId: "5",
+        fullName: "Rookie Rusher",
+        position: "RB",
+        yearsExp: 0,
+      },
+    ];
+
+    const rankingStoreService = {
+      getFlags: () => ({}),
+      getRankingMatches: () =>
+        players.map((player, index) => ({
+          ranking: { rank: index + 1, playerName: player.fullName },
+          player,
+          method: "SLEEPER_ID",
+        })),
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      noopAdpService as never,
+      noopPlayerService as never,
+    );
+
+    const rookies = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+      undefined,
+      undefined,
+      false,
+      true,
+    );
+    const rookieRunners = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+      ["RB"],
+      "runner",
+      false,
+      true,
+    );
+
+    expect(rookies.recommendations.map((r) => r.player.sleeperId)).toEqual([
+      "1",
+      "2",
+      "5",
+    ]);
+    expect(
+      rookieRunners.recommendations.map((r) => r.player.sleeperId),
+    ).toEqual(["1"]);
+  });
 });

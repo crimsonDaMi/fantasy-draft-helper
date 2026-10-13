@@ -28,6 +28,10 @@ const recommendationsQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((value) => value === "true"),
+  rookies: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
 });
 
 export function createRecommendationsRoutes(
@@ -48,7 +52,7 @@ export function createRecommendationsRoutes(
 
       const { draftId } = draftParamsSchema.parse(request.params);
 
-      const { rankingId, limit, positions, q, showAvoided } =
+      const { rankingId, limit, positions, q, showAvoided, rookies } =
         recommendationsQuerySchema.parse(request.query);
 
       if (!rankingStoreService.hasRanking(rankingId, userId)) {
@@ -63,6 +67,7 @@ export function createRecommendationsRoutes(
         positions,
         q,
         showAvoided,
+        rookies,
       );
 
       return mapRecommendationsResponse(draftId, result);

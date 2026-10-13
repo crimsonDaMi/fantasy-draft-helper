@@ -50,6 +50,11 @@ function mapRecommendation(recommendation: Recommendation) {
       team: recommendation.player.team,
       position: recommendation.player.position,
       injuryStatus: recommendation.player.injuryStatus,
+      age: recommendation.player.age,
+      rookie:
+        recommendation.player.yearsExp === undefined
+          ? undefined
+          : recommendation.player.yearsExp === 0,
     },
     adp: recommendation.adp,
     flag: recommendation.flag,

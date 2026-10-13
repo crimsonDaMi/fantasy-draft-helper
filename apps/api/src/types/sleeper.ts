@@ -63,6 +63,9 @@ export interface SleeperPlayer {
   active?: boolean;
   sport?: string;
   fantasy_positions?: string[] | null;
+  age?: number | null;
+  /** Seasons in the NFL; 0 for a rookie. */
+  years_exp?: number | null;
 }
 
 export type SleeperPlayersResponse = Record<string, SleeperPlayer>;

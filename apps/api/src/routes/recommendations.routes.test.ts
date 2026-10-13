@@ -293,6 +293,7 @@ describe("recommendations routes", () => {
       ["RB", "WR"],
       undefined,
       false,
+      false,
     );
 
     await app.close();
@@ -336,6 +337,7 @@ describe("recommendations routes", () => {
       undefined,
       undefined,
       false,
+      false,
     );
 
     await app.close();
@@ -375,7 +377,100 @@ describe("recommendations routes", () => {
       undefined,
       "smith",
       false,
+      false,
     );
+
+    await app.close();
+  });
+
+  it("forwards the rookies filter", async () => {
+    const app = Fastify();
+
+    app.decorateRequest("user", undefined);
+    app.addHook("onRequest", async (request) => {
+      request.user = TEST_USER;
+    });
+
+    const getRecommendations = vi.fn(async () => recommendationResult);
+
+    app.register(
+      createRecommendationsRoutes(
+        { getRecommendations } as never,
+        {
+          hasRankings: () => true,
+          hasRanking: () => true,
+        } as never,
+      ),
+    );
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts/draft-1/recommendations?rankingId=ranking-1&positions=WR&q=smith&rookies=true",
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(getRecommendations).toHaveBeenCalledWith(
+      "draft-1",
+      "ranking-1",
+      TEST_USER.id,
+      20,
+      ["WR"],
+      "smith",
+      false,
+      true,
+    );
+
+    await app.close();
+  });
+
+  it("returns the player's age and rookie status when Sleeper has them", async () => {
+    const app = createTestApp({
+      ...recommendationResult,
+      recommendations: [
+        {
+          ...recommendationResult.recommendations[0],
+          player: {
+            sleeperId: "1",
+            fullName: "Player One",
+            age: 21,
+            yearsExp: 0,
+          },
+        },
+        {
+          ...recommendationResult.recommendations[0],
+          player: {
+            sleeperId: "2",
+            fullName: "Player Two",
+            age: 29,
+            yearsExp: 6,
+          },
+        },
+        {
+          ...recommendationResult.recommendations[0],
+          player: { sleeperId: "3", fullName: "Player Three" },
+        },
+      ],
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/drafts/draft-1/recommendations?rankingId=ranking-1",
+    });
+
+    expect(
+      response
+        .json()
+        .recommendations.map(
+          (r: { player: { age?: number; rookie?: boolean } }) => [
+            r.player.age,
+            r.player.rookie,
+          ],
+        ),
+    ).toEqual([
+      [21, true],
+      [29, false],
+      [undefined, undefined],
+    ]);
 
     await app.close();
   });

@@ -115,4 +115,49 @@ describe("RecommendationsList", () => {
     expect(screen.getByText(/ADP is SF ADP/)).toBeInTheDocument();
     expect(screen.queryByText(/watch a player/)).not.toBeInTheDocument();
   });
+
+  it("shows age and a rookie badge only where Sleeper has the data", () => {
+    const { container } = render(
+      <RecommendationsList
+        adpFormat="SF"
+        recommendations={[
+          {
+            rank: 1,
+            player: {
+              sleeperId: "1",
+              fullName: "Player One",
+              team: "AAA",
+              age: 21,
+              rookie: true,
+            },
+          },
+          {
+            rank: 2,
+            player: {
+              sleeperId: "2",
+              fullName: "Player Two",
+              team: "BBB",
+              age: 29,
+              rookie: false,
+            },
+          },
+          {
+            rank: 3,
+            player: { sleeperId: "3", fullName: "Player Three", team: "CCC" },
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector(".hero__meta")).toHaveTextContent(
+      /^AAA · Age 21$/,
+    );
+    expect(container.querySelector(".hero__title")).toContainElement(
+      screen.getByLabelText("Rookie"),
+    );
+    const metas = container.querySelectorAll(".rec-list__meta");
+    expect(metas[0]).toHaveTextContent(/^BBB · Age 29$/);
+    expect(metas[1]).toHaveTextContent(/^CCC$/);
+    expect(screen.getAllByLabelText("Rookie")).toHaveLength(1);
+  });
 });

@@ -161,11 +161,12 @@ Returns normalized draft metadata, including `PRE_DRAFT`, `DRAFTING`, `COMPLETE`
 ### Get recommendations
 
 ```text
-GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20&positions=QB,RB&q=<search>
+GET /drafts/:draftId/recommendations?rankingId=<rankingId>&limit=20&positions=QB,RB&q=<search>&rookies=true
 ```
 
-`positions` and `q` (a case-insensitive name/team search) are optional and
-are applied before `limit`.
+`positions`, `q` (a case-insensitive name/team search), and `rookies=true`
+(only players Sleeper lists with no years of experience) are optional,
+combine with each other, and are applied before `limit`.
 
 Besides the recommendations, the response carries what the draft-day
 panels need: `draft` (type, teams, rounds, reversal round, draft order,
@@ -175,7 +176,7 @@ available), `adpFormat` (the ADP format used for the
 draft, e.g. `1QB PPR` or `SF` — see
 [ADP Data Source](configuration.md#adp-data-source)), and `tierCounts`
 (players left in the best two remaining tiers of your ranking, per
-position — unaffected by `positions`, `q`, and `limit`).
+position — unaffected by `positions`, `q`, `rookies`, and `limit`).
 
 The response includes draft status, total picks, drafted-player count, last pick when available, freshness timestamps, and recommendations. `playersUpdatedAt` is when the player data — and so the injury statuses — was last loaded from Sleeper.
 
@@ -192,7 +193,9 @@ Position data is available for that player:
     "sleeperId": "9221",
     "fullName": "Jahmyr Gibbs",
     "team": "DET",
-    "position": "RB"
+    "position": "RB",
+    "age": 22,
+    "rookie": false
   },
   "adp": { "value": 3.7, "diff": -0.7, "positionRank": 2 }
 }
@@ -200,6 +203,10 @@ Position data is available for that player:
 
 `bye` is the player's bye week from the ranking CSV, omitted when the CSV
 had none.
+
+`player.age` and `player.rookie` come from Sleeper's player data (`age`,
+and `years_exp` of 0 for a rookie); each is omitted when Sleeper has no
+value for the player.
 
 `positionRank` is the player's place among their position in your whole
 ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't

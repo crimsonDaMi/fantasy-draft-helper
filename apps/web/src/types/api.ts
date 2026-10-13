@@ -4,6 +4,10 @@ export interface ApiPlayer {
   team?: string;
   position?: string;
   injuryStatus?: string;
+  /** From Sleeper, when it has the player's age. */
+  age?: number;
+  /** From Sleeper's years of experience; omitted when unknown. */
+  rookie?: boolean;
 }
 
 export type PlayerFlag = "watch" | "avoid";

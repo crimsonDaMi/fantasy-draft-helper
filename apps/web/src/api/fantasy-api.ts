@@ -179,6 +179,7 @@ export interface GetRecommendationsOptions {
   positions?: string[];
   query?: string;
   showAvoided?: boolean;
+  rookies?: boolean;
 }
 
 export function getRecommendations(
@@ -186,7 +187,7 @@ export function getRecommendations(
   rankingId: string,
   options: GetRecommendationsOptions = {},
 ): Promise<RecommendationsResponse> {
-  const { limit = 20, positions, query, showAvoided } = options;
+  const { limit = 20, positions, query, showAvoided, rookies } = options;
 
   const params = new URLSearchParams({
     rankingId,
@@ -203,6 +204,10 @@ export function getRecommendations(
 
   if (showAvoided) {
     params.set("showAvoided", "true");
+  }
+
+  if (rookies) {
+    params.set("rookies", "true");
   }
 
   const recommendationsPath = path`/drafts/${draftId}/recommendations`;

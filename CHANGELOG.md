@@ -28,6 +28,11 @@ See `RELEASING.md`.
   are on bye. Information only: byes never change the recommendations.
   Rankings without bye data look as before, and "Export CSV" now
   includes the column.
+- Age and rookies, for dynasty startups and rookie drafts: each
+  recommended player shows their age and, for rookies, an "R" badge, both
+  from Sleeper's player data and left out where Sleeper has none. A
+  "Rookies" pill next to the position filter limits the recommendations
+  to rookies, together with the position filter and search.
 - Positional ranks next to each player in the recommendations, recent
   picks and draft recap: where the player sits among their position in
   your ranking (e.g. `WR12`) and, when Sleeper has ADP for them, by ADP

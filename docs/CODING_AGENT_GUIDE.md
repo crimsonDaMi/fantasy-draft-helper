@@ -113,7 +113,7 @@ Fuzzy suggestions, if ever added, must never create a match automatically.
 
 `RecommendationService` walks the persisted ranking in order, skipping
 unmatched/ambiguous rows, drafted players, and players outside the
-position filter, and stops at the limit (default 20, max 100). The
+position, search, and rookies filters, and stops at the limit (default 20, max 100). The
 ranking is stored in order, so there is no sorting per request.
 
 The web app polls via TanStack Query (`useDraftRecommendations`): disabled

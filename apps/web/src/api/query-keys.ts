@@ -17,6 +17,7 @@ export const queryKeys = {
     positions: string[] | undefined,
     query: string | undefined,
     showAvoided: boolean,
+    rookies: boolean,
   ) =>
     [
       "recommendations",
@@ -25,5 +26,6 @@ export const queryKeys = {
       positions,
       query,
       showAvoided,
+      rookies,
     ] as const,
 };
