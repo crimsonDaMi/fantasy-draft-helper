@@ -150,6 +150,7 @@ export function RankingEditorPage() {
   const [confirmingRemoveTierPosition, setConfirmingRemoveTierPosition] =
     useState<number>();
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
+  const [rookiesOnly, setRookiesOnly] = useState(false);
   const [unrankedSearch, setUnrankedSearch] = useState("");
   // Separate from the unranked search on purpose: finding a player to
   // drag in shouldn't also hide the tier rows you want to drop between.
@@ -272,9 +273,12 @@ export function RankingEditorPage() {
     return findPlayer(sleeperId)?.fullName ?? fallback;
   }
 
-  // Whether a player passes the position filter and a name search.
+  // Whether a player passes the position and rookies filters and a name
+  // search.
   function matchesFilters(player: EditorPlayer, search: string): boolean {
-    return filterPlayers([player], positionFilter, search).length > 0;
+    return (
+      filterPlayers([player], positionFilter, search, rookiesOnly).length > 0
+    );
   }
 
   function handleSelectPlayer(sleeperId: string) {
@@ -584,6 +588,8 @@ export function RankingEditorPage() {
         <PositionFilter
           selected={positionFilter}
           onChange={setPositionFilter}
+          rookies={rookiesOnly}
+          onRookiesChange={setRookiesOnly}
         />
         <SearchField
           className="ranking-editor__ranked-search"
@@ -675,6 +681,7 @@ export function RankingEditorPage() {
                       containers[tier.label] ?? [],
                       positionFilter,
                       rankedSearch,
+                      rookiesOnly,
                     )}
                     showRank
                     className="ranking-editor__tier"
@@ -731,6 +738,7 @@ export function RankingEditorPage() {
                   containers[UNRANKED_CONTAINER] ?? [],
                   positionFilter,
                   unrankedSearch,
+                  rookiesOnly,
                 )}
                 showRank={false}
                 className="ranking-editor__unranked"

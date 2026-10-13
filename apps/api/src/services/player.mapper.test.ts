@@ -23,12 +23,17 @@ describe("mapSleeperPlayer", () => {
     });
   });
 
-  it("maps age and years of experience, leaving out missing ones", () => {
+  it("maps age and rookie status, leaving out missing ones", () => {
     const rookie = mapSleeperPlayer({
       player_id: "1",
       full_name: "Player One",
       age: 21,
       years_exp: 0,
+    });
+    const veteran = mapSleeperPlayer({
+      player_id: "3",
+      full_name: "Player Three",
+      years_exp: 4,
     });
     const unknown = mapSleeperPlayer({
       player_id: "2",
@@ -37,8 +42,9 @@ describe("mapSleeperPlayer", () => {
       years_exp: null,
     });
 
-    expect(rookie).toMatchObject({ age: 21, yearsExp: 0 });
+    expect(rookie).toMatchObject({ age: 21, rookie: true });
+    expect(veteran.rookie).toBe(false);
     expect(unknown.age).toBeUndefined();
-    expect(unknown.yearsExp).toBeUndefined();
+    expect(unknown.rookie).toBeUndefined();
   });
 });

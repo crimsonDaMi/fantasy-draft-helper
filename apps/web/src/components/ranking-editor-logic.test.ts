@@ -410,4 +410,38 @@ describe("filterPlayers", () => {
     const result = filterPlayers(players, ["RB"], "josh");
     expect(result.map((p) => p.sleeperId)).toEqual(["2"]);
   });
+
+  it("combines the rookies filter with position and search", () => {
+    const withRookies = [
+      ...players,
+      {
+        sleeperId: "4",
+        fullName: "Rookie Runner",
+        position: "RB",
+        rookie: true,
+      },
+      {
+        sleeperId: "5",
+        fullName: "Rookie Passer",
+        position: "QB",
+        rookie: true,
+      },
+      {
+        sleeperId: "6",
+        fullName: "Veteran Runner",
+        position: "RB",
+        rookie: false,
+      },
+    ];
+
+    expect(filterPlayers(withRookies, [], "", false)).toBe(withRookies);
+    expect(
+      filterPlayers(withRookies, [], "", true).map((p) => p.sleeperId),
+    ).toEqual(["4", "5"]);
+    expect(
+      filterPlayers(withRookies, ["RB"], "runner", true).map(
+        (p) => p.sleeperId,
+      ),
+    ).toEqual(["4"]);
+  });
 });

@@ -10,6 +10,6 @@ export interface Player {
   active: boolean;
   fantasyPositions: string[];
   age?: number;
-  /** Seasons in the NFL; 0 for a rookie. */
-  yearsExp?: number;
+  /** Undefined when Sleeper doesn't know the player's experience. */
+  rookie?: boolean;
 }

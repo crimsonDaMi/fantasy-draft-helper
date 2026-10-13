@@ -29,6 +29,7 @@ export interface EditorPlayer {
   position?: string;
   team?: string;
   injuryStatus?: string;
+  rookie?: boolean;
   /** True 1..N position across the whole ranking (not tier-local), as
    * persisted by the backend. Undefined for unranked players. Baked
    * in once per settled server sync in buildContainers — never
@@ -54,6 +55,7 @@ function toEditorPlayer(
     position: player.position,
     team: player.team,
     injuryStatus: player.injuryStatus,
+    rookie: player.rookie,
     globalRank,
     flag,
   };
@@ -363,15 +365,28 @@ export function filterPlayersByQuery(
   });
 }
 
-/** Both filters: position, then name search. Returns `players` itself
- * when neither is active. */
+/** Only rookies when `rookiesOnly`; a player with unknown experience
+ * isn't one. Same no-op-when-off behavior as above. */
+function filterPlayersByRookie(
+  players: EditorPlayer[],
+  rookiesOnly: boolean,
+): EditorPlayer[] {
+  return rookiesOnly ? players.filter((player) => player.rookie) : players;
+}
+
+/** All filters: position, rookies, then name search. Returns `players`
+ * itself when none is active. */
 export function filterPlayers(
   players: EditorPlayer[],
   positions: string[],
   query: string,
+  rookiesOnly = false,
 ): EditorPlayer[] {
   return filterPlayersByQuery(
-    filterPlayersByPosition(players, positions),
+    filterPlayersByRookie(
+      filterPlayersByPosition(players, positions),
+      rookiesOnly,
+    ),
     query,
   );
 }

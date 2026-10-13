@@ -433,7 +433,7 @@ describe("recommendations routes", () => {
             sleeperId: "1",
             fullName: "Player One",
             age: 21,
-            yearsExp: 0,
+            rookie: true,
           },
         },
         {
@@ -442,7 +442,7 @@ describe("recommendations routes", () => {
             sleeperId: "2",
             fullName: "Player Two",
             age: 29,
-            yearsExp: 6,
+            rookie: false,
           },
         },
         {

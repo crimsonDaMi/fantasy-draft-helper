@@ -15,7 +15,7 @@ export function mapSleeperPlayer(player: SleeperPlayer): Player {
     active: player.active ?? false,
     fantasyPositions: player.fantasy_positions ?? [],
     age: player.age ?? undefined,
-    yearsExp: player.years_exp ?? undefined,
+    rookie: player.years_exp == null ? undefined : player.years_exp === 0,
   };
 }
 

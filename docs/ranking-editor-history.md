@@ -41,7 +41,8 @@ so only visible rows plus overscan are mounted.
 - Rows have a fixed height (`PLAYER_ROW_HEIGHT`); long names are truncated
   with an ellipsis and a `title` tooltip. Dynamic row heights would break
   `withForcedRows`'s assumptions.
-- The filter helpers (name search, global position filter) return the
+- The filter helpers (name search, global position and rookies filters)
+  return the
   original array reference when no filter is active, to avoid per-dragover
   work.
 - There are two name searches on purpose: one for the tiers and one for

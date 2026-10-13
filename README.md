@@ -53,6 +53,7 @@ draft state.
   editor.
 - A drag-and-drop ranking editor: reorder players, move them between
   tiers, add and remove tiers, start from scratch, and export as a CSV.
+  Filters by position and rookies, and search, help find players.
 - Several saved rankings, e.g. one per league.
 - Watch (★) players to highlight them, or avoid (⊘) them to hide them from
   the board.

@@ -47,11 +47,6 @@ function matchesQuery(player: Player, query: string | undefined) {
   return haystack.includes(normalizedQuery);
 }
 
-/** Unknown experience counts as not a rookie. */
-function isRookie(player: Player) {
-  return player.yearsExp === 0;
-}
-
 const TIERS_SHOWN_PER_POSITION = 2;
 
 /** The player's ADP and its difference to their rank (`rank - adp`,
@@ -199,7 +194,7 @@ export class RecommendationService {
       .filter((match) => showAvoided || !isAvoided(match))
       .filter((match) => isInPositions(match.player, positions))
       .filter((match) => matchesQuery(match.player, query))
-      .filter((match) => !rookiesOnly || isRookie(match.player))
+      .filter((match) => !rookiesOnly || match.player.rookie === true)
       .slice(0, limit)
       .map((match): Recommendation => ({
         ranking: match.ranking,

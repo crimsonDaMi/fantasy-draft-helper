@@ -900,26 +900,26 @@ describe("RecommendationService", () => {
         sleeperId: "1",
         fullName: "Rookie Runner",
         position: "RB",
-        yearsExp: 0,
+        rookie: true,
       },
       {
         sleeperId: "2",
         fullName: "Rookie Catcher",
         position: "WR",
-        yearsExp: 0,
+        rookie: true,
       },
       {
         sleeperId: "3",
         fullName: "Veteran Runner",
         position: "RB",
-        yearsExp: 5,
+        rookie: false,
       },
       { sleeperId: "4", fullName: "Unknown Runner", position: "RB" },
       {
         sleeperId: "5",
         fullName: "Rookie Rusher",
         position: "RB",
-        yearsExp: 0,
+        rookie: true,
       },
     ];
 

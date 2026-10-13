@@ -6,7 +6,8 @@ export interface ApiPlayer {
   injuryStatus?: string;
   /** From Sleeper, when it has the player's age. */
   age?: number;
-  /** From Sleeper's years of experience; omitted when unknown. */
+  /** From Sleeper's years of experience (0 for a rookie); omitted when
+   * unknown. */
   rookie?: boolean;
 }
 

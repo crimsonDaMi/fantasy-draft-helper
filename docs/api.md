@@ -206,7 +206,8 @@ had none.
 
 `player.age` and `player.rookie` come from Sleeper's player data (`age`,
 and `years_exp` of 0 for a rookie); each is omitted when Sleeper has no
-value for the player.
+value for the player. The ranking editor routes return them on their
+players too.
 
 `positionRank` is the player's place among their position in your whole
 ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't

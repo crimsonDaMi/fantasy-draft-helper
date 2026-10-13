@@ -245,6 +245,39 @@ describe("RankingEditorPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows only rookies, ranked and unranked, with the Rookies pill", async () => {
+    mockTwoTierRanking();
+    const detail = await mocks.getRanking();
+    detail.players[1].player.rookie = true;
+    mocks.getRanking.mockResolvedValue(detail);
+    mocks.getUnrankedPlayers.mockResolvedValue({
+      players: [
+        {
+          sleeperId: "4",
+          fullName: "Player Four",
+          position: "WR",
+          rookie: true,
+        },
+        {
+          sleeperId: "5",
+          fullName: "Player Five",
+          position: "WR",
+          rookie: false,
+        },
+      ],
+    });
+    renderWithClient();
+
+    await screen.findByText("Player Five");
+    fireEvent.click(screen.getByLabelText("Rookies"));
+
+    await waitFor(() => expect(screen.queryByText("Player One")).toBeNull());
+    expect(screen.queryByText("Player Three")).toBeNull();
+    expect(screen.queryByText("Player Five")).toBeNull();
+    expect(screen.getByText("Player Two")).toBeInTheDocument();
+    expect(screen.getByText("Player Four")).toBeInTheDocument();
+  });
+
   it("watches a ranked player from its row", async () => {
     mockTwoTierRanking();
     mocks.setPlayerFlag.mockResolvedValue({ flags: { "1": "watch" } });
