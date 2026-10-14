@@ -186,7 +186,9 @@ export function setPlayerNote(
   });
 }
 
-export interface GetRecommendationsOptions {
+/** What the recommendations are narrowed to; unset filters let every
+ * player through. */
+export interface RecommendationFilters {
   limit?: number;
   positions?: string[];
   query?: string;
@@ -197,9 +199,9 @@ export interface GetRecommendationsOptions {
 export function getRecommendations(
   draftId: string,
   rankingId: string,
-  options: GetRecommendationsOptions = {},
+  filters: RecommendationFilters = {},
 ): Promise<RecommendationsResponse> {
-  const { limit = 20, positions, query, showAvoided, rookies } = options;
+  const { limit = 20, positions, query, showAvoided, rookies } = filters;
 
   const params = new URLSearchParams({
     rankingId,

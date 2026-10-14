@@ -2,6 +2,7 @@ import {
   PositionTierCounts,
   RankedDraftPick,
   Recommendation,
+  RecommendationFilters,
   RecommendationResult,
 } from "../domain/recommendation.js";
 import { adpFormatFor } from "../domain/adp-format.js";
@@ -167,11 +168,13 @@ export class RecommendationService {
     draftId: string,
     rankingId: string,
     userId: string,
-    limit: number,
-    positions?: string[],
-    query?: string,
-    showAvoided = false,
-    rookiesOnly = false,
+    {
+      limit,
+      positions,
+      query,
+      showAvoided = false,
+      rookiesOnly = false,
+    }: RecommendationFilters,
   ): Promise<RecommendationResult> {
     const draftState = await this.draftStateService.getDraftState(draftId);
 

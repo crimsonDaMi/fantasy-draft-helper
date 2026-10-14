@@ -63,11 +63,7 @@ export function createRecommendationsRoutes(
         draftId,
         rankingId,
         userId,
-        limit,
-        positions,
-        q,
-        showAvoided,
-        rookies,
+        { limit, positions, query: q, showAvoided, rookiesOnly: rookies },
       );
 
       return mapRecommendationsResponse(draftId, result);

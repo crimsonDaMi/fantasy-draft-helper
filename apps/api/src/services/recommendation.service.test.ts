@@ -70,7 +70,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(result.recommendations).toHaveLength(1);
@@ -144,7 +144,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(
@@ -226,8 +226,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      ["RB"],
+      { limit: 10, positions: ["RB"] },
     );
 
     expect(
@@ -295,8 +294,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      [],
+      { limit: 10, positions: [] },
     );
 
     expect(
@@ -364,8 +362,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      ["RB"],
+      { limit: 10, positions: ["RB"] },
     );
 
     expect(
@@ -420,7 +417,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(result.recommendations[0]?.adp).toEqual({
@@ -474,7 +471,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(result.recommendations[0]?.adp).toBeUndefined();
@@ -515,7 +512,7 @@ describe("RecommendationService", () => {
         "draft-1",
         "ranking-1",
         TEST_USER_ID,
-        10,
+        { limit: 10 },
       );
 
       expect(requestedColumns).toEqual([column]);
@@ -560,17 +557,13 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      1,
-      undefined,
-      "amonra",
+      { limit: 1, query: "amonra" },
     );
     const byTeam = await service.getRecommendations(
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      undefined,
-      "bbb",
+      { limit: 10, query: "bbb" },
     );
 
     expect(byName.recommendations.map((r) => r.player.sleeperId)).toEqual([
@@ -629,7 +622,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(result.recommendations[0]?.player.injuryStatus).toBe("Questionable");
@@ -676,7 +669,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
 
     expect(result.picks.map((pick) => pick.depthChart)).toEqual([
@@ -758,8 +751,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      ["WR"],
+      { limit: 10, positions: ["WR"] },
     );
 
     expect(
@@ -837,8 +829,7 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      1,
-      ["WR"],
+      { limit: 1, positions: ["WR"] },
     );
 
     expect(result.picks).toEqual([
@@ -922,13 +913,10 @@ describe("RecommendationService", () => {
 
     const marked = async (positions?: string[], limit = 10) =>
       (
-        await service.getRecommendations(
-          "draft-1",
-          "ranking-1",
-          TEST_USER_ID,
+        await service.getRecommendations("draft-1", "ranking-1", TEST_USER_ID, {
           limit,
           positions,
-        )
+        })
       ).recommendations.map((recommendation) => [
         recommendation.player.sleeperId,
         recommendation.lastInTier,
@@ -982,16 +970,13 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
+      { limit: 10 },
     );
     const shown = await service.getRecommendations(
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      undefined,
-      undefined,
-      true,
+      { limit: 10, showAvoided: true },
     );
 
     expect(
@@ -1067,21 +1052,19 @@ describe("RecommendationService", () => {
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      undefined,
-      undefined,
-      false,
-      true,
+      { limit: 10, showAvoided: false, rookiesOnly: true },
     );
     const rookieRunners = await service.getRecommendations(
       "draft-1",
       "ranking-1",
       TEST_USER_ID,
-      10,
-      ["RB"],
-      "runner",
-      false,
-      true,
+      {
+        limit: 10,
+        positions: ["RB"],
+        query: "runner",
+        showAvoided: false,
+        rookiesOnly: true,
+      },
     );
 
     expect(rookies.recommendations.map((r) => r.player.sleeperId)).toEqual([

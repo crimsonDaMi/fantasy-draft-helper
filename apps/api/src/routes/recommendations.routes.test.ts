@@ -289,11 +289,13 @@ describe("recommendations routes", () => {
       "draft-1",
       "ranking-1",
       TEST_USER.id,
-      20,
-      ["RB", "WR"],
-      undefined,
-      false,
-      false,
+      {
+        limit: 20,
+        positions: ["RB", "WR"],
+        query: undefined,
+        showAvoided: false,
+        rookiesOnly: false,
+      },
     );
 
     await app.close();
@@ -333,11 +335,13 @@ describe("recommendations routes", () => {
       "draft-1",
       "ranking-1",
       TEST_USER.id,
-      20,
-      undefined,
-      undefined,
-      false,
-      false,
+      {
+        limit: 20,
+        positions: undefined,
+        query: undefined,
+        showAvoided: false,
+        rookiesOnly: false,
+      },
     );
 
     await app.close();
@@ -373,11 +377,13 @@ describe("recommendations routes", () => {
       "draft-1",
       "ranking-1",
       TEST_USER.id,
-      20,
-      undefined,
-      "smith",
-      false,
-      false,
+      {
+        limit: 20,
+        positions: undefined,
+        query: "smith",
+        showAvoided: false,
+        rookiesOnly: false,
+      },
     );
 
     await app.close();
@@ -413,11 +419,13 @@ describe("recommendations routes", () => {
       "draft-1",
       "ranking-1",
       TEST_USER.id,
-      20,
-      ["WR"],
-      "smith",
-      false,
-      true,
+      {
+        limit: 20,
+        positions: ["WR"],
+        query: "smith",
+        showAvoided: false,
+        rookiesOnly: true,
+      },
     );
 
     await app.close();

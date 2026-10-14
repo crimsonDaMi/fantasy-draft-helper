@@ -10,6 +10,18 @@ interface Adp {
   positionRank?: number;
 }
 
+/** What the user narrowed the recommendations to. Unset filters let
+ * every player through; avoided players are hidden unless
+ * `showAvoided`. */
+export interface RecommendationFilters {
+  limit: number;
+  positions?: string[];
+  /** Name or team search. */
+  query?: string;
+  showAvoided?: boolean;
+  rookiesOnly?: boolean;
+}
+
 export interface Recommendation {
   ranking: Ranking;
   player: Player;

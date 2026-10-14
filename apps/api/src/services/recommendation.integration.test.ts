@@ -153,7 +153,7 @@ describe("recommendation flow", () => {
       "draft-1",
       flow.rankingId,
       flow.userId,
-      10,
+      { limit: 10 },
     );
 
     expect(
@@ -170,7 +170,7 @@ describe("recommendation flow", () => {
       "draft-1",
       flow.rankingId,
       flow.userId,
-      10,
+      { limit: 10 },
     );
 
     expect(
@@ -200,7 +200,7 @@ describe("recommendation flow", () => {
       "draft-1",
       flow.rankingId,
       flow.userId,
-      10,
+      { limit: 10 },
     );
 
     expect(
@@ -235,7 +235,7 @@ describe("recommendation flow", () => {
       "draft-1",
       flow.rankingId,
       flow.userId,
-      10,
+      { limit: 10 },
     );
 
     expect(result.draftStatus).toBe("COMPLETE");

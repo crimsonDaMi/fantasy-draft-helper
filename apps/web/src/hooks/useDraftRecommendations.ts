@@ -1,6 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { ApiRequestError, getRecommendations } from "../api/fantasy-api";
+import {
+  ApiRequestError,
+  getRecommendations,
+  type RecommendationFilters,
+} from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import type { DraftStatus, RecommendationsResponse } from "../types/api";
 import {
@@ -35,31 +39,15 @@ function resolvePollingInterval(
 }
 
 export function useDraftRecommendations(
-  draftId?: string,
-  rankingId?: string,
-  positions?: string[],
-  searchQuery?: string,
-  showAvoided = false,
-  rookies = false,
+  draftId: string | undefined,
+  rankingId: string | undefined,
+  filters: RecommendationFilters,
 ): UseDraftRecommendationsResult {
   const isEnabled = Boolean(draftId && rankingId);
 
   const query = useQuery({
-    queryKey: queryKeys.recommendations(
-      draftId,
-      rankingId,
-      positions,
-      searchQuery,
-      showAvoided,
-      rookies,
-    ),
-    queryFn: () =>
-      getRecommendations(draftId!, rankingId!, {
-        positions,
-        query: searchQuery,
-        showAvoided,
-        rookies,
-      }),
+    queryKey: queryKeys.recommendations(draftId, rankingId, filters),
+    queryFn: () => getRecommendations(draftId!, rankingId!, filters),
     enabled: isEnabled,
     placeholderData: keepPreviousData,
     retry: (failureCount, error) => {

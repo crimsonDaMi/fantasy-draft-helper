@@ -1,3 +1,5 @@
+import type { RecommendationFilters } from "./fantasy-api";
+
 /**
  * TanStack Query keys, defined once so a query and the invalidations
  * that target it can't drift apart through a typo.
@@ -14,18 +16,6 @@ export const queryKeys = {
   recommendations: (
     draftId: string | undefined,
     rankingId: string | undefined,
-    positions: string[] | undefined,
-    query: string | undefined,
-    showAvoided: boolean,
-    rookies: boolean,
-  ) =>
-    [
-      "recommendations",
-      draftId,
-      rankingId,
-      positions,
-      query,
-      showAvoided,
-      rookies,
-    ] as const,
+    filters: RecommendationFilters,
+  ) => ["recommendations", draftId, rankingId, filters] as const,
 };

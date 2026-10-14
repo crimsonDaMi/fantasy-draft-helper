@@ -78,14 +78,12 @@ export function DraftDashboard() {
   const effectiveRankingId = selectedRanking?.id;
 
   const { data, error, isLoading, pollingIntervalMs, retry } =
-    useDraftRecommendations(
-      draftId,
-      effectiveRankingId,
+    useDraftRecommendations(draftId, effectiveRankingId, {
       positions,
-      debouncedSearch,
+      query: debouncedSearch,
       showAvoided,
       rookies,
-    );
+    });
 
   const flagMutation = useMutation({
     mutationFn: ({
