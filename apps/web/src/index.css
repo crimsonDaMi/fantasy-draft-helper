@@ -439,8 +439,25 @@ input[type="number"] {
   vertical-align: middle;
 }
 
+/* Stack badge */
+
+.stack-badge {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-link) 18%, transparent);
+  color: var(--color-link);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 /* In list rows the badges sit inline; the hero's flex gap spaces them. */
-.rec-list__name .rookie-badge + .injury-badge {
+.rec-list__name .rookie-badge + .injury-badge,
+.rec-list__name :is(.rookie-badge, .injury-badge) + .stack-badge {
   margin-left: 4px;
 }
 

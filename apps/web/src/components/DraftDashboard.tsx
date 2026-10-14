@@ -255,6 +255,7 @@ export function DraftDashboard() {
                   recommendations={data.recommendations}
                   adpFormat={data.adpFormat}
                   showAllNotes={showNotes}
+                  myPicks={myPicks}
                   onFlagChange={(sleeperId, flag) =>
                     flagMutation.mutate({ sleeperId, flag })
                   }

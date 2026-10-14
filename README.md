@@ -46,6 +46,8 @@ draft state.
   your best remaining tiers per position.
 - A "Last" tag on the last player of a position left in a tier of your
   ranking, so you can take them before the drop-off.
+- A stack tag (e.g. `Stack: BUF`) on QBs who share an NFL team with a
+  WR or TE you drafted, and the other way round.
 - A recap once the draft completes: your picks against your ranking and
   ADP, downloadable as a CSV.
 

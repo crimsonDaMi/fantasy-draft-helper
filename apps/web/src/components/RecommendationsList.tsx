@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import type { ApiRecommendation, PlayerFlag } from "../types/api";
+import type { ApiDraftPick, ApiRecommendation, PlayerFlag } from "../types/api";
 import { FlagButtons } from "./FlagButtons";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
@@ -8,7 +8,9 @@ import { InjuryBadge } from "./InjuryBadge";
 import { LastInTierBadge } from "./LastInTierBadge";
 import { PositionBadge } from "./PositionBadge";
 import { RookieBadge } from "./RookieBadge";
+import { StackBadge } from "./StackBadge";
 import { formatPositionRank } from "../utils/position-rank";
+import { stackPartners } from "../utils/stacks";
 
 interface RecommendationsListProps {
   recommendations: ApiRecommendation[];
@@ -16,6 +18,8 @@ interface RecommendationsListProps {
   adpFormat: string;
   /** Shows every row's note, instead of behind its ✎ toggle. */
   showAllNotes?: boolean;
+  /** The user's picks so far, for the stack badges. */
+  myPicks?: ApiDraftPick[];
   /** Omit to render the list without watch/avoid controls. */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
 }
@@ -73,10 +77,12 @@ function RecommendationRow({
   recommendation,
   showNote,
   flagButtons,
+  myPicks,
 }: {
   recommendation: ApiRecommendation;
   showNote: boolean;
   flagButtons: ReactNode;
+  myPicks: ApiDraftPick[];
 }) {
   const noteTip = useInfoTip();
   const { note } = recommendation;
@@ -89,6 +95,10 @@ function RecommendationRow({
         {recommendation.player.fullName}{" "}
         <RookieBadge rookie={recommendation.player.rookie} />
         <InjuryBadge status={recommendation.player.injuryStatus} />
+        <StackBadge
+          team={recommendation.player.team}
+          partners={stackPartners(recommendation.player, myPicks)}
+        />
         {note && !showNote && (
           <button
             type="button"
@@ -140,6 +150,7 @@ export function RecommendationsList({
   recommendations,
   adpFormat,
   showAllNotes = false,
+  myPicks = [],
   onFlagChange,
 }: RecommendationsListProps) {
   const legend = useInfoTip();
@@ -172,6 +183,10 @@ export function RecommendationsList({
             <span className="hero__name">{topPick.player.fullName}</span>
             <RookieBadge rookie={topPick.player.rookie} />
             <InjuryBadge status={topPick.player.injuryStatus} />
+            <StackBadge
+              team={topPick.player.team}
+              partners={stackPartners(topPick.player, myPicks)}
+            />
             {flagButtons(topPick)}
           </span>
           <span className="hero__meta">
@@ -216,6 +231,10 @@ export function RecommendationsList({
           </li>
           <li>Bye: the player's bye week, from your ranking CSV.</li>
           <li>
+            <span className="stack-badge">Stack</span>: shares an NFL team with
+            a QB, WR or TE you drafted (QB with WR/TE).
+          </li>
+          <li>
             ✎ shows your note on the player, from your ranking ("Show all notes"
             opens every one).
           </li>
@@ -238,6 +257,7 @@ export function RecommendationsList({
               recommendation={recommendation}
               showNote={showAllNotes}
               flagButtons={flagButtons(recommendation)}
+              myPicks={myPicks}
             />
           ))}
         </ol>

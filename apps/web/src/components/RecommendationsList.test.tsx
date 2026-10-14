@@ -225,4 +225,44 @@ describe("RecommendationsList", () => {
       /^BBB · Tier A Last$/,
     );
   });
+
+  it("tags players who stack with the user's picks", () => {
+    render(
+      <RecommendationsList
+        adpFormat="SF"
+        myPicks={[
+          {
+            pickNo: 3,
+            playerId: "9",
+            playerName: "Player Nine",
+            position: "QB",
+            team: "AAA",
+          },
+        ]}
+        recommendations={[
+          {
+            rank: 1,
+            player: {
+              sleeperId: "1",
+              fullName: "Player One",
+              position: "WR",
+              team: "AAA",
+            },
+          },
+          {
+            rank: 2,
+            player: {
+              sleeperId: "2",
+              fullName: "Player Two",
+              position: "WR",
+              team: "BBB",
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByLabelText("Stacks with Player Nine")).toHaveLength(1);
+    expect(screen.getByText("Stack: AAA")).toBeInTheDocument();
+  });
 });

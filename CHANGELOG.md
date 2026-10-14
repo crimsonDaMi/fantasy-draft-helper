@@ -22,6 +22,11 @@ See `RELEASING.md`.
 
 ### Added
 
+- Stack indicator: a recommended QB who shares an NFL team with a WR or
+  TE you've drafted, or a WR or TE who shares one with your QB, gets a
+  "Stack: BUF" tag; hovering it names your players it stacks with.
+  Free agents are never tagged. Information only: it never changes the
+  recommendations.
 - Last-in-tier marker: when a recommended player is the last one of
   their position left in a tier of your ranking, a "Last" tag appears
   next to their tier, so you see the drop-off coming before the tier
