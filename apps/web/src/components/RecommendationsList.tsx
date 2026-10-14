@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import type { ApiDraftPick, ApiRecommendation, PlayerFlag } from "../types/api";
 import { FlagButtons } from "./FlagButtons";
+import { HandcuffBadge } from "./HandcuffBadge";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
 import { InjuryBadge } from "./InjuryBadge";
@@ -10,6 +11,7 @@ import { PositionBadge } from "./PositionBadge";
 import { RookieBadge } from "./RookieBadge";
 import { StackBadge } from "./StackBadge";
 import { formatPositionRank } from "../utils/position-rank";
+import { handcuffedRbs } from "../utils/handcuffs";
 import { stackPartners } from "../utils/stacks";
 
 interface RecommendationsListProps {
@@ -18,7 +20,7 @@ interface RecommendationsListProps {
   adpFormat: string;
   /** Shows every row's note, instead of behind its ✎ toggle. */
   showAllNotes?: boolean;
-  /** The user's picks so far, for the stack badges. */
+  /** The user's picks so far, for the stack and handcuff badges. */
   myPicks?: ApiDraftPick[];
   /** Omit to render the list without watch/avoid controls. */
   onFlagChange?: (sleeperId: string, flag: PlayerFlag | null) => void;
@@ -98,6 +100,9 @@ function RecommendationRow({
         <StackBadge
           team={recommendation.player.team}
           partners={stackPartners(recommendation.player, myPicks)}
+        />
+        <HandcuffBadge
+          starters={handcuffedRbs(recommendation.player, myPicks)}
         />
         {note && !showNote && (
           <button
@@ -187,6 +192,7 @@ export function RecommendationsList({
               team={topPick.player.team}
               partners={stackPartners(topPick.player, myPicks)}
             />
+            <HandcuffBadge starters={handcuffedRbs(topPick.player, myPicks)} />
             {flagButtons(topPick)}
           </span>
           <span className="hero__meta">
@@ -233,6 +239,10 @@ export function RecommendationsList({
           <li>
             <span className="stack-badge">Stack</span>: shares an NFL team with
             a QB, WR or TE you drafted (QB with WR/TE).
+          </li>
+          <li>
+            <span className="handcuff-badge">Handcuff</span>: the next RB on the
+            depth chart behind an RB you drafted, from Sleeper.
           </li>
           <li>
             ✎ shows your note on the player, from your ranking ("Show all notes"

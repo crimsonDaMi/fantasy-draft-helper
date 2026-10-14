@@ -66,6 +66,11 @@ export interface SleeperPlayer {
   age?: number | null;
   /** Seasons in the NFL; 0 for a rookie. */
   years_exp?: number | null;
+  /** Position on the team's depth chart, e.g. `RB`; may differ from
+   * `position` (`LWR`, `SWR` for receivers). */
+  depth_chart_position?: string | null;
+  /** 1 for the starter at `depth_chart_position`. */
+  depth_chart_order?: number | null;
 }
 
 export type SleeperPlayersResponse = Record<string, SleeperPlayer>;

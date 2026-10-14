@@ -9,6 +9,15 @@ export interface ApiPlayer {
   /** From Sleeper's years of experience (0 for a rookie); omitted when
    * unknown. */
   rookie?: boolean;
+  /** Place on the NFL team's depth chart; omitted when Sleeper has none. */
+  depthChart?: ApiDepthChart;
+}
+
+export interface ApiDepthChart {
+  /** e.g. `RB`; receivers are split into `LWR`, `RWR`, `SWR`. */
+  position: string;
+  /** 1 for the starter. */
+  order: number;
 }
 
 export type PlayerFlag = "watch" | "avoid";
@@ -113,6 +122,7 @@ export interface ApiDraftPick {
   playerName?: string;
   position?: string;
   team?: string;
+  depthChart?: ApiDepthChart;
   /** Where the player sat in your ranking, when they were in it. */
   rank?: number;
   positionRank?: number;

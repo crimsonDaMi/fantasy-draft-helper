@@ -253,6 +253,7 @@ export class RecommendationService {
       return {
         ...pick,
         playerName: pick.playerName ?? this.playerName(pick, match?.player),
+        depthChart: this.playerService.getPlayerById(pick.playerId)?.depthChart,
         rank: match?.ranking.rank,
         positionRank: positionRankBySleeperId.get(pick.playerId),
         tier: match?.ranking.tier,

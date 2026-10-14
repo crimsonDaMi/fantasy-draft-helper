@@ -211,6 +211,12 @@ and `years_exp` of 0 for a rookie); each is omitted when Sleeper has no
 value for the player. The ranking editor routes return them on their
 players too.
 
+`player.depthChart` is the player's place on their NFL team's depth chart
+from Sleeper (`depth_chart_position` and `depth_chart_order`), e.g.
+`{ "position": "RB", "order": 2 }`, and omitted when Sleeper has none.
+Each of `picks` carries it too, for the drafted player; the web app marks
+the RB directly behind one the user drafted as a handcuff.
+
 `positionRank` is the player's place among their position in your whole
 ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't
 change as players are drafted or filtered out. `adp.positionRank` is the

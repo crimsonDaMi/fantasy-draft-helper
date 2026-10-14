@@ -47,4 +47,22 @@ describe("mapSleeperPlayer", () => {
     expect(unknown.age).toBeUndefined();
     expect(unknown.rookie).toBeUndefined();
   });
+
+  it("maps the depth chart only when Sleeper has both position and order", () => {
+    const backup = mapSleeperPlayer({
+      player_id: "1",
+      full_name: "Player One",
+      depth_chart_position: "RB",
+      depth_chart_order: 2,
+    });
+    const unknown = mapSleeperPlayer({
+      player_id: "2",
+      full_name: "Player Two",
+      depth_chart_position: "RB",
+      depth_chart_order: null,
+    });
+
+    expect(backup.depthChart).toEqual({ position: "RB", order: 2 });
+    expect(unknown.depthChart).toBeUndefined();
+  });
 });

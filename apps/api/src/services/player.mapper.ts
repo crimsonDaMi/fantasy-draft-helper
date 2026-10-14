@@ -1,4 +1,4 @@
-import { Player } from "../domain/player.js";
+import { DepthChart, Player } from "../domain/player.js";
 import { SleeperPlayer } from "../types/sleeper.js";
 
 export function mapSleeperPlayer(player: SleeperPlayer): Player {
@@ -16,6 +16,18 @@ export function mapSleeperPlayer(player: SleeperPlayer): Player {
     fantasyPositions: player.fantasy_positions ?? [],
     age: player.age ?? undefined,
     rookie: player.years_exp == null ? undefined : player.years_exp === 0,
+    depthChart: mapDepthChart(player),
+  };
+}
+
+function mapDepthChart(player: SleeperPlayer): DepthChart | undefined {
+  if (!player.depth_chart_position || player.depth_chart_order == null) {
+    return undefined;
+  }
+
+  return {
+    position: player.depth_chart_position,
+    order: player.depth_chart_order,
   };
 }
 

@@ -1,5 +1,5 @@
 import { PlayerFlag } from "./player-flag.js";
-import { Player } from "./player.js";
+import { DepthChart, Player } from "./player.js";
 import { Ranking } from "./ranking.js";
 import { Draft, DraftPick, DraftStatus } from "./draft.js";
 
@@ -24,6 +24,8 @@ export interface Recommendation {
 
 /** A made pick, joined with where the player sat in the user's ranking. */
 export interface RankedDraftPick extends DraftPick {
+  /** The player's live place on their team's depth chart. */
+  depthChart?: DepthChart;
   rank?: number;
   positionRank?: number;
   tier?: string;

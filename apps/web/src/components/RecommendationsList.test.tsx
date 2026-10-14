@@ -265,4 +265,46 @@ describe("RecommendationsList", () => {
     expect(screen.getAllByLabelText("Stacks with Player Nine")).toHaveLength(1);
     expect(screen.getByText("Stack: AAA")).toBeInTheDocument();
   });
+
+  it("tags the next RB behind one the user drafted as a handcuff", () => {
+    render(
+      <RecommendationsList
+        adpFormat="SF"
+        myPicks={[
+          {
+            pickNo: 3,
+            playerId: "9",
+            playerName: "Player Nine",
+            position: "RB",
+            team: "AAA",
+            depthChart: { position: "RB", order: 1 },
+          },
+        ]}
+        recommendations={[
+          {
+            rank: 1,
+            player: {
+              sleeperId: "1",
+              fullName: "Player One",
+              position: "RB",
+              team: "AAA",
+              depthChart: { position: "RB", order: 2 },
+            },
+          },
+          {
+            rank: 2,
+            player: {
+              sleeperId: "2",
+              fullName: "Player Two",
+              position: "RB",
+              team: "AAA",
+              depthChart: { position: "RB", order: 3 },
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByLabelText("Handcuff: Player Nine")).toHaveLength(1);
+  });
 });

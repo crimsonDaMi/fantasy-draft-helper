@@ -31,6 +31,11 @@ See `RELEASING.md`.
   or PDF backup for when the draft site, the app or your device lets
   you down mid-draft. On paper it drops the app's header and colors and
   runs in three columns, so a 250-player ranking fits on a few pages.
+- Handcuff indicator: a recommended RB who is next on their NFL team's
+  depth chart behind an RB you've drafted gets a "Handcuff" tag;
+  hovering it names your RB. Uses Sleeper's depth charts, so players
+  without one are never tagged. Information only: it never changes the
+  recommendations.
 - Stack indicator: a recommended QB who shares an NFL team with a WR or
   TE you've drafted, or a WR or TE who shares one with your QB, gets a
   "Stack: BUF" tag; hovering it names your players it stacks with.

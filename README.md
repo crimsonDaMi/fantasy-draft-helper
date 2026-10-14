@@ -48,6 +48,8 @@ draft state.
   ranking, so you can take them before the drop-off.
 - A stack tag (e.g. `Stack: BUF`) on QBs who share an NFL team with a
   WR or TE you drafted, and the other way round.
+- A `Handcuff` tag on the RB directly behind an RB you drafted on their
+  team's depth chart (from Sleeper).
 - A recap once the draft completes: your picks against your ranking and
   ADP, downloadable as a CSV.
 

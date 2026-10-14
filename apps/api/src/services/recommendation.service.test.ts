@@ -635,6 +635,56 @@ describe("RecommendationService", () => {
     expect(result.recommendations[0]?.player.injuryStatus).toBe("Questionable");
   });
 
+  it("gives picks the live player's depth chart", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING", rosterSlots: {} },
+        picks: [
+          { playerId: "1", pickNo: 1 },
+          { playerId: "2", pickNo: 2 },
+        ],
+        draftedPlayerIds: new Set(["1", "2"]),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankingStoreService = {
+      getFlags: () => ({}),
+      getRankingMatches: () => [],
+    };
+
+    const playerService = {
+      ...noopPlayerService,
+      getPlayerById: (id: string) =>
+        id === "1"
+          ? {
+              sleeperId: "1",
+              fullName: "Player One",
+              depthChart: { position: "RB", order: 1 },
+            }
+          : undefined,
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      noopAdpService as never,
+      playerService as never,
+    );
+
+    const result = await service.getRecommendations(
+      "draft-1",
+      "ranking-1",
+      TEST_USER_ID,
+      10,
+    );
+
+    expect(result.picks.map((pick) => pick.depthChart)).toEqual([
+      { position: "RB", order: 1 },
+      undefined,
+    ]);
+  });
+
   it("numbers positions over the full ranking and by ADP", async () => {
     const draftStateService = {
       getDraftState: async () => ({
