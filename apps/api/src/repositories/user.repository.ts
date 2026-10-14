@@ -12,6 +12,8 @@ import { promisify } from "node:util";
 import {
   migrate,
   openDatabase,
+  queryAll,
+  queryOne,
   resolveDatabasePath,
   runInTransaction,
   VersionedSchema,
@@ -164,14 +166,14 @@ export class UserRepository {
   }
 
   usernameExists(username: string): boolean {
-    const row = this.database
-      .prepare(
-        `SELECT 1 AS found
-         FROM users
-         WHERE username = ?
-         LIMIT 1`,
-      )
-      .get(username) as unknown as { found: number } | undefined;
+    const row = queryOne<{ found: number }>(
+      this.database,
+      `SELECT 1 AS found
+       FROM users
+       WHERE username = ?
+       LIMIT 1`,
+      username,
+    );
 
     return row !== undefined;
   }
@@ -180,20 +182,18 @@ export class UserRepository {
     username: string,
     password: string,
   ): Promise<User | undefined> {
-    const row = this.database
-      .prepare(
-        `SELECT id, username, password_salt, password_hash
-         FROM users
-         WHERE username = ?`,
-      )
-      .get(username) as unknown as
-      | {
-          id: string;
-          username: string;
-          password_salt: string;
-          password_hash: string;
-        }
-      | undefined;
+    const row = queryOne<{
+      id: string;
+      username: string;
+      password_salt: string;
+      password_hash: string;
+    }>(
+      this.database,
+      `SELECT id, username, password_salt, password_hash
+       FROM users
+       WHERE username = ?`,
+      username,
+    );
 
     if (!row) {
       await this.hashPassword(password, DUMMY_SALT, this.scryptCost);
@@ -257,17 +257,20 @@ export class UserRepository {
    * (see SESSION_TTL_MS and SESSION_MAX_AGE_MS). */
   getSession(token: string): SessionLookup | undefined {
     const tokenHash = hashSessionToken(token);
-    const row = this.database
-      .prepare(
-        `SELECT users.id AS id, users.username AS username,
-                sessions.created_at AS created_at, sessions.expires_at AS expires_at
-         FROM sessions
-         JOIN users ON users.id = sessions.user_id
-         WHERE sessions.token = ?`,
-      )
-      .get(tokenHash) as unknown as
-      | { id: string; username: string; created_at: string; expires_at: string }
-      | undefined;
+    const row = queryOne<{
+      id: string;
+      username: string;
+      created_at: string;
+      expires_at: string;
+    }>(
+      this.database,
+      `SELECT users.id AS id, users.username AS username,
+              sessions.created_at AS created_at, sessions.expires_at AS expires_at
+       FROM sessions
+       JOIN users ON users.id = sessions.user_id
+       WHERE sessions.token = ?`,
+      tokenHash,
+    );
 
     if (!row) {
       return undefined;
@@ -334,9 +337,11 @@ export class UserRepository {
 
   /** Users whose last activity is older than `cutoff`. */
   listInactiveUserIds(cutoff: Date): string[] {
-    const rows = this.database
-      .prepare(`SELECT id FROM users WHERE last_active_at < ?`)
-      .all(cutoff.toISOString()) as unknown as { id: string }[];
+    const rows = queryAll<{ id: string }>(
+      this.database,
+      `SELECT id FROM users WHERE last_active_at < ?`,
+      cutoff.toISOString(),
+    );
 
     return rows.map((row) => row.id);
   }

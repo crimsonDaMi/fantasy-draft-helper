@@ -4,6 +4,8 @@ import { DatabaseSync } from "node:sqlite";
 import {
   migrate,
   openDatabase,
+  queryAll,
+  queryOne,
   resolveDatabasePath,
   runInTransaction,
   VersionedSchema,
@@ -279,9 +281,11 @@ export class RankingRepository {
     runInTransaction(this.database, () => {
       // Users keep several rankings side by side (e.g. one per league);
       // importing or starting a new one adds to them.
-      const { count } = this.database
-        .prepare(`SELECT COUNT(*) AS count FROM rankings WHERE user_id = ?`)
-        .get(userId) as unknown as { count: number };
+      const { count } = queryOne<{ count: number }>(
+        this.database,
+        `SELECT COUNT(*) AS count FROM rankings WHERE user_id = ?`,
+        userId,
+      )!;
 
       if (count >= MAX_RANKINGS_PER_USER) {
         throw new ConflictError(
@@ -315,42 +319,44 @@ export class RankingRepository {
   }
 
   getMatches(rankingId: string, userId: string): PlayerMatch[] {
-    const rows = this.database
-      .prepare(
-        `SELECT ${PLAYER_COLUMNS}
-         FROM ${PLAYERS_WITH_TIERS}
-         JOIN rankings ON rankings.id = ranking_players.ranking_id
-         WHERE ranking_players.ranking_id = ? AND rankings.user_id = ?
-         ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
-      )
-      .all(rankingId, userId) as unknown as RankingPlayerRow[];
+    const rows = queryAll<RankingPlayerRow>(
+      this.database,
+      `SELECT ${PLAYER_COLUMNS}
+       FROM ${PLAYERS_WITH_TIERS}
+       JOIN rankings ON rankings.id = ranking_players.ranking_id
+       WHERE ranking_players.ranking_id = ? AND rankings.user_id = ?
+       ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
+      rankingId,
+      userId,
+    );
 
     return rows.map(toMatch);
   }
 
   hasRanking(rankingId: string, userId: string): boolean {
-    const row = this.database
-      .prepare(
-        `SELECT 1 AS found
-         FROM rankings
-         WHERE id = ? AND user_id = ?
-         LIMIT 1`,
-      )
-      .get(rankingId, userId) as unknown as { found: number } | undefined;
+    const row = queryOne<{ found: number }>(
+      this.database,
+      `SELECT 1 AS found
+       FROM rankings
+       WHERE id = ? AND user_id = ?
+       LIMIT 1`,
+      rankingId,
+      userId,
+    );
 
     return row !== undefined;
   }
 
   getLatestRankingId(userId: string): string | undefined {
-    const row = this.database
-      .prepare(
-        `SELECT id
-         FROM rankings
-         WHERE user_id = ?
-         ORDER BY created_at DESC, rowid DESC
-         LIMIT 1`,
-      )
-      .get(userId) as unknown as { id: string } | undefined;
+    const row = queryOne<{ id: string }>(
+      this.database,
+      `SELECT id
+       FROM rankings
+       WHERE user_id = ?
+       ORDER BY created_at DESC, rowid DESC
+       LIMIT 1`,
+      userId,
+    );
 
     return row?.id;
   }
@@ -361,20 +367,20 @@ export class RankingRepository {
 
   /** The user's rankings, newest first. */
   listRankings(userId: string): RankingSummary[] {
-    return this.database
-      .prepare(
-        `SELECT rankings.id AS id,
-                rankings.name AS name,
-                rankings.created_at AS createdAt,
-                COUNT(ranking_players.id) AS playerCount,
-                COUNT(ranking_players.sleeper_id) AS matchedCount
-         FROM rankings
-         LEFT JOIN ranking_players ON ranking_players.ranking_id = rankings.id
-         WHERE rankings.user_id = ?
-         GROUP BY rankings.id
-         ORDER BY rankings.created_at DESC, rankings.rowid DESC`,
-      )
-      .all(userId) as unknown as RankingSummary[];
+    return queryAll<RankingSummary>(
+      this.database,
+      `SELECT rankings.id AS id,
+              rankings.name AS name,
+              rankings.created_at AS createdAt,
+              COUNT(ranking_players.id) AS playerCount,
+              COUNT(ranking_players.sleeper_id) AS matchedCount
+       FROM rankings
+       LEFT JOIN ranking_players ON ranking_players.ranking_id = rankings.id
+       WHERE rankings.user_id = ?
+       GROUP BY rankings.id
+       ORDER BY rankings.created_at DESC, rankings.rowid DESC`,
+      userId,
+    );
   }
 
   rename(rankingId: string, userId: string, name: string): void {
@@ -570,25 +576,25 @@ export class RankingRepository {
 
   /** Sleeper ID → flag, for the flagged players of a ranking. */
   getFlags(rankingId: string): Record<string, PlayerFlag> {
-    const rows = this.database
-      .prepare(
-        `SELECT sleeper_id, flag FROM ranking_players
-         WHERE ranking_id = ? AND flag IS NOT NULL`,
-      )
-      .all(rankingId) as unknown as { sleeper_id: string; flag: PlayerFlag }[];
+    const rows = queryAll<{ sleeper_id: string; flag: PlayerFlag }>(
+      this.database,
+      `SELECT sleeper_id, flag FROM ranking_players
+       WHERE ranking_id = ? AND flag IS NOT NULL`,
+      rankingId,
+    );
 
     return Object.fromEntries(rows.map((row) => [row.sleeper_id, row.flag]));
   }
 
   getTiers(rankingId: string): RankingTier[] {
-    const counts = this.database
-      .prepare(
-        `SELECT tier_id, COUNT(*) AS count
-         FROM ranking_players
-         WHERE ranking_id = ? AND tier_id IS NOT NULL
-         GROUP BY tier_id`,
-      )
-      .all(rankingId) as unknown as { tier_id: number; count: number }[];
+    const counts = queryAll<{ tier_id: number; count: number }>(
+      this.database,
+      `SELECT tier_id, COUNT(*) AS count
+       FROM ranking_players
+       WHERE ranking_id = ? AND tier_id IS NOT NULL
+       GROUP BY tier_id`,
+      rankingId,
+    );
 
     const countByTierId = new Map(
       counts.map((row) => [row.tier_id, row.count]),
@@ -675,14 +681,14 @@ export class RankingRepository {
   // ---------------------------------------------------------------------
 
   private getOrderedRows(rankingId: string): StoredRow[] {
-    const rows = this.database
-      .prepare(
-        `SELECT ${PLAYER_COLUMNS}
-         FROM ${PLAYERS_WITH_TIERS}
-         WHERE ranking_players.ranking_id = ?
-         ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
-      )
-      .all(rankingId) as unknown as RankingPlayerRow[];
+    const rows = queryAll<RankingPlayerRow>(
+      this.database,
+      `SELECT ${PLAYER_COLUMNS}
+       FROM ${PLAYERS_WITH_TIERS}
+       WHERE ranking_players.ranking_id = ?
+       ORDER BY ranking_players.rank ASC, ranking_players.id ASC`,
+      rankingId,
+    );
 
     return rows.map((row) => ({ id: row.id, match: toMatch(row) }));
   }
@@ -701,28 +707,26 @@ export class RankingRepository {
     const tierIds = this.tierIdsByLabel(rankingId);
 
     const stored = new Map(
-      (
-        this.database
-          .prepare(
-            `SELECT id, rank, tier_id FROM ranking_players WHERE ranking_id = ?`,
-          )
-          .all(rankingId) as unknown as {
-          id: number;
-          rank: number;
-          tier_id: number | null;
-        }[]
+      queryAll<{ id: number; rank: number; tier_id: number | null }>(
+        this.database,
+        `SELECT id, rank, tier_id FROM ranking_players WHERE ranking_id = ?`,
+        rankingId,
       ).map((row) => [row.id, row]),
     );
 
     const keptIds = new Set(rows.map((row) => row.id));
+    const deleteRow = this.database.prepare(
+      `DELETE FROM ranking_players WHERE id = ?`,
+    );
+    const moveRow = this.database.prepare(
+      `UPDATE ranking_players SET rank = ?, tier_id = ? WHERE id = ?`,
+    );
 
     // Deletes first, so a removed player can't collide with the
     // one-row-per-player index.
     for (const id of stored.keys()) {
       if (!keptIds.has(id)) {
-        this.database
-          .prepare(`DELETE FROM ranking_players WHERE id = ?`)
-          .run(id);
+        deleteRow.run(id);
       }
     }
 
@@ -738,11 +742,7 @@ export class RankingRepository {
         const current = stored.get(row.id)!;
 
         if (current.rank !== rank || current.tier_id !== tierId) {
-          this.database
-            .prepare(
-              `UPDATE ranking_players SET rank = ?, tier_id = ? WHERE id = ?`,
-            )
-            .run(rank, tierId, row.id);
+          moveRow.run(rank, tierId, row.id);
         }
       }
     }
@@ -819,12 +819,12 @@ export class RankingRepository {
 
   /** The ranking's tiers, best first. */
   private readTiers(rankingId: string): TierRow[] {
-    return this.database
-      .prepare(
-        `SELECT id, position FROM ranking_tiers
-         WHERE ranking_id = ? ORDER BY position ASC`,
-      )
-      .all(rankingId) as unknown as TierRow[];
+    return queryAll<TierRow>(
+      this.database,
+      `SELECT id, position FROM ranking_tiers
+       WHERE ranking_id = ? ORDER BY position ASC`,
+      rankingId,
+    );
   }
 
   private tierIdsByLabel(rankingId: string): Map<string, number> {
@@ -850,11 +850,12 @@ export class RankingRepository {
     // Walk in the direction that avoids colliding with the unique
     // (ranking_id, position) index while shifting; `tiers` is ascending.
     const ordered = delta > 0 ? tiers.reverse() : tiers;
+    const moveTier = this.database.prepare(
+      `UPDATE ranking_tiers SET position = ? WHERE id = ?`,
+    );
 
     for (const tier of ordered) {
-      this.database
-        .prepare(`UPDATE ranking_tiers SET position = ? WHERE id = ?`)
-        .run(tier.position + delta, tier.id);
+      moveTier.run(tier.position + delta, tier.id);
     }
   }
 }

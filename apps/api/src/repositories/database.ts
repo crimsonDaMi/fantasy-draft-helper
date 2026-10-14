@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 
 const DEFAULT_DATABASE_PATH = resolve(
   process.cwd(),
@@ -30,6 +30,25 @@ export function openDatabase(
   database.exec("PRAGMA foreign_keys = ON");
 
   return database;
+}
+
+/** The query's first row, typed as the caller's row shape (node:sqlite
+ * returns untyped rows), or undefined when there is none. */
+export function queryOne<Row>(
+  database: DatabaseSync,
+  sql: string,
+  ...params: SQLInputValue[]
+): Row | undefined {
+  return database.prepare(sql).get(...params) as Row | undefined;
+}
+
+/** All of the query's rows, typed as the caller's row shape. */
+export function queryAll<Row>(
+  database: DatabaseSync,
+  sql: string,
+  ...params: SQLInputValue[]
+): Row[] {
+  return database.prepare(sql).all(...params) as Row[];
 }
 
 /** Runs `fn` inside a transaction, rolling back if it throws. */
@@ -137,9 +156,11 @@ function assertOrderedSteps(schema: VersionedSchema): number {
 }
 
 function readVersion(database: DatabaseSync, name: string): number | undefined {
-  const row = database
-    .prepare(`SELECT version FROM schema_versions WHERE schema = ?`)
-    .get(name) as unknown as { version: number } | undefined;
+  const row = queryOne<{ version: number }>(
+    database,
+    `SELECT version FROM schema_versions WHERE schema = ?`,
+    name,
+  );
 
   return row?.version;
 }
@@ -293,13 +314,12 @@ function assertMatchesSteps(
 }
 
 function listTables(database: DatabaseSync): string[] {
-  const rows = database
-    .prepare(
-      `SELECT name FROM sqlite_master
-       WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
-       ORDER BY name`,
-    )
-    .all() as unknown as { name: string }[];
+  const rows = queryAll<{ name: string }>(
+    database,
+    `SELECT name FROM sqlite_master
+     WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+     ORDER BY name`,
+  );
 
   return rows.map((row) => row.name);
 }
