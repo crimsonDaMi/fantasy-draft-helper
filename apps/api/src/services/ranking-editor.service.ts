@@ -32,7 +32,7 @@ export class RankingEditorService {
       throw new NotFoundError("Tier was not found", "TIER_NOT_FOUND");
     }
 
-    const newMatch = this.isRanked(rankingId, userId, sleeperId)
+    const newMatch = this.repository.hasPlayer(rankingId, sleeperId)
       ? undefined
       : await this.matchForPlayer(sleeperId, targetTier, "SLEEPER_ID");
 
@@ -63,7 +63,7 @@ export class RankingEditorService {
     this.assertOwnership(rankingId, userId);
     const row = this.findUnmatchedRow(rankingId, userId, rank, playerName);
 
-    if (this.isRanked(rankingId, userId, sleeperId)) {
+    if (this.repository.hasPlayer(rankingId, sleeperId)) {
       throw new ConflictError(
         "That player is already in this ranking",
         "PLAYER_ALREADY_RANKED",
@@ -194,13 +194,7 @@ export class RankingEditorService {
     flag: PlayerFlag | undefined,
   ): Record<string, PlayerFlag> {
     this.assertOwnership(rankingId, userId);
-
-    if (!this.isRanked(rankingId, userId, sleeperId)) {
-      throw new NotFoundError(
-        "Player is not part of this ranking",
-        "PLAYER_NOT_RANKED",
-      );
-    }
+    this.assertRanked(rankingId, sleeperId);
 
     this.repository.setFlag(rankingId, sleeperId, flag);
 
@@ -215,13 +209,7 @@ export class RankingEditorService {
     note: string | undefined,
   ): void {
     this.assertOwnership(rankingId, userId);
-
-    if (!this.isRanked(rankingId, userId, sleeperId)) {
-      throw new NotFoundError(
-        "Player is not part of this ranking",
-        "PLAYER_NOT_RANKED",
-      );
-    }
+    this.assertRanked(rankingId, sleeperId);
 
     this.repository.setNote(rankingId, sleeperId, note);
   }
@@ -282,14 +270,13 @@ export class RankingEditorService {
     return row;
   }
 
-  private isRanked(
-    rankingId: string,
-    userId: string,
-    sleeperId: string,
-  ): boolean {
-    return this.repository
-      .getMatches(rankingId, userId)
-      .some((match) => match.player?.sleeperId === sleeperId);
+  private assertRanked(rankingId: string, sleeperId: string): void {
+    if (!this.repository.hasPlayer(rankingId, sleeperId)) {
+      throw new NotFoundError(
+        "Player is not part of this ranking",
+        "PLAYER_NOT_RANKED",
+      );
+    }
   }
 
   private withLiveStatus(matches: PlayerMatch[]): PlayerMatch[] {

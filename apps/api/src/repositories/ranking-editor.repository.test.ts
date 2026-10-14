@@ -72,6 +72,20 @@ describe("RankingRepository editor mutations", () => {
     expect(result.map((m) => m.ranking.rank)).toEqual([1, 2]);
   });
 
+  it("knows which players are ranked, per ranking", () => {
+    const repository = new RankingRepository(":memory:");
+
+    const rankingId = repository.create(
+      [match(1, "S", "1"), unmatched(2, "S", "Unknown Player")],
+      USER_ID,
+    );
+    const otherRankingId = repository.create([match(1, "S", "2")], USER_ID);
+
+    expect(repository.hasPlayer(rankingId, "1")).toBe(true);
+    expect(repository.hasPlayer(rankingId, "2")).toBe(false);
+    expect(repository.hasPlayer(otherRankingId, "1")).toBe(false);
+  });
+
   it("seeds tiers from the imported ranking", () => {
     const repository = new RankingRepository(":memory:");
 

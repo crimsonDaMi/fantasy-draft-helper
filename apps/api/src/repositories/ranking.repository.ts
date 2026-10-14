@@ -546,6 +546,21 @@ export class RankingRepository {
     return this.getOrderedMatches(rankingId);
   }
 
+  /** Whether the player is ranked in this ranking. */
+  hasPlayer(rankingId: string, sleeperId: string): boolean {
+    const row = queryOne<{ found: number }>(
+      this.database,
+      `SELECT 1 AS found
+       FROM ranking_players
+       WHERE ranking_id = ? AND sleeper_id = ?
+       LIMIT 1`,
+      rankingId,
+      sleeperId,
+    );
+
+    return row !== undefined;
+  }
+
   /** Sets a ranked player's flag, or clears it with `undefined`. */
   setFlag(
     rankingId: string,
