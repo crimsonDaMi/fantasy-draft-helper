@@ -1,13 +1,5 @@
-import {
-  createHash,
-  randomBytes,
-  randomUUID,
-  scrypt,
-  ScryptOptions,
-  timingSafeEqual,
-} from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
-import { promisify } from "node:util";
 
 import {
   migrate,
@@ -18,10 +10,15 @@ import {
   runInTransaction,
   VersionedSchema,
 } from "./database.js";
+import {
+  hashDummyPassword,
+  hashNewPassword,
+  SCRYPT_COST,
+  type ScryptCost,
+  verifyStoredPassword,
+} from "../utils/password-hash.js";
 import { DAY_MS } from "../utils/time.js";
 
-const SCRYPT_KEY_LENGTH = 64;
-const SALT_BYTES = 16;
 // A session expires after this long without use...
 export const SESSION_TTL_MS = 30 * DAY_MS;
 // ...and this long after login, however often it is used.
@@ -30,61 +27,12 @@ export const SESSION_MAX_AGE_MS = 90 * DAY_MS;
 // every request writes to the database.
 const SESSION_RENEWAL_INTERVAL_MS = DAY_MS;
 
-export interface ScryptCost {
-  log2N: number;
-  r: number;
-  p: number;
-}
-
-// OWASP's minimum for scrypt (128 MiB per hash). Stored with each hash as
-// `scrypt$<log2N>$<r>$<p>$<hex>`, so the cost can be raised later without
-// invalidating existing passwords.
-const SCRYPT_COST: ScryptCost = { log2N: 17, r: 8, p: 1 };
-
-// Node's scrypt defaults, used for hashes stored as plain hex before the
-// cost was recorded alongside the hash. Upgraded on the next login.
-const LEGACY_SCRYPT_COST: ScryptCost = { log2N: 14, r: 8, p: 1 };
-
-const scryptAsync = promisify(scrypt) as (
-  password: string,
-  salt: string,
-  keyLength: number,
-  options: ScryptOptions,
-) => Promise<Buffer>;
-
-function parseStoredHash(stored: string): { cost: ScryptCost; hash: string } {
-  const parts = stored.split("$");
-
-  if (parts.length === 5 && parts[0] === "scrypt") {
-    const [, log2N, r, p, hash] = parts;
-
-    return {
-      cost: { log2N: Number(log2N), r: Number(r), p: Number(p) },
-      hash,
-    };
-  }
-
-  return { cost: LEGACY_SCRYPT_COST, hash: stored };
-}
-
-function formatStoredHash(cost: ScryptCost, hash: string): string {
-  return `scrypt$${cost.log2N}$${cost.r}$${cost.p}$${hash}`;
-}
-
-function isSameCost(a: ScryptCost, b: ScryptCost): boolean {
-  return a.log2N === b.log2N && a.r === b.r && a.p === b.p;
-}
-
 /** Only this hash is stored, so a leaked database or backup doesn't hand
  * out working session tokens. Tokens are 256 random bits, so a fast,
  * unsalted hash is enough. */
 function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
-
-// Hashed against when the username doesn't exist, so a login attempt takes
-// the same time either way and doesn't reveal which usernames are taken.
-const DUMMY_SALT = randomBytes(SALT_BYTES).toString("hex");
 
 export interface User {
   id: string;
@@ -152,7 +100,7 @@ export class UserRepository {
 
   async createUser(username: string, password: string): Promise<User> {
     const id = randomUUID();
-    const { salt, hash } = await this.newStoredHash(password);
+    const { salt, hash } = await hashNewPassword(password, this.scryptCost);
     const createdAt = new Date().toISOString();
 
     this.database
@@ -196,29 +144,25 @@ export class UserRepository {
     );
 
     if (!row) {
-      await this.hashPassword(password, DUMMY_SALT, this.scryptCost);
+      await hashDummyPassword(password, this.scryptCost);
       return undefined;
     }
 
-    const { cost, hash } = parseStoredHash(row.password_hash);
-    const candidateHash = await this.hashPassword(
+    const { matches, needsRehash } = await verifyStoredPassword(
       password,
       row.password_salt,
-      cost,
+      row.password_hash,
+      this.scryptCost,
     );
 
-    const stored = Buffer.from(hash, "hex");
-    const candidate = Buffer.from(candidateHash, "hex");
-
-    if (
-      stored.length !== candidate.length ||
-      !timingSafeEqual(stored, candidate)
-    ) {
+    if (!matches) {
       return undefined;
     }
 
-    if (!isSameCost(cost, this.scryptCost)) {
-      await this.updatePasswordHash(row.id, password);
+    if (needsRehash) {
+      const { salt, hash } = await hashNewPassword(password, this.scryptCost);
+
+      this.writePasswordHash(row.id, salt, hash);
     }
 
     return { id: row.id, username: row.username };
@@ -313,7 +257,7 @@ export class UserRepository {
     password: string,
     keepSessionToken: string,
   ): Promise<void> {
-    const { salt, hash } = await this.newStoredHash(password);
+    const { salt, hash } = await hashNewPassword(password, this.scryptCost);
 
     runInTransaction(this.database, () => {
       this.writePasswordHash(userId, salt, hash);
@@ -362,53 +306,11 @@ export class UserRepository {
       .run(at.toISOString(), userId);
   }
 
-  private async updatePasswordHash(
-    userId: string,
-    password: string,
-  ): Promise<void> {
-    const { salt, hash } = await this.newStoredHash(password);
-
-    this.writePasswordHash(userId, salt, hash);
-  }
-
   private writePasswordHash(userId: string, salt: string, hash: string): void {
     this.database
       .prepare(
         `UPDATE users SET password_salt = ?, password_hash = ? WHERE id = ?`,
       )
       .run(salt, hash, userId);
-  }
-
-  /** A fresh salt and the stored hash of `password` at the current cost. */
-  private async newStoredHash(
-    password: string,
-  ): Promise<{ salt: string; hash: string }> {
-    const salt = randomBytes(SALT_BYTES).toString("hex");
-    const hash = formatStoredHash(
-      this.scryptCost,
-      await this.hashPassword(password, salt, this.scryptCost),
-    );
-
-    return { salt, hash };
-  }
-
-  /** Async so a login doesn't block the event loop (and every other
-   * user's draft polling) for the duration of the hash. */
-  private async hashPassword(
-    password: string,
-    salt: string,
-    cost: ScryptCost,
-  ): Promise<string> {
-    const N = 2 ** cost.log2N;
-    const hash = await scryptAsync(password, salt, SCRYPT_KEY_LENGTH, {
-      N,
-      r: cost.r,
-      p: cost.p,
-      // Node rejects anything above 32 MiB by default; scrypt needs
-      // 128 * N * r bytes, plus headroom.
-      maxmem: 2 * 128 * N * cost.r,
-    });
-
-    return hash.toString("hex");
   }
 }
