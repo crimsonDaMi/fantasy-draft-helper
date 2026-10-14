@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-import type { ApiDraftPick, ApiRecommendation, PlayerFlag } from "../types/api";
+import type {
+  ApiDraftPick,
+  ApiPlayer,
+  ApiRecommendation,
+  PlayerFlag,
+} from "../types/api";
 import { FlagButtons } from "./FlagButtons";
 import { HandcuffBadge } from "./HandcuffBadge";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
@@ -28,6 +33,27 @@ interface RecommendationsListProps {
 
 function flagClass(recommendation: ApiRecommendation): string {
   return recommendation.flag ? ` flagged--${recommendation.flag}` : "";
+}
+
+/** The badges after a player's name, in the top pick and the list. */
+function PlayerBadges({
+  player,
+  myPicks,
+}: {
+  player: ApiPlayer;
+  myPicks: ApiDraftPick[];
+}) {
+  return (
+    <>
+      <RookieBadge rookie={player.rookie} />
+      <InjuryBadge status={player.injuryStatus} />
+      <StackBadge
+        team={player.team}
+        partners={stackPartners(player, myPicks)}
+      />
+      <HandcuffBadge starters={handcuffedRbs(player, myPicks)} />
+    </>
+  );
 }
 
 function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
@@ -95,15 +121,7 @@ function RecommendationRow({
       <PositionBadge position={recommendation.player.position} />
       <span className="rec-list__name">
         {recommendation.player.fullName}{" "}
-        <RookieBadge rookie={recommendation.player.rookie} />
-        <InjuryBadge status={recommendation.player.injuryStatus} />
-        <StackBadge
-          team={recommendation.player.team}
-          partners={stackPartners(recommendation.player, myPicks)}
-        />
-        <HandcuffBadge
-          starters={handcuffedRbs(recommendation.player, myPicks)}
-        />
+        <PlayerBadges player={recommendation.player} myPicks={myPicks} />
         {note && !showNote && (
           <button
             type="button"
@@ -186,13 +204,7 @@ export function RecommendationsList({
           <span className="hero__title">
             <PositionBadge position={topPick.player.position} />
             <span className="hero__name">{topPick.player.fullName}</span>
-            <RookieBadge rookie={topPick.player.rookie} />
-            <InjuryBadge status={topPick.player.injuryStatus} />
-            <StackBadge
-              team={topPick.player.team}
-              partners={stackPartners(topPick.player, myPicks)}
-            />
-            <HandcuffBadge starters={handcuffedRbs(topPick.player, myPicks)} />
+            <PlayerBadges player={topPick.player} myPicks={myPicks} />
             {flagButtons(topPick)}
           </span>
           <span className="hero__meta">
