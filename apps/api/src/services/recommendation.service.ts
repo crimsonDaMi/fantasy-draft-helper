@@ -122,6 +122,36 @@ function countRemainingByTier(
   );
 }
 
+/** Sleeper IDs of the players who are the only undrafted one of their
+ * position left in their tier, over every tier. Players without a tier
+ * or position are never included. */
+function lastInTierIds(
+  available: (PlayerMatch & { player: Player })[],
+): Set<string> {
+  const byPositionTier = new Map<string, string[]>();
+
+  for (const match of available) {
+    const position = match.player.position ?? match.ranking.position;
+    const tier = match.ranking.tier;
+
+    if (!position || !tier) {
+      continue;
+    }
+
+    const key = `${position}|${tier}`;
+    byPositionTier.set(key, [
+      ...(byPositionTier.get(key) ?? []),
+      match.player.sleeperId,
+    ]);
+  }
+
+  return new Set(
+    [...byPositionTier.values()]
+      .filter((sleeperIds) => sleeperIds.length === 1)
+      .flat(),
+  );
+}
+
 export class RecommendationService {
   constructor(
     private readonly draftStateService: DraftStateService,
@@ -190,6 +220,10 @@ export class RecommendationService {
     const isAvoided = (match: { player: Player }) =>
       flags[match.player.sleeperId] === "avoid";
 
+    // Over all available players, like the tier counts, so filters and
+    // the limit don't change who is marked.
+    const lastInTier = lastInTierIds(available);
+
     const recommendations = available
       .filter((match) => showAvoided || !isAvoided(match))
       .filter((match) => isInPositions(match.player, positions))
@@ -201,6 +235,7 @@ export class RecommendationService {
         player: match.player,
         positionRank: positionRankBySleeperId.get(match.player.sleeperId),
         flag: flags[match.player.sleeperId],
+        lastInTier: lastInTier.has(match.player.sleeperId) || undefined,
         adp: adpComparison(
           match.ranking.rank,
           adpBySleeperId.get(match.player.sleeperId),

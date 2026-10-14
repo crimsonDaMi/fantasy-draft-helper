@@ -828,6 +828,79 @@ describe("RecommendationService", () => {
     ]);
   });
 
+  it("marks the last available player of a position's tier", async () => {
+    const draftStateService = {
+      getDraftState: async () => ({
+        draft: { status: "DRAFTING", rosterSlots: {} },
+        picks: [{ playerId: "1", pickNo: 1 }],
+        draftedPlayerIds: new Set(["1"]),
+        lastUpdatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      }),
+    };
+
+    const rankedPlayer = (
+      sleeperId: string,
+      rank: number,
+      position: string,
+      tier?: string,
+    ) => ({
+      ranking: { rank, playerName: `Player ${sleeperId}`, tier },
+      player: { sleeperId, fullName: `Player ${sleeperId}`, position },
+      method: "SLEEPER_ID",
+    });
+
+    const rankingStoreService = {
+      getFlags: () => ({}),
+      getRankingMatches: () => [
+        rankedPlayer("1", 1, "RB", "S"),
+        rankedPlayer("2", 2, "RB", "S"),
+        rankedPlayer("3", 3, "WR", "S"),
+        rankedPlayer("4", 4, "WR", "S"),
+        rankedPlayer("5", 5, "RB", "A"),
+        rankedPlayer("6", 6, "RB", "A"),
+        rankedPlayer("7", 7, "TE", "A"),
+        rankedPlayer("8", 8, "QB"),
+      ],
+    };
+
+    const service = new RecommendationService(
+      draftStateService as never,
+      rankingStoreService as never,
+      noopAdpService as never,
+      noopPlayerService as never,
+    );
+
+    const marked = async (positions?: string[], limit = 10) =>
+      (
+        await service.getRecommendations(
+          "draft-1",
+          "ranking-1",
+          TEST_USER_ID,
+          limit,
+          positions,
+        )
+      ).recommendations.map((recommendation) => [
+        recommendation.player.sleeperId,
+        recommendation.lastInTier,
+      ]);
+
+    // RB S lost player 1 to the draft; TE A only ever had one; players
+    // without a tier are never marked.
+    expect(await marked()).toEqual([
+      ["2", true],
+      ["3", undefined],
+      ["4", undefined],
+      ["5", undefined],
+      ["6", undefined],
+      ["7", true],
+      ["8", undefined],
+    ]);
+
+    // Filters and the limit narrow the list, not who counts as last.
+    expect(await marked(["TE"])).toEqual([["7", true]]);
+    expect(await marked(undefined, 1)).toEqual([["2", true]]);
+  });
+
   it("hides avoided players unless asked, and marks flagged ones", async () => {
     const draftStateService = {
       getDraftState: async () => ({

@@ -5,6 +5,7 @@ import { FlagButtons } from "./FlagButtons";
 import { InfoTipButton, InfoTipPanel } from "./InfoTip";
 import { useInfoTip } from "../hooks/useInfoTip";
 import { InjuryBadge } from "./InjuryBadge";
+import { LastInTierBadge } from "./LastInTierBadge";
 import { PositionBadge } from "./PositionBadge";
 import { RookieBadge } from "./RookieBadge";
 import { formatPositionRank } from "../utils/position-rank";
@@ -40,7 +41,18 @@ function PlayerMeta({ recommendation }: { recommendation: ApiRecommendation }) {
       {recommendation.player.age !== undefined &&
         ` · Age ${recommendation.player.age}`}
       {positionRank && ` · ${positionRank}`}
-      {recommendation.tier && ` · Tier ${recommendation.tier}`}
+      {recommendation.tier && (
+        <>
+          {` · Tier ${recommendation.tier}`}
+          {/* Non-breaking, so "Last" stays on the tier's line. */}
+          {recommendation.lastInTier && " "}
+          <LastInTierBadge
+            lastInTier={recommendation.lastInTier}
+            position={position}
+            tier={recommendation.tier}
+          />
+        </>
+      )}
       {recommendation.bye !== undefined && ` · Bye ${recommendation.bye}`}
       {recommendation.adp && (
         <>
@@ -197,6 +209,10 @@ export function RecommendationsList({
           <li>
             WR12: the player's place among their position in your ranking · ADP
             WR15: the same by ADP
+          </li>
+          <li>
+            <span className="last-in-tier-badge">Last</span>: the last player of
+            their position left in that tier of your ranking.
           </li>
           <li>Bye: the player's bye week, from your ranking CSV.</li>
           <li>

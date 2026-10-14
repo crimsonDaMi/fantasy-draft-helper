@@ -30,6 +30,8 @@ export interface ApiRecommendation {
     positionRank?: number;
   };
   flag?: PlayerFlag;
+  /** The only undrafted player of their position left in their tier. */
+  lastInTier?: boolean;
 }
 
 export interface RankingSummary {

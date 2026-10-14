@@ -22,6 +22,12 @@ See `RELEASING.md`.
 
 ### Added
 
+- Last-in-tier marker: when a recommended player is the last one of
+  their position left in a tier of your ranking, a "Last" tag appears
+  next to their tier, so you see the drop-off coming before the tier
+  runs out. Counted over your whole ranking, whatever the filters, and
+  information only: it never changes the order. Rankings without tiers
+  look as before.
 - On-the-clock alerts: while you're in another tab, the browser tab's
   title shows how close your pick is, `(Up in 2)` up to five picks
   ahead and `(ON THE CLOCK)` on your turn, and goes back to normal once

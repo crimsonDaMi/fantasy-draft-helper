@@ -194,4 +194,35 @@ describe("RecommendationsList", () => {
 
     expect(screen.getByText("New OC, target share up")).toBeInTheDocument();
   });
+
+  it("marks only players flagged as last in their tier", () => {
+    const { container } = render(
+      <RecommendationsList
+        adpFormat="SF"
+        recommendations={[
+          {
+            rank: 1,
+            tier: "A",
+            player: { sleeperId: "1", fullName: "Player One", position: "RB" },
+          },
+          {
+            rank: 2,
+            tier: "A",
+            lastInTier: true,
+            player: {
+              sleeperId: "2",
+              fullName: "Player Two",
+              position: "WR",
+              team: "BBB",
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByLabelText("Last WR left in tier A")).toHaveLength(1);
+    expect(container.querySelector(".rec-list__meta")).toHaveTextContent(
+      /^BBB · Tier A Last$/,
+    );
+  });
 });

@@ -44,6 +44,8 @@ draft state.
 - Recent picks with reaches and steals against your ranking, the
   positional run of the last 8 picks, and how many players are left in
   your best remaining tiers per position.
+- A "Last" tag on the last player of a position left in a tier of your
+  ranking, so you can take them before the drop-off.
 - A recap once the draft completes: your picks against your ranking and
   ADP, downloadable as a CSV.
 

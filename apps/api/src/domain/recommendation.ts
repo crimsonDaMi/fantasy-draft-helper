@@ -17,6 +17,9 @@ export interface Recommendation {
   positionRank?: number;
   adp?: Adp;
   flag?: PlayerFlag;
+  /** The only undrafted player of their position left in their tier;
+   * omitted otherwise. */
+  lastInTier?: true;
 }
 
 /** A made pick, joined with where the player sat in the user's ranking. */

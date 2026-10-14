@@ -216,6 +216,11 @@ ranking (2 for RB2), counting drafted and unmatched rows, so it doesn't
 change as players are drafted or filtered out. `adp.positionRank` is the
 same by ADP order.
 
+`lastInTier` is `true` on the only undrafted player of their position left
+in their tier (counted over every tier of the ranking, like `tierCounts`,
+and unaffected by `positions`, `q`, `rookies`, and `limit`), and omitted
+otherwise, including for rankings without tiers.
+
 `adp.diff` is `your rank − ADP value`: negative means you have the player
 ranked earlier than the field's consensus (a reach relative to ADP);
 positive means the field values them higher than you do. The `adp` field is

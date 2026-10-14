@@ -425,6 +425,20 @@ input[type="number"] {
   vertical-align: middle;
 }
 
+/* Last-in-tier badge, outlined so it doesn't read as a rookie badge */
+
+.last-in-tier-badge {
+  display: inline-block;
+  padding: 0 4px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+  vertical-align: middle;
+}
+
 /* In list rows the badges sit inline; the hero's flex gap spaces them. */
 .rec-list__name .rookie-badge + .injury-badge {
   margin-left: 4px;

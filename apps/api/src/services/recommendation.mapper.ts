@@ -56,6 +56,7 @@ function mapRecommendation(recommendation: Recommendation) {
     },
     adp: recommendation.adp,
     flag: recommendation.flag,
+    lastInTier: recommendation.lastInTier,
   };
 }
 
