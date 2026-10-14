@@ -32,27 +32,34 @@ apps/api/src/
 ├── app.ts, server.ts, app-dependencies.ts
 ├── clients/        sleeper.client.ts, adp.client.ts — external HTTP only
 ├── cache/          in-memory player cache
-├── domain/         domain types
+├── domain/         domain types and pure rules (ADP format, row placement)
 ├── repositories/   all SQL (database.ts, ranking/user repositories)
 ├── routes/         Fastify routes, Zod-validated
 ├── services/       business logic and mappers
 ├── types/          Fastify augmentation, raw Sleeper types
-└── utils/          errors, name/tier normalization, auth guard, SPA routes
+└── utils/          errors, name/tier normalization, password hashing,
+                    auth guard, SPA routes
 
 apps/web/src/
 ├── App.tsx, main.tsx, config.ts, themes.ts
 ├── api/            fantasy-api.ts (the only HTTP client), query keys
 ├── components/     flat component files, ranking-editor/ subfolder
 ├── hooks/          data, auth, theme, and ranking-editor hooks
-└── types/          API response types
+├── types/          API response types
+└── utils/          draft-board display derivations, browser storage
 ```
 
 ## Architectural rules
 
 1. **Frontend never calls Sleeper.** The flow is
    `React -> Fastify API -> Sleeper API`.
-2. **Business logic lives in backend services.** React displays data and
-   manages UI state; no matching, recommendation, or Sleeper logic there.
+2. **Business logic lives in backend services.** Matching,
+   recommendations, ADP, rankings, and anything that talks to Sleeper stay
+   in the API. The web app may derive display information from data the
+   API already returned — pick order and the user's next pick, roster
+   fill, stacks, handcuffs, bye clashes — as pure, unit-tested functions
+   in `apps/web/src/utils/`. They never fetch data of their own or feed
+   back into the API.
 3. **External API code is isolated.** Clients only fetch; responses are
    validated and mapped before reaching services. Never return raw Sleeper
    payloads or internal `Set`s as JSON.
@@ -60,8 +67,9 @@ apps/web/src/
 5. **Match at import, never during polling** (see below).
 6. **Recommendations are deterministic:** the same ranking and the same
    drafted IDs always give the same result.
-7. **Routes are authenticated** except `/health` and `/auth/*`; ranking
-   data is always scoped to the requesting user. In `RankingRepository`,
+7. **Routes are authenticated** except `/health`, `/instance`,
+   `/announcement`, and `/auth/*`; ranking data is always scoped to the
+   requesting user. In `RankingRepository`,
    ranking-level methods (`getMatches`, `hasRanking`, `rename`, `delete`,
    `listRankings`) take a `userId` and scope their SQL by owner;
    editor-level methods (players, tiers, flags) take only a `rankingId`
