@@ -71,6 +71,10 @@ export interface SleeperPlayer {
   depth_chart_position?: string | null;
   /** 1 for the starter at `depth_chart_position`. */
   depth_chart_order?: number | null;
+  /** When Sleeper last had news on the player (epoch ms). */
+  news_updated?: number | null;
+  /** Sleeper's relevance order for search, 1 = most relevant. */
+  search_rank?: number | null;
 }
 
 export type SleeperPlayersResponse = Record<string, SleeperPlayer>;

@@ -233,7 +233,11 @@ include at least one of `FANTASY_POSITIONS` (`apps/api/src/domain/ranking.ts`,
 also used by CSV validation). `PlayerService.refreshPlayers()` drops
 irrelevant positions at load time (`hasRelevantFantasyPosition`, position
 only — inactive players stay cached so imports can still match them);
-`isFantasyRelevantPlayer` additionally requires `active` at read time.
+`isFantasyRelevantPlayer` additionally requires the player to be current
+at read time: Sleeper's `active` flag, plus news in the past year (or, with
+no news at all, a team). `active` alone isn't enough: Sleeper keeps it set
+for about 2,000 players who left the league, some still with their old
+team. The unranked pool is sorted by Sleeper's `search_rank`.
 
 ## Testing
 

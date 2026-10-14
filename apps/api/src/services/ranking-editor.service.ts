@@ -9,6 +9,18 @@ import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
 import { isFantasyRelevantPlayer } from "../utils/is-fantasy-relevant-player.js";
 import { PlayerService } from "./player.service.js";
 
+/** Most relevant first by Sleeper's search rank; players without one
+ * last, in their original order. */
+function bySearchRank(a: Player, b: Player): number {
+  if (a.searchRank === undefined || b.searchRank === undefined) {
+    return (
+      Number(a.searchRank === undefined) - Number(b.searchRank === undefined)
+    );
+  }
+
+  return a.searchRank - b.searchRank;
+}
+
 export class RankingEditorService {
   constructor(
     private readonly repository: RankingRepository,
@@ -130,7 +142,8 @@ export class RankingEditorService {
   }
 
   /**
-   * Active, fantasy-relevant players not currently part of this ranking —
+   * Current, fantasy-relevant players not part of this ranking, most
+   * relevant first (Sleeper's search rank; players without one last) —
    * the pool shown in the editor's "unranked" side panel.
    */
   async getUnrankedPlayers(
@@ -148,13 +161,16 @@ export class RankingEditorService {
         .filter((sleeperId): sleeperId is string => sleeperId !== undefined),
     );
 
+    const now = Date.now();
+
     return this.playerService
       .getAllPlayers()
       .filter(
         (player) =>
-          isFantasyRelevantPlayer(player) &&
+          isFantasyRelevantPlayer(player, now) &&
           !rankedSleeperIds.has(player.sleeperId),
-      );
+      )
+      .sort(bySearchRank);
   }
 
   /**

@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Fixed
+
+- The ranking editor's Unranked panel no longer lists players who left
+  the league years ago (Sleeper still marks many as active), and shows
+  the most relevant players first instead of the oldest ones.
+
 ### Removed
 
 - API endpoints the web app doesn't use: `GET /players`,

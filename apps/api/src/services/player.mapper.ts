@@ -17,6 +17,8 @@ export function mapSleeperPlayer(player: SleeperPlayer): Player {
     age: player.age ?? undefined,
     rookie: player.years_exp == null ? undefined : player.years_exp === 0,
     depthChart: mapDepthChart(player),
+    lastNewsAt: player.news_updated ?? undefined,
+    searchRank: player.search_rank ?? undefined,
   };
 }
 

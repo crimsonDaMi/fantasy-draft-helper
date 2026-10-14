@@ -45,10 +45,14 @@ the draft view and the ranking editor view.
 
 6. **Unranked players.** Players who are fantasy-relevant (per
    `isFantasyRelevantPlayer`) but not part of the ranking are shown in a
-   side area, separate from the ranked list. Fantasy-relevant means
-   active in the current NFL season **and** at least one of their Sleeper
-   `fantasy_positions` is QB, RB, WR, TE, K, or DEF (e.g. `["WR", "CB"]`
-   counts; `["LB"]` or `["DB", "S"]` doesn't). The position list is the
+   side area, separate from the ranked list, most relevant first
+   (Sleeper's `search_rank`; players without one, such as team defenses,
+   last). Fantasy-relevant means active in the current NFL season **and**
+   at least one of their Sleeper `fantasy_positions` is QB, RB, WR, TE, K,
+   or DEF (e.g. `["WR", "CB"]` counts; `["LB"]` or `["DB", "S"]`
+   doesn't). Sleeper keeps many long-retired players `active`, so active
+   also requires news on the player in the past year (`news_updated`), or,
+   for a player without any news, a team. The position list is the
    shared `FANTASY_POSITIONS` constant in `apps/api/src/domain/ranking.ts`.
    Players with no relevant position (individual defensive players etc.)
    are also dropped from the player cache at load time; inactive players

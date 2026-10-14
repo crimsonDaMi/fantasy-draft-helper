@@ -6,10 +6,14 @@ import {
   isFantasyRelevantPlayer,
 } from "./is-fantasy-relevant-player.js";
 
+const NOW = Date.parse("2026-10-14T12:00:00Z");
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function createPlayer(fantasyPositions: string[]): Player {
   return {
     sleeperId: "1",
     fullName: "Test Player",
+    team: "BUF",
     active: true,
     fantasyPositions,
   };
@@ -21,6 +25,7 @@ describe("isFantasyRelevantPlayer", () => {
       isFantasyRelevantPlayer({
         sleeperId: "1",
         fullName: "Josh Allen",
+        team: "BUF",
         active: true,
         fantasyPositions: ["QB"],
       }),
@@ -61,6 +66,41 @@ describe("isFantasyRelevantPlayer", () => {
     expect(isFantasyRelevantPlayer(createPlayer(["K"]))).toBe(true);
 
     expect(isFantasyRelevantPlayer(createPlayer(["WR", "CB"]))).toBe(true);
+  });
+
+  it("accepts a player with news in the past year, on a team or not", () => {
+    const recentNews = NOW - 300 * DAY_MS;
+
+    expect(
+      isFantasyRelevantPlayer(
+        { ...createPlayer(["WR"]), lastNewsAt: recentNews },
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isFantasyRelevantPlayer(
+        { ...createPlayer(["WR"]), team: undefined, lastNewsAt: recentNews },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a player Sleeper still lists as active without news for over a year", () => {
+    expect(
+      isFantasyRelevantPlayer(
+        { ...createPlayer(["QB"]), lastNewsAt: NOW - 400 * DAY_MS },
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a free agent without any news", () => {
+    expect(
+      isFantasyRelevantPlayer(
+        { ...createPlayer(["TE"]), team: undefined },
+        NOW,
+      ),
+    ).toBe(false);
   });
 });
 

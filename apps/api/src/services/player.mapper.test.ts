@@ -65,4 +65,26 @@ describe("mapSleeperPlayer", () => {
     expect(backup.depthChart).toEqual({ position: "RB", order: 2 });
     expect(unknown.depthChart).toBeUndefined();
   });
+
+  it("maps when Sleeper last had news and its search rank", () => {
+    const current = mapSleeperPlayer({
+      player_id: "1",
+      full_name: "Player One",
+      news_updated: 1791167716045,
+      search_rank: 39,
+    });
+    const unknown = mapSleeperPlayer({
+      player_id: "2",
+      full_name: "Player Two",
+      news_updated: null,
+      search_rank: null,
+    });
+
+    expect(current).toMatchObject({
+      lastNewsAt: 1791167716045,
+      searchRank: 39,
+    });
+    expect(unknown.lastNewsAt).toBeUndefined();
+    expect(unknown.searchRank).toBeUndefined();
+  });
 });

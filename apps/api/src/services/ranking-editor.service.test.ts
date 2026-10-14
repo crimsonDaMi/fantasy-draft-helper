@@ -382,6 +382,35 @@ describe("RankingEditorService", () => {
       expect(playerService.ensurePlayersLoaded).toHaveBeenCalledTimes(1);
     });
 
+    it("orders them by Sleeper's search rank, players without one last", async () => {
+      const repository = new RankingRepository(":memory:");
+
+      const rankingId = repository.create([], USER_ID);
+
+      const playerService = createFixturePlayerService({
+        getAllPlayers: () => [
+          createFantasyPlayer("1", "Player One"),
+          { ...createFantasyPlayer("2", "Player Two"), searchRank: 40 },
+          { ...createFantasyPlayer("3", "Player Three"), searchRank: 3 },
+          createFantasyPlayer("4", "Player Four"),
+        ],
+      });
+
+      const service = new RankingEditorService(
+        repository,
+        playerService as never,
+      );
+
+      const result = await service.getUnrankedPlayers(rankingId, USER_ID);
+
+      expect(result.map((player) => player.sleeperId)).toEqual([
+        "3",
+        "2",
+        "1",
+        "4",
+      ]);
+    });
+
     it("throws 404 when the ranking does not belong to the user", async () => {
       const repository = new RankingRepository(":memory:");
 

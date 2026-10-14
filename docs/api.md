@@ -234,7 +234,7 @@ PATCH  /rankings/:rankingId/players/:sleeperId    move or add a player
 DELETE /rankings/:rankingId/players/:sleeperId    remove a player
 POST   /rankings/:rankingId/tiers                 insert an empty tier
 DELETE /rankings/:rankingId/tiers/:position       remove a tier, merging its players
-GET    /rankings/:rankingId/unranked-players      fantasy-relevant players not ranked
+GET    /rankings/:rankingId/unranked-players      current fantasy players not ranked, most relevant first
 PATCH  /rankings/:rankingId/players/:sleeperId/flag   { "flag": "watch" | "avoid" | null }
 PATCH  /rankings/:rankingId/players/:sleeperId/note   { "note": "<text>" | null }
 PATCH  /rankings/:rankingId/unmatched/:rank       { "playerName", "sleeperId" }: resolve a row
