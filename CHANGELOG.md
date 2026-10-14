@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v3.1.0 — 2026-10-14
+
 ### Fixed
 
 - The ranking editor's Unranked panel no longer lists players who left
