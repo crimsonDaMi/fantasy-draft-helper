@@ -17,10 +17,15 @@ import { DraftStateService } from "./draft-state.service.js";
 import { PlayerService } from "./player.service.js";
 import { RankingStoreService } from "./ranking-store.service.js";
 
-function hasPlayer(
-  match: PlayerMatch,
-): match is PlayerMatch & { player: Player } {
+type MatchedPlayer = PlayerMatch & { player: Player };
+
+function hasPlayer(match: PlayerMatch): match is MatchedPlayer {
   return match.player !== undefined;
+}
+
+/** The player's live position, or the ranked one when Sleeper has none. */
+function positionOf(match: PlayerMatch): string | undefined {
+  return match.player?.position ?? match.ranking.position;
 }
 
 /** No filter (undefined or empty) lets every player through. */
@@ -93,63 +98,57 @@ function positionRanks(
   return ranks;
 }
 
-/** Per position, the first tiers (in ranking order) that still have
- * undrafted players, with how many are left in each. */
-function countRemainingByTier(
-  available: (PlayerMatch & { player: Player })[],
-): PositionTierCounts[] {
-  const byPosition = new Map<string, Map<string, number>>();
+/** Players by position, then by tier, both in ranking order. Players
+ * without a position or tier are left out. */
+function groupByPositionAndTier(
+  available: MatchedPlayer[],
+): Map<string, Map<string, MatchedPlayer[]>> {
+  const byPosition = new Map<string, Map<string, MatchedPlayer[]>>();
 
   for (const match of available) {
-    const position = match.player.position ?? match.ranking.position;
+    const position = positionOf(match);
     const tier = match.ranking.tier;
 
     if (!position || !tier) {
       continue;
     }
 
-    const tiers = byPosition.get(position) ?? new Map<string, number>();
-    tiers.set(tier, (tiers.get(tier) ?? 0) + 1);
+    const tiers =
+      byPosition.get(position) ?? new Map<string, MatchedPlayer[]>();
+    const players = tiers.get(tier) ?? [];
+    players.push(match);
+    tiers.set(tier, players);
     byPosition.set(position, tiers);
   }
 
+  return byPosition;
+}
+
+/** Per position, the first tiers (in ranking order) that still have
+ * undrafted players, with how many are left in each. */
+function countRemainingByTier(
+  byPosition: Map<string, Map<string, MatchedPlayer[]>>,
+): PositionTierCounts[] {
   return FANTASY_POSITIONS.filter((position) => byPosition.has(position)).map(
     (position) => ({
       position,
       tiers: [...byPosition.get(position)!]
         .slice(0, TIERS_SHOWN_PER_POSITION)
-        .map(([tier, remaining]) => ({ tier, remaining })),
+        .map(([tier, players]) => ({ tier, remaining: players.length })),
     }),
   );
 }
 
 /** Sleeper IDs of the players who are the only undrafted one of their
- * position left in their tier, over every tier. Players without a tier
- * or position are never included. */
+ * position left in their tier, over every tier. */
 function lastInTierIds(
-  available: (PlayerMatch & { player: Player })[],
+  byPosition: Map<string, Map<string, MatchedPlayer[]>>,
 ): Set<string> {
-  const byPositionTier = new Map<string, string[]>();
-
-  for (const match of available) {
-    const position = match.player.position ?? match.ranking.position;
-    const tier = match.ranking.tier;
-
-    if (!position || !tier) {
-      continue;
-    }
-
-    const key = `${position}|${tier}`;
-    byPositionTier.set(key, [
-      ...(byPositionTier.get(key) ?? []),
-      match.player.sleeperId,
-    ]);
-  }
-
   return new Set(
-    [...byPositionTier.values()]
-      .filter((sleeperIds) => sleeperIds.length === 1)
-      .flat(),
+    [...byPosition.values()]
+      .flatMap((tiers) => [...tiers.values()])
+      .filter((players) => players.length === 1)
+      .map(([match]) => match!.player.sleeperId),
   );
 }
 
@@ -203,7 +202,7 @@ export class RecommendationService {
     const positionRankBySleeperId = positionRanks(
       matches.map((match) => ({
         sleeperId: match.player?.sleeperId,
-        position: match.player?.position ?? match.ranking.position,
+        position: positionOf(match),
       })),
     );
 
@@ -223,9 +222,10 @@ export class RecommendationService {
     const isAvoided = (match: { player: Player }) =>
       flags[match.player.sleeperId] === "avoid";
 
-    // Over all available players, like the tier counts, so filters and
-    // the limit don't change who is marked.
-    const lastInTier = lastInTierIds(available);
+    // Over all available players, so filters and the limit change
+    // neither the tier counts nor who is marked last in tier.
+    const availableByPositionAndTier = groupByPositionAndTier(available);
+    const lastInTier = lastInTierIds(availableByPositionAndTier);
 
     const recommendations = available
       .filter((match) => showAvoided || !isAvoided(match))
@@ -271,7 +271,7 @@ export class RecommendationService {
       draft: draftState.draft,
       adpFormat: adpFormat.label,
       picks,
-      tierCounts: countRemainingByTier(available),
+      tierCounts: countRemainingByTier(availableByPositionAndTier),
       avoidedCount: available.filter(isAvoided).length,
       draftedPlayerCount: draftedPlayerIds.size,
       draftStatus: draftState.draft.status,
