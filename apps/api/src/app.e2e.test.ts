@@ -131,22 +131,17 @@ function createTestDependencies(): AppDependencies {
   );
 
   return {
-    sleeperClient,
     authService,
     accountService,
     instanceInfo: { accountRetentionDays: 730 },
     // Never created, so no announcement.
     announcementPath: join(tmpdir(), "fantasy-draft-helper-missing", "a.txt"),
-    adpService: noopAdpService as never,
     adpRankingService: new AdpRankingService(
       noopAdpService,
       playerService,
       rankingStoreService,
     ),
     draftService,
-    playerCache,
-    playerService,
-    draftStateService,
     rankingImportService: {} as never, // not exercised by this test
     rankingEditorService,
     rankingStoreService,

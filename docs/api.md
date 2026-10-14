@@ -90,15 +90,6 @@ whose player an earlier row already holds; it's omitted otherwise. The
 row stays in the ranking without a player, with that player as its only
 candidate.
 
-### Rankings status
-
-```text
-GET /rankings/status
-```
-
-Returns whether any ranking has been imported, plus the total and matched
-player counts for the newest ranking.
-
 ### Saved rankings
 
 ```text
@@ -137,7 +128,7 @@ current password, which counts toward the login lockout).
 and permanently deletes the logged-in user with all of their rankings
 (`403` for a wrong password, which counts toward the login lockout).
 
-All other API routes (`/rankings`, `/drafts`, `/players`) require a valid
+All other API routes (`/rankings`, `/drafts`) require a valid
 session cookie; `/health` and `/auth/*` remain open.
 
 ### Find drafts by Sleeper username

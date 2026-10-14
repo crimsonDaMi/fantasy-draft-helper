@@ -22,7 +22,7 @@ describe("isSpaClientRoute", () => {
   });
 
   it("does not match other rankings API paths", () => {
-    expect(isSpaClientRoute("GET", "/rankings/status")).toBe(false);
+    expect(isSpaClientRoute("GET", "/rankings/export")).toBe(false);
     expect(isSpaClientRoute("GET", "/rankings")).toBe(false);
   });
 

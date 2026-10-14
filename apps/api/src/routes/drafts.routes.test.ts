@@ -10,17 +10,14 @@ describe("drafts routes", () => {
 
     app.setErrorHandler(errorHandler);
     app.register(
-      createDraftsRoutes(
-        {
-          getDraft: async () => ({
-            id: "draft-1",
-            status: "PRE_DRAFT",
-            rosterSlots: { QB: 1, SUPER_FLEX: 1 },
-            scoringType: "dynasty_ppr",
-          }),
-        } as never,
-        {} as never,
-      ),
+      createDraftsRoutes({
+        getDraft: async () => ({
+          id: "draft-1",
+          status: "PRE_DRAFT",
+          rosterSlots: { QB: 1, SUPER_FLEX: 1 },
+          scoringType: "dynasty_ppr",
+        }),
+      } as never),
     );
 
     const response = await app.inject({

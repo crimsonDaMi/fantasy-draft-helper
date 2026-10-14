@@ -188,28 +188,6 @@ describe("rankings routes", () => {
     await app.close();
   });
 
-  it("returns rankings status", async () => {
-    const app = createTestApp({}, [
-      { player: { sleeperId: "1" } },
-      { player: undefined },
-    ]);
-
-    const response = await app.inject({
-      method: "GET",
-      url: "/rankings/status",
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      loaded: true,
-      rankingId: "ranking-1",
-      rankingCount: 2,
-      matchedCount: 1,
-    });
-
-    await app.close();
-  });
-
   it("exports the current ranking as a CSV download", async () => {
     const app = createTestApp({}, [
       {

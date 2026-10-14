@@ -4,11 +4,6 @@ import { z } from "zod";
 import { draftParamsSchema } from "./params.schemas.js";
 import { adpFormatFor } from "../domain/adp-format.js";
 import { DraftService } from "../services/draft.service.js";
-import { DraftStateService } from "../services/draft-state.service.js";
-
-const availablePlayersQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(1000).default(100),
-});
 
 const userDraftsQuerySchema = z.object({
   username: z.string().trim().min(1).max(64),
@@ -18,10 +13,7 @@ const userDraftsQuerySchema = z.object({
     .default(() => String(new Date().getFullYear())),
 });
 
-export function createDraftsRoutes(
-  draftService: DraftService,
-  draftStateService: DraftStateService,
-) {
+export function createDraftsRoutes(draftService: DraftService) {
   return async function draftsRoutes(app: FastifyInstance) {
     // Find a draft without pasting its ID: a Sleeper user's drafts for a
     // season (defaults to the current year).
@@ -56,28 +48,6 @@ export function createDraftsRoutes(
       // The ADP format recommendations use for this draft, so a ranking
       // can be started from the matching ADP before one exists.
       return { ...draft, adpFormat: adpFormatFor(draft) };
-    });
-
-    app.get("/drafts/:draftId/picks", async (request) => {
-      const { draftId } = draftParamsSchema.parse(request.params);
-
-      return draftService.getDraftPicks(draftId);
-    });
-
-    app.get("/drafts/:draftId/available-players", async (request) => {
-      const { draftId } = draftParamsSchema.parse(request.params);
-
-      const { limit } = availablePlayersQuerySchema.parse(request.query);
-
-      const draftState = await draftStateService.getDraftState(draftId);
-
-      return {
-        draftId: draftState.draft.id,
-        draftedPlayerCount: draftState.draftedPlayerIds.size,
-        availablePlayerCount: draftState.availablePlayers.length,
-        lastUpdatedAt: draftState.lastUpdatedAt,
-        players: draftState.availablePlayers.slice(0, limit),
-      };
     });
   };
 }

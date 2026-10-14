@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PlayerCache } from "../cache/player.cache.js";
-import { PlayerService, RefreshCooldownError } from "./player.service.js";
+import { PlayerService } from "./player.service.js";
 
 describe("PlayerService", () => {
   it("shares concurrent first cache loads", async () => {
@@ -44,7 +44,7 @@ describe("PlayerService", () => {
   });
 });
 
-describe("PlayerService refresh cooldown", () => {
+describe("PlayerService.refreshPlayers", () => {
   function createFixtureClient() {
     return {
       getNFLPlayers: vi.fn(async () => ({
@@ -60,46 +60,13 @@ describe("PlayerService refresh cooldown", () => {
     };
   }
 
-  it("allows a refresh when the cache has never been loaded", async () => {
+  it("loads Sleeper's players into the cache", async () => {
     const client = createFixtureClient();
     const service = new PlayerService(client as never, new PlayerCache());
 
-    await service.refreshPlayersWithCooldown();
+    await service.refreshPlayers();
 
     expect(service.getAllPlayers()).toHaveLength(1);
-    expect(service.getPlayerCount()).toBe(1);
-  });
-
-  it("rejects a second refresh within the cooldown window", async () => {
-    const client = createFixtureClient();
-    const service = new PlayerService(client as never, new PlayerCache());
-
-    await service.refreshPlayersWithCooldown();
-
-    await expect(service.refreshPlayersWithCooldown()).rejects.toThrow(
-      RefreshCooldownError,
-    );
-
-    expect(client.getNFLPlayers).toHaveBeenCalledTimes(1);
-  });
-
-  it("allows a refresh once the cooldown has elapsed", async () => {
-    vi.useFakeTimers();
-
-    try {
-      const client = createFixtureClient();
-      const service = new PlayerService(client as never, new PlayerCache());
-
-      await service.refreshPlayersWithCooldown();
-
-      vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
-
-      await service.refreshPlayersWithCooldown();
-
-      expect(client.getNFLPlayers).toHaveBeenCalledTimes(2);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });
 
@@ -170,11 +137,11 @@ describe("PlayerService automatic refresh", () => {
 
     expect(refreshPlayers).toHaveBeenCalledTimes(1);
 
-    expect(service.getPlayerCount()).toBe(1);
+    expect(service.getAllPlayers().length).toBe(1);
 
     resolveRefresh();
 
-    await vi.waitFor(() => expect(service.getPlayerCount()).toBe(0));
+    await vi.waitFor(() => expect(service.getAllPlayers().length).toBe(0));
   });
 
   it("keeps the data after a failed refresh and retries an hour later", async () => {
@@ -197,7 +164,7 @@ describe("PlayerService automatic refresh", () => {
 
     expect(refreshPlayers).toHaveBeenCalledTimes(1);
 
-    expect(service.getPlayerCount()).toBe(1);
+    expect(service.getAllPlayers().length).toBe(1);
 
     vi.advanceTimersByTime(1);
 

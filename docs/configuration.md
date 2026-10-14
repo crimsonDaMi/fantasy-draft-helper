@@ -167,23 +167,3 @@ This is a **soft dependency**, not a formal API contract:
   standard-scoring column, so standard-scoring drafts use PPR ADP. Dynasty
   drafts read the sheet's dynasty columns. The app labels ADP with the
   format it uses, e.g. "1QB PPR" or "Dynasty SF".
-
-## Player Cache Refresh Cooldown
-
-`POST /players/refresh` is rate-limited to once per 24 hours, regardless of
-which authenticated user calls it. This follows Sleeper's own API guidance:
-["You do not need to call this endpoint more than once per
-day."](https://docs.sleeper.com/) — the full player dataset is several
-megabytes, and Sleeper explicitly asks integrators not to poll it more
-often than that.
-
-A refresh attempted before the cooldown elapses returns `429 Too Many
-Requests` with a `retryAfterMs` field indicating how long to wait. The
-cooldown applies globally to the shared player cache, not per-user — since
-player data is objectively the same for everyone, there's no reason for
-each person to have their own cooldown window.
-
-The API also refreshes the cache on its own: the first request after the
-data turns 24 hours old starts a background refresh and is answered from the
-current data meanwhile. If that refresh fails, the current data stays and the
-next attempt waits an hour.

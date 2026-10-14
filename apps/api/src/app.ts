@@ -12,7 +12,6 @@ import { createAuthRoutes } from "./routes/auth.routes.js";
 import { createDraftsRoutes } from "./routes/drafts.routes.js";
 import { createAnnouncementRoutes } from "./routes/announcement.routes.js";
 import { createInstanceRoutes } from "./routes/instance.routes.js";
-import { createPlayersRoutes } from "./routes/players.routes.js";
 import { errorHandler } from "./utils/error-handler.js";
 import { createRankingEditorRoutes } from "./routes/ranking-editor.routes.js";
 import { createRankingsRoutes } from "./routes/rankings.routes.js";
@@ -32,7 +31,7 @@ const { version: APP_VERSION } = JSON.parse(
 const MAX_CSV_UPLOAD_BYTES = 1024 * 1024;
 
 // Route namespaces that require a logged-in session.
-const PROTECTED_PREFIXES = ["/rankings", "/drafts", "/players"];
+const PROTECTED_PREFIXES = ["/rankings", "/drafts"];
 
 // Every API namespace. Unknown paths under these get a JSON 404; anything
 // else falls through to the SPA shell for client-side routing.
@@ -115,14 +114,7 @@ export async function buildApp(injectedDependencies?: AppDependencies) {
     ).user;
   });
 
-  await app.register(
-    createDraftsRoutes(
-      dependencies.draftService,
-      dependencies.draftStateService,
-    ),
-  );
-
-  await app.register(createPlayersRoutes(dependencies.playerService));
+  await app.register(createDraftsRoutes(dependencies.draftService));
 
   await app.register(
     createRankingsRoutes(

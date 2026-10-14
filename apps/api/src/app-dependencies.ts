@@ -26,17 +26,12 @@ import {
 } from "./utils/retention-days.js";
 
 export interface AppDependencies {
-  sleeperClient: SleeperClient;
   authService: AuthService;
   accountService: AccountService;
   instanceInfo: InstanceInfo;
   announcementPath: string;
-  adpService: AdpService;
   adpRankingService: AdpRankingService;
   draftService: DraftService;
-  playerCache: PlayerCache;
-  playerService: PlayerService;
-  draftStateService: DraftStateService;
   rankingImportService: RankingImportService;
   rankingEditorService: RankingEditorService;
   rankingStoreService: RankingStoreService;
@@ -129,17 +124,12 @@ export function createAppDependencies(
   );
 
   return {
-    sleeperClient,
     authService,
     accountService,
     instanceInfo,
     announcementPath,
-    adpService,
     adpRankingService,
     draftService,
-    playerCache,
-    playerService,
-    draftStateService,
     rankingImportService,
     rankingEditorService,
     rankingStoreService,

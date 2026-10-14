@@ -7,6 +7,14 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Removed
+
+- API endpoints the web app doesn't use: `GET /players`,
+  `GET /players/cache-status`, `POST /players/refresh`,
+  `GET /drafts/:draftId/picks`, `GET /drafts/:draftId/available-players`
+  and `GET /rankings/status`. The player data still refreshes by itself
+  once a day.
+
 ## v3.0.0 — 2026-10-14
 
 ### Upgrading

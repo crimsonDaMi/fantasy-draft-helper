@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DraftStateService } from "./draft-state.service.js";
 
 describe("DraftStateService", () => {
-  it("removes drafted players", async () => {
+  it("collects the drafted player IDs", async () => {
     const draftService = {
       getDraft: async () => ({
         id: "draft-1",
@@ -21,20 +21,6 @@ describe("DraftStateService", () => {
 
     const playerService = {
       ensurePlayersLoaded: async () => {},
-      getAllPlayers: () => [
-        {
-          sleeperId: "1",
-          fullName: "Player One",
-          active: true,
-          fantasyPositions: ["QB"],
-        },
-        {
-          sleeperId: "2",
-          fullName: "Player Two",
-          active: true,
-          fantasyPositions: ["RB"],
-        },
-      ],
     };
 
     const service = new DraftStateService(
@@ -44,8 +30,6 @@ describe("DraftStateService", () => {
 
     const result = await service.getDraftState("draft-1");
 
-    expect(result.availablePlayers).toHaveLength(1);
-
-    expect(result.availablePlayers[0]?.sleeperId).toBe("1");
+    expect([...result.draftedPlayerIds]).toEqual(["2"]);
   });
 });

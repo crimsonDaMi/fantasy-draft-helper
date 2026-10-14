@@ -180,22 +180,5 @@ export function createRankingsRoutes(
         .header("content-disposition", 'attachment; filename="rankings.csv"')
         .send(csv);
     });
-
-    app.get("/rankings/status", async (request) => {
-      const userId = requireUser(request).id;
-
-      const rankingId = rankingStoreService.getLatestRankingId(userId);
-      const matches = rankingId
-        ? rankingStoreService.getRankingMatches(rankingId, userId)
-        : [];
-
-      return {
-        loaded: rankingId !== undefined,
-        rankingId,
-        rankingCount: matches.length,
-        matchedCount: matches.filter((match) => match.player !== undefined)
-          .length,
-      };
-    });
   };
 }

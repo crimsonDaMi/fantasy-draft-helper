@@ -3,23 +3,15 @@ import { PlayerCache } from "../cache/player.cache.js";
 import { Player } from "../domain/player.js";
 import { hasRelevantFantasyPosition } from "../utils/is-fantasy-relevant-player.js";
 import { mapSleeperPlayer } from "./player.mapper.js";
-import { DAY_MS, HOUR_MS, MINUTE_MS } from "../utils/time.js";
+import { DAY_MS, HOUR_MS } from "../utils/time.js";
 
 // Per Sleeper's own API docs: "You do not need to call this endpoint more
 // than once per day." https://docs.sleeper.com/
-const REFRESH_COOLDOWN_MS = DAY_MS;
+const REFRESH_INTERVAL_MS = DAY_MS;
 
 // How long to wait before retrying a failed automatic refresh, so draft
 // polling can't hammer Sleeper while it's down.
 const REFRESH_RETRY_MS = HOUR_MS;
-
-export class RefreshCooldownError extends Error {
-  constructor(public readonly retryAfterMs: number) {
-    super(
-      `Player data was refreshed recently. Try again in ${Math.ceil(retryAfterMs / MINUTE_MS)} minute(s).`,
-    );
-  }
-}
 
 export class PlayerService {
   private playersLoadPromise?: Promise<void>;
@@ -44,20 +36,6 @@ export class PlayerService {
       .filter(hasRelevantFantasyPosition);
 
     this.playerCache.replace(players);
-  }
-
-  async refreshPlayersWithCooldown(): Promise<void> {
-    const updatedAt = this.playerCache.updatedAt;
-
-    if (updatedAt) {
-      const elapsed = Date.now() - updatedAt.getTime();
-
-      if (elapsed < REFRESH_COOLDOWN_MS) {
-        throw new RefreshCooldownError(REFRESH_COOLDOWN_MS - elapsed);
-      }
-    }
-
-    await this.refreshPlayers();
   }
 
   /** Loads the cache when it's empty; once it's a day old, refreshes it in
@@ -86,7 +64,7 @@ export class PlayerService {
 
     if (
       this.backgroundRefreshPromise ||
-      now - updatedAt < REFRESH_COOLDOWN_MS ||
+      now - updatedAt < REFRESH_INTERVAL_MS ||
       (this.lastFailedRefreshAt !== undefined &&
         now - this.lastFailedRefreshAt < REFRESH_RETRY_MS)
     ) {
@@ -116,10 +94,6 @@ export class PlayerService {
 
   getAllPlayers(): Player[] {
     return this.playerCache.getAll();
-  }
-
-  getPlayerCount(): number {
-    return this.playerCache.size;
   }
 
   getCacheUpdatedAt(): Date | undefined {
