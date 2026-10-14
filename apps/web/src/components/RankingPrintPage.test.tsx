@@ -32,6 +32,7 @@ function renderPrintPage() {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  window.localStorage.clear();
 });
 
 describe("RankingPrintPage", () => {
@@ -86,6 +87,31 @@ describe("RankingPrintPage", () => {
     expect(screen.getByText("target share up")).toBeTruthy();
     expect(screen.getByRole("img", { name: "Avoided" })).toBeTruthy();
     expect(screen.getByText(/^2 players/)).toBeTruthy();
+  });
+
+  it("numbers tiers when the editor shows numbers", async () => {
+    window.localStorage.setItem("draft-helper-tier-display-mode", "numeric");
+    mocks.listRankings.mockResolvedValue({
+      rankings: [{ id: "r1", name: "Main league", playerCount: 1 }],
+    });
+    mocks.getRanking.mockResolvedValue({
+      players: [
+        {
+          ranking: { rank: 1, playerName: "Player One", tier: "A" },
+          player: { sleeperId: "1", fullName: "Player One", position: "WR" },
+          method: "SLEEPER_ID",
+        },
+      ],
+      tiers: [
+        { label: "S", position: 1, playerCount: 0 },
+        { label: "A", position: 2, playerCount: 1 },
+      ],
+      flags: {},
+    });
+
+    renderPrintPage();
+
+    expect(await screen.findByRole("heading", { name: "Tier 2" })).toBeTruthy();
   });
 
   it("opens the browser's print dialog", async () => {

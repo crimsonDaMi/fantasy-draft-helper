@@ -4,8 +4,10 @@ import { Link } from "react-router";
 import { getRanking } from "../api/fantasy-api";
 import { queryKeys } from "../api/query-keys";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
+import { useTierDisplayMode } from "../hooks/useTierDisplayMode";
 import { buildPrintTiers, type PrintRow } from "../utils/ranking-print";
 import { ErrorMessage } from "./ErrorMessage";
+import { formatTierHeading } from "./ranking-editor-logic";
 
 const FLAG_SYMBOL = { watch: "★", avoid: "⊘" } as const;
 
@@ -45,6 +47,7 @@ function PrintRowItem({ row }: { row: PrintRow }) {
 export function RankingPrintPage() {
   const { selectedRanking, isLoading } = useSelectedRanking();
   const rankingId = selectedRanking?.id;
+  const [tierDisplayMode] = useTierDisplayMode();
 
   const detailQuery = useQuery({
     queryKey: queryKeys.rankingDetail(rankingId),
@@ -101,7 +104,13 @@ export function RankingPrintPage() {
         {tiers.map((tier) => (
           <section key={tier.label ?? ""} className="ranking-print__tier">
             {tier.label && (
-              <h3 className="ranking-print__tier-heading">Tier {tier.label}</h3>
+              <h3 className="ranking-print__tier-heading">
+                {formatTierHeading(
+                  tier.label,
+                  tier.position ?? 1,
+                  tierDisplayMode,
+                )}
+              </h3>
             )}
             <ol className="ranking-print__list">
               {tier.rows.map((row) => (

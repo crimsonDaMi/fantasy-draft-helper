@@ -15,6 +15,8 @@ export interface PrintRow {
 export interface PrintTier {
   /** Undefined when the ranking has no tiers. */
   label?: string;
+  /** 1-based tier order, for numeric labels. */
+  position?: number;
   rows: PrintRow[];
 }
 
@@ -58,5 +60,9 @@ export function buildPrintTiers(detail: RankingDetailResponse): PrintTier[] {
 
   return [...groups]
     .filter(([, rows]) => rows.length > 0)
-    .map(([label, rows]) => ({ label, rows }));
+    .map(([label, rows]) => ({
+      label,
+      position: tiers.find((tier) => tier.label === label)?.position,
+      rows,
+    }));
 }

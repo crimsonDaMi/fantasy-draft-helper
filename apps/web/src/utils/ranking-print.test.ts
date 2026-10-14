@@ -29,7 +29,10 @@ describe("buildPrintTiers", () => {
       flags: {},
     });
 
-    expect(tiers.map((tier) => tier.label)).toEqual(["S", "A"]);
+    expect(tiers.map((tier) => [tier.label, tier.position])).toEqual([
+      ["S", 1],
+      ["A", 2],
+    ]);
     expect(tiers[0].rows.map((row) => row.name)).toEqual([
       "Player 1",
       "Player 2",
@@ -106,6 +109,7 @@ describe("buildPrintTiers", () => {
     ).toEqual([
       {
         label: undefined,
+        position: undefined,
         rows: [expect.objectContaining({ name: "Player 1" })],
       },
     ]);

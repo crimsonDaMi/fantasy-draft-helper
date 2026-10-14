@@ -198,6 +198,24 @@ describe("RankingEditorPage", () => {
     );
   });
 
+  it("remembers numbered tier labels across visits", async () => {
+    mockTwoTierRanking();
+    renderWithClient();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Numbers" }));
+
+    expect(screen.getByRole("heading", { name: "Tier 2" })).toBeInTheDocument();
+    cleanup();
+    renderWithClient();
+    expect(
+      await screen.findByRole("heading", { name: "Tier 2" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Numbers" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
   it("links to the CSV export of the current ranking", async () => {
     mockTwoTierRanking();
     renderWithClient();

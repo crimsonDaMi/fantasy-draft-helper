@@ -22,6 +22,7 @@ import { useEdgeAutoscroll } from "../hooks/useEdgeAutoscroll";
 import { PHONE_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import { useRankingEditorMutations } from "../hooks/useRankingEditorMutations";
 import { useSelectedRanking } from "../hooks/useSelectedRanking";
+import { useTierDisplayMode } from "../hooks/useTierDisplayMode";
 import type { RankingTierDto } from "../types/api";
 import { PositionFilter } from "./PositionFilter";
 import { RankingSelector } from "./RankingSelector";
@@ -47,7 +48,6 @@ import {
   type Containers,
   type EditorPlayer,
   type KeyboardMove,
-  type TierDisplayMode,
 } from "./ranking-editor-logic";
 import { ErrorMessage } from "./ErrorMessage";
 import { SearchField } from "./SearchField";
@@ -146,8 +146,7 @@ export function RankingEditorPage() {
 
   useEdgeAutoscroll(isDragging, lastOverId, resolveContainer, scrollElements);
 
-  const [tierDisplayMode, setTierDisplayMode] =
-    useState<TierDisplayMode>("alpha");
+  const [tierDisplayMode, setTierDisplayMode] = useTierDisplayMode();
   const [confirmingRemoveTierPosition, setConfirmingRemoveTierPosition] =
     useState<number>();
   const [positionFilter, setPositionFilter] = useState<string[]>([]);

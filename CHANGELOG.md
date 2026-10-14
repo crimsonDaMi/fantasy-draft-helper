@@ -23,9 +23,11 @@ See `RELEASING.md`.
 ### Added
 
 - Printable cheat sheet: "Print" in the ranking editor opens your
-  ranking as a compact list grouped by tier, with each player's
-  positional rank, team, bye week, watch (★) or avoid (⊘) flag and
-  note, ready for the browser's print dialog or "Save as PDF". A paper
+  ranking as a compact list grouped by tier (labelled with letters or
+  numbers, as you chose in the editor, which now remembers that choice
+  in your browser), with each player's positional rank, team, bye
+  week, watch (★) or avoid (⊘) flag and note, ready for the browser's
+  print dialog or "Save as PDF". A paper
   or PDF backup for when the draft site, the app or your device lets
   you down mid-draft. On paper it drops the app's header and colors and
   runs in three columns, so a 250-player ranking fits on a few pages.
