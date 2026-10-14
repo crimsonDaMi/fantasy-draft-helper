@@ -17,6 +17,12 @@ draft day or shared with your whole league. Either way, it doesn't pick for
 you: no auto-drafting and no machine learning, just your rankings and the
 draft state.
 
+![The draft board during a Sleeper mock draft: the best available player from your ranking at the top, with ADP, tier and positional rank, the next players below with injury and rookie badges, your team and next pick on the left, and recent picks marked as reaches or steals on the right](docs/assets/screenshots/draft-board.png)
+
+| Ranking editor                                                                                                                                                                                                   | One theme per NFL team (here: Fjord)                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| ![The ranking editor mid-drag: a wide receiver being dragged between two running backs in tier S, with tier A below and the unranked players beside it](docs/assets/screenshots/ranking-editor-mid-drag-top.png) | ![The same draft board in the purple and gold Fjord theme](docs/assets/screenshots/draft-board-fjord.png) |
+
 ## Features
 
 **On draft day**
