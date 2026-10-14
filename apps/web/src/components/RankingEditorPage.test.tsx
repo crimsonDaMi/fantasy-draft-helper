@@ -8,6 +8,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RankingEditorPage } from "./RankingEditorPage";
@@ -57,7 +58,9 @@ function renderWithClient(
 ) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <RankingEditorPage />
+      <MemoryRouter>
+        <RankingEditorPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

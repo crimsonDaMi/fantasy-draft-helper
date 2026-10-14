@@ -65,6 +65,8 @@ draft state.
   tiers, add and remove tiers, start from scratch, and export as a CSV.
   Filters by position and rookies, and search, help find players.
 - Several saved rankings, e.g. one per league.
+- Print a ranking, or save it as a PDF, as a compact cheat sheet by
+  tier: a backup for draft day if the connection or your device fails.
 - Watch (★) players to highlight them, or avoid (⊘) them to hide them from
   the board, and keep a note (✎) on any player for draft day.
 

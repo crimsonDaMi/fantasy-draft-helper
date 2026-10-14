@@ -6,6 +6,7 @@ import { AppFooter } from "./components/AppFooter";
 import { DraftDashboard } from "./components/DraftDashboard";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { RankingEditorPage } from "./components/RankingEditorPage";
+import { RankingPrintPage } from "./components/RankingPrintPage";
 import { ThemeSelect } from "./components/ThemeSelect";
 import { LoginForm } from "./components/LoginForm";
 import { useTheme } from "./hooks/useTheme";
@@ -84,6 +85,7 @@ function App() {
       <Routes>
         <Route path="/" element={<DraftDashboard />} />
         <Route path="/rankings/edit" element={<RankingEditorPage />} />
+        <Route path="/rankings/print" element={<RankingPrintPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route
           path="/account"

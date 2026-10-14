@@ -7,7 +7,7 @@
  * always serve the SPA shell, regardless of auth state, so a direct
  * browser reload behaves the same as in-app client-side navigation.
  */
-const SPA_CLIENT_ROUTES = new Set(["/rankings/edit"]);
+const SPA_CLIENT_ROUTES = new Set(["/rankings/edit", "/rankings/print"]);
 
 export function isSpaClientRoute(
   method: string,

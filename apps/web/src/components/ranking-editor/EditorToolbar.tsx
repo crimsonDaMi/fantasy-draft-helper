@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 import { rankingExportUrl } from "../../api/fantasy-api";
 import type { TierDisplayMode } from "../ranking-editor-logic";
 import { TierModeToggle } from "./TierModeToggle";
@@ -22,6 +24,12 @@ export function EditorToolbar({
         >
           Export CSV
         </a>
+        <Link
+          className="ranking-editor__mode-button ranking-editor__export-link"
+          to="/rankings/print"
+        >
+          Print
+        </Link>
         <TierModeToggle
           value={tierDisplayMode}
           onChange={onTierDisplayModeChange}

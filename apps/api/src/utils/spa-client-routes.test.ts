@@ -7,6 +7,10 @@ describe("isSpaClientRoute", () => {
     expect(isSpaClientRoute("GET", "/rankings/edit")).toBe(true);
   });
 
+  it("matches the ranking print view's client-side route", () => {
+    expect(isSpaClientRoute("GET", "/rankings/print")).toBe(true);
+  });
+
   it("ignores a query string", () => {
     expect(isSpaClientRoute("GET", "/rankings/edit?foo=bar")).toBe(true);
   });
