@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v3.0.0 — 2026-10-14
+
 ### Upgrading
 
 - **This release changes the database schema, so existing data can't be
