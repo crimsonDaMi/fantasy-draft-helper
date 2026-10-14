@@ -14,11 +14,15 @@ import { PlayerFlag } from "../domain/player-flag.js";
 import { Player } from "../domain/player.js";
 import { PlayerMatch } from "../domain/player-match.js";
 import { FantasyPosition } from "../domain/ranking.js";
+import {
+  fittingTier,
+  indexOfMatchedRank,
+} from "../domain/ranking-placement.js";
 import { RankingTier } from "../domain/ranking-tier.js";
 import { ConflictError, NotFoundError } from "../utils/domain-errors.js";
 import {
-  labelTierToNumeric,
   MAX_TIERS,
+  labelTierToNumeric,
   numericTierToLabel,
 } from "../utils/tier.js";
 
@@ -131,51 +135,6 @@ export interface RankingSummary {
   createdAt: string;
   playerCount: number;
   matchedCount: number;
-}
-
-/** Index in `ordered` of the `matchedRank`-th (1-based) matched row, or
- * the end of the list when there are fewer matched rows. */
-function indexOfMatchedRank(
-  ordered: PlayerMatch[],
-  matchedRank: number,
-): number {
-  let seen = 0;
-
-  for (const [index, match] of ordered.entries()) {
-    if (match.player && ++seen === Math.max(1, matchedRank)) {
-      return index;
-    }
-  }
-
-  return ordered.length;
-}
-
-/** `preferred` if it sorts between the tiers of the nearest matched rows
- * around `index`, else the tier of the matched row above (or below). */
-function fittingTier(
-  ordered: PlayerMatch[],
-  index: number,
-  preferred: string | undefined,
-): string | undefined {
-  const above = ordered
-    .slice(0, index)
-    .reverse()
-    .find((match) => match.player)?.ranking.tier;
-  const below = ordered.slice(index + 1).find((match) => match.player)
-    ?.ranking.tier;
-  const order = (tier: string | undefined) =>
-    tier === undefined ? undefined : labelTierToNumeric(tier);
-  const preferredOrder = order(preferred);
-
-  if (
-    preferredOrder !== undefined &&
-    preferredOrder >= (order(above) ?? 0) &&
-    preferredOrder <= (order(below) ?? Infinity)
-  ) {
-    return preferred;
-  }
-
-  return above ?? below ?? preferred;
 }
 
 interface TierRow {
@@ -393,7 +352,7 @@ export class RankingRepository {
     }
   }
 
-  /** Deletes a ranking with its players, tiers, and flags (FK cascade). */
+  /** Deletes a ranking with its players and tiers (FK cascade). */
   delete(rankingId: string, userId: string): void {
     const result = this.database
       .prepare(`DELETE FROM rankings WHERE id = ? AND user_id = ?`)
@@ -404,8 +363,8 @@ export class RankingRepository {
     }
   }
 
-  /** Deletes all of a user's rankings with their players, tiers, and
-   * flags (FK cascade), for account deletion. */
+  /** Deletes all of a user's rankings with their players and tiers (FK
+   * cascade), for account deletion. */
   deleteAllForUser(userId: string): void {
     this.database.prepare(`DELETE FROM rankings WHERE user_id = ?`).run(userId);
   }
@@ -482,9 +441,10 @@ export class RankingRepository {
   /**
    * Replaces the unmatched row at `rank` (1-based, counting every row)
    * with `resolved` at the same position, or removes it when `resolved`
-   * is undefined. The row keeps its bye week and note, and its tier unless edits since the import
-   * left it between players of other tiers; it then joins the tier of
-   * the matched player above it, so every tier stays one contiguous block.
+   * is undefined. The row keeps its bye week and note, and its tier
+   * unless edits since the import left it between players of other
+   * tiers; it then joins the tier of the matched player above it, so
+   * every tier stays one contiguous block.
    */
   replaceUnmatchedRow(
     rankingId: string,
