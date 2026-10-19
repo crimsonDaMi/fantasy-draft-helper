@@ -7,6 +7,12 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Security
+
+- Fastify upgrade to fix a low-severity header validation bypass
+  ([GHSA-389g-gv7q-r4x8](https://github.com/fastify/fastify/security/advisories/GHSA-389g-gv7q-r4x8)),
+  along with other patch-level dependency updates.
+
 ## v3.1.0 — 2026-10-14
 
 ### Fixed
