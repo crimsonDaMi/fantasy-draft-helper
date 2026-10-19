@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v3.1.1 — 2026-10-19
+
 ### Security
 
 - Fastify upgrade to fix a low-severity header validation bypass
