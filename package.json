@@ -21,7 +21,7 @@
     "release": "bash scripts/release.sh"
   },
   "devDependencies": {
-    "knip": "^6.41.0",
+    "knip": "^6.42.1",
     "prettier": "^3.9.10"
   }
 }
