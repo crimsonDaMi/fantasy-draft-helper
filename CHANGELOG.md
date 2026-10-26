@@ -7,6 +7,8 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+## v3.1.2 — 2026-10-26
+
 ### Security
 
 - fast-uri, used by Fastify, upgraded to fix URI scheme spoofing and host
