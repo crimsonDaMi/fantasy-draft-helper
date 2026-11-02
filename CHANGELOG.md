@@ -7,6 +7,15 @@ See `RELEASING.md`.
 
 ## Unreleased
 
+### Security
+
+- glob and minimatch, used by Fastify's static file serving, upgraded to fix
+  a filesystem traversal that continued after cancellation
+  ([GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4))
+  and a pattern-expansion denial of service
+  ([GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)),
+  both moderate severity.
+
 ## v3.1.2 — 2026-10-26
 
 ### Security
